@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RimaBR - Buscador de Rimas em Português</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>🎵 RimaBR</h1>
+                <p class="tagline">Buscador de Rimas para Português Brasileiro</p>
+            </div>
+            <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Alternar modo escuro">
+                🌙
+            </button>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-box">
+                <input
+                    type="text"
+                    id="searchInput"
+                    class="search-input"
+                    placeholder="Digite uma palavra (ex: amor, coração, liberdade)..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="search-btn">Buscar Rimas</button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters" id="filters">
+                <button class="filter-toggle" id="filterToggle">
+                    ⚙️ Filtros Avançados
+                </button>
+
+                <div class="filter-panel" id="filterPanel">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="stressFilter">Acentuação:</label>
+                            <select id="stressFilter" class="filter-select">
+                                <option value="">Todas</option>
+                                <option value="oxítona">Oxítona (última sílaba)</option>
+                                <option value="paroxítona">Paroxítona (penúltima)</option>
+                                <option value="proparoxítona">Proparoxítona (antepenúltima)</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="minSyllables">Mín. Sílabas:</label>
+                            <input type="number" id="minSyllables" class="filter-input" min="1" max="10" placeholder="1">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="maxSyllables">Máx. Sílabas:</label>
+                            <input type="number" id="maxSyllables" class="filter-input" min="1" max="10" placeholder="10">
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="suffixFilter">Sufixo:</label>
+                            <input type="text" id="suffixFilter" class="filter-input" placeholder="ex: dade, ção, ado">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="endingFilter">Terminação:</label>
+                            <input type="text" id="endingFilter" class="filter-input" placeholder="ex: ão, ente">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="limitFilter">Resultados:</label>
+                            <input type="number" id="limitFilter" class="filter-input" value="50" min="10" max="200">
+                        </div>
+                    </div>
+
+                    <button id="clearFilters" class="clear-filters-btn">Limpar Filtros</button>
+                </div>
+            </div>
+
+            <!-- Quick Filter Pills -->
+            <div class="quick-filters">
+                <span class="quick-filter-label">Rápido:</span>
+                <button class="pill-btn" data-genre="rap">Rap/Hip-Hop</button>
+                <button class="pill-btn" data-genre="sertanejo">Sertanejo</button>
+                <button class="pill-btn" data-genre="mpb">MPB</button>
+                <button class="pill-btn" data-genre="repente">Repente</button>
+            </div>
+        </section>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Buscando rimas...</p>
+        </div>
+
+        <!-- Results Section -->
+        <section id="results" class="results-section" style="display: none;">
+            <div class="results-header">
+                <h2 id="resultsTitle">Rimas para "<span id="queryWord"></span>"</h2>
+                <span id="resultsCount" class="results-count"></span>
+            </div>
+
+            <div id="resultsList" class="results-list"></div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <h3>Estatísticas do Banco</h3>
+            <div id="statsContainer" class="stats-container">
+                <div class="stat-card">
+                    <span class="stat-label">Total de Palavras</span>
+                    <span class="stat-value" id="totalWords">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Oxítonas</span>
+                    <span class="stat-value" id="oxitonaCount">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Paroxítonas</span>
+                    <span class="stat-value" id="paroxitonaCount">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Proparoxítonas</span>
+                    <span class="stat-value" id="proparoxitonaCount">-</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info Section -->
+        <section class="info-section">
+            <h3>Como Funciona?</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-icon">🎯</div>
+                    <h4>Análise Multi-Critério</h4>
+                    <p>Analisa prosódia, vogal tônica, padrões fonéticos e morfologia</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">📊</div>
+                    <h4>Scores Graduados</h4>
+                    <p>Pontuação de 0 a 100 mostrando qualidade da rima</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">🎼</div>
+                    <h4>Contextos Variados</h4>
+                    <p>Filtros para rap, sertanejo, MPB, repente e mais</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">🇧🇷</div>
+                    <h4>Otimizado PT-BR</h4>
+                    <p>Entende acentuação brasileira: oxítona, paroxítona, proparoxítona</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>RimaBR - Sistema de busca de rimas com análise fonética multi-critério</p>
+            <p>Desenvolvido para compositores, rappers, poetas e artistas brasileiros 🇧🇷</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
