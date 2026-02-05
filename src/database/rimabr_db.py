@@ -249,20 +249,50 @@ class RimaBRDatabase:
                 conditions.append(f"ending_{len(ending)} = ?")
                 params.append(ending)
 
-        # Build WHERE clause
-        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        # Build WHERE clause with smart phonetic pre-filtering
+        if not conditions:
+            # No user filters - add smart phonetic pre-filtering
+            # Priority 1: Same ending + stress type (best rhymes)
+            # Priority 2: Same tonic vowel + stress type (good rhymes)
+            # Priority 3: Same stress type only (acceptable rhymes)
+
+            ending_2 = query_features.syllables[-1][-2:] if len(query_features.syllables[-1]) >= 2 else None
+
+            conditions_smart = []
+            params_smart = []
+
+            # Option 1: Same ending_2 and stress type
+            if ending_2:
+                conditions_smart.append("(ending_2 = ? AND stress_type = ?)")
+                params_smart.extend([ending_2, query_features.stress_type])
+
+            # Option 2: Same tonic vowel and stress type
+            conditions_smart.append("(tonic_vowel = ? AND stress_type = ?)")
+            params_smart.extend([query_features.tonic_vowel, query_features.stress_type])
+
+            # Option 3: Just same stress type
+            conditions_smart.append("stress_type = ?")
+            params_smart.extend([query_features.stress_type])
+
+            where_clause = f"({' OR '.join(conditions_smart)})"
+            params = params_smart
+        else:
+            where_clause = " AND ".join(conditions)
 
         # Exclude the query word itself
         where_clause += " AND word != ?"
         params.append(query_word.lower())
 
-        # Execute query
+        # Execute query - get many candidates, scoring will rank them
+        # For smart filter, get enough to cover the whole range
+        fetch_limit = 5000 if not conditions else limit * 10
+
         cursor.execute(f"""
             SELECT word, features_json
             FROM words
             WHERE {where_clause}
             LIMIT ?
-        """, params + [limit * 3])  # Get more, we'll rank and filter
+        """, params + [fetch_limit])
 
         results = cursor.fetchall()
         conn.close()

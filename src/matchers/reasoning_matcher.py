@@ -170,19 +170,29 @@ class ReasoningBasedMatcher:
 
         # Tonic vowel (critical for rhyme)
         if m.tonic_vowel == c.tonic_vowel:
-            score += 0.6
+            score += 0.5
             checks.append(f"✓✓ Tonic vowel match: '{m.tonic_vowel}'")
         else:
             checks.append(f"✗✗ Different tonic vowels: '{m.tonic_vowel}' vs '{c.tonic_vowel}'")
 
-        # Tonic consonant (affects quality)
-        if m.tonic_consonant == c.tonic_consonant:
+        # Ending match (the part AFTER tonic vowel - crucial for rhyme!)
+        # Get last 2-3 characters of the word for comparison
+        m_ending = m.syllables[-1][-2:] if len(m.syllables[-1]) >= 2 else m.syllables[-1]
+        c_ending = c.syllables[-1][-2:] if len(c.syllables[-1]) >= 2 else c.syllables[-1]
+
+        if m_ending == c_ending:
             score += 0.4
+            checks.append(f"✓✓ Ending match: '-{m_ending}'")
+        elif m_ending[-1] == c_ending[-1] and len(m_ending) > 0:  # At least last letter matches
+            score += 0.15
+            checks.append(f"✓ Partial ending: '-{m_ending[-1]}'")
+
+        # Tonic consonant (less important for rhyme, but affects quality)
+        if m.tonic_consonant == c.tonic_consonant:
+            score += 0.1
             checks.append(f"✓ Tonic consonant match: '{m.tonic_consonant}'")
         elif m.tonic_consonant and c.tonic_consonant:
             checks.append(f"△ Different tonic consonants: '{m.tonic_consonant}' vs '{c.tonic_consonant}'")
-        else:
-            checks.append(f"△ Tonic consonant: '{m.tonic_consonant}' vs '{c.tonic_consonant}'")
 
         reasoning = " | ".join(checks)
         return min(score, 1.0), reasoning
