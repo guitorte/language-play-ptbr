@@ -4,6 +4,14 @@
 
 A multi-criteria phonetic matching system for Brazilian Portuguese that uses explicit reasoning rather than black-box embeddings. Designed to leverage Claude's analytical strengths for rhyme detection, poetry analysis, and linguistic research.
 
+## 🚀 Quick Start - Google Colab (Recommended!)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/guitorte/language-play-ptbr/blob/claude/analyze-word-syllables-zn3b8/RimaBR_Colab.ipynb)
+
+**No installation needed!** Click the badge above to run RimaBR instantly in your browser with Google Colab.
+
+[📖 Read Colab Guide](README_COLAB.md)
+
 ## Overview
 
 Traditional rhyme theory gives binary "rhyme" or "no rhyme" classifications. This system provides:
