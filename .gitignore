@@ -23,3 +23,10 @@ Thumbs.db
 # Project specific
 *.log
 .env
+data/rimabr.db-journal
+
+# SQLite databases (too large for GitHub)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
