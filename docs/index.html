@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RimaBR - Dicionario de Rimas do Portugues Brasileiro</title>
+  <meta name="description" content="Encontre rimas perfeitas e aproximadas em portugues brasileiro. Ferramenta gratuita com analise fonetica de mais de 39.000 palavras.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>RimaBR</h1>
+      <p>Dicionario de rimas do portugues brasileiro</p>
+      <div class="stats" id="stats">Carregando...</div>
+    </header>
+
+    <div class="search-box">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Digite uma palavra..."
+        autocomplete="off"
+        spellcheck="false"
+        disabled
+      >
+      <button id="search-btn" disabled>Buscar</button>
+      <div class="autocomplete" id="autocomplete"></div>
+    </div>
+
+    <div class="options">
+      <label class="toggle">
+        <input type="checkbox" id="near-toggle" checked>
+        Incluir rimas aproximadas
+      </label>
+    </div>
+
+    <div class="loading" id="loading" style="display:none">
+      <span class="spinner"></span> Buscando rimas...
+    </div>
+
+    <div id="results">
+      <div class="empty-state">
+        <div class="icon">~</div>
+        <p>Digite uma palavra para encontrar rimas.</p>
+        <p style="margin-top:0.5rem;font-size:0.85rem">Exemplos: amor, coracao, saudade, liberdade</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>RimaBR &mdash; Analise fonetica para portugues brasileiro</p>
+      <p style="margin-top:0.3rem">
+        <a href="https://github.com/guitorte/language-play-ptbr">GitHub</a>
+      </p>
+    </footer>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
