@@ -126,10 +126,7 @@ class PTBRSyllabifier:
 
         # Add remaining
         if current:
-            if syllables:
-                syllables[-1] += current
-            else:
-                syllables.append(current)
+            syllables.append(current)
 
         return syllables if syllables else [word]
 
