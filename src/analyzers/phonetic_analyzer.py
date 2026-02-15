@@ -161,10 +161,7 @@ class PTBRPhoneticAnalyzer:
                 current = ""
 
         if current:
-            if result:
-                result[-1] += current
-            else:
-                result.append(current)
+            result.append(current)
 
         return result if result else [word]
 
