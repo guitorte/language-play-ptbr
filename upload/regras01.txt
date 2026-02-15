@@ -1,0 +1,110 @@
+A divisão silábica de qualquer vocábulo, assinalada pelo hífen, é geralmente feita pela **soletração**, e não pelos seus elementos constitutivos.
+
+As fontes estabelecem um conjunto de normas que devem ser sempre respeitadas para a correta divisão de sílabas:
+
+### Regras Fundamentais de Separação Silábica
+
+1.  **Consoante Inicial Não Seguida de Vogal:**
+    A consoante que inicia um vocábulo e **não é seguida de vogal** permanece na sílaba que a segue.
+    *Exemplos:* *cni-do-se*, *dze-ta*, *gno-ma*, *mne-mô-ni-ca*, *pneu-má-ti-co*.
+
+2.  **Consoante Interior Não Seguida de Vogal:**
+    No interior do vocábulo, a consoante **não seguida de vogal** é conservada na sílaba que a precede.
+    *Exemplos:* *ab-di-car*, *ac-ne*, *ét-ni-co*, *nup-ci-al*, *ob-fir-mar*, *op-ção*, *sig-ma-tis-mo*, *sub-por*, *sub-ju-gar*.
+
+3.  **Grupos Consonantais Inseparáveis e Dígrafos:**
+    Não se separam:
+    *   Os elementos dos **grupos consonânticos iniciais** de sílabas (aqueles em que a segunda consoante é geralmente *l* ou *r*, formando um som complexo com a vogal seguinte).
+        *Exemplos:* *a-blu-ção*, *a-bra-sar*.
+    *   Os **dígrafos** *ch*, *lh*, *nh*.
+        *Exemplos:* *a-che-gar*, *fi-lho*, *ma-nhã*.
+
+    *Observação sobre Grupos Consonantais:* Em alguns casos, as consoantes *bl* e *br* não formam grupos articulados, e o *l* e o *r* são pronunciados separadamente, o que deve ser atendido na divisão. O mesmo ocorre com *dl* (exceto em onomatopeias como *dlim*).
+    *Exemplos:* *sub-lin-gual*, *sub-rogar*, *ad-le-ga-ção*.
+
+4.  **Grupos Consonantais Separados no Interior:**
+    Os grupos *sc* e *sç* no interior do vocábulo são **bipartidos**, ficando o *s* na sílaba que o precede.
+    *Exemplos:* *as-cen-der*, *nas-cer*, *des-cer*, *res-cin-dir*, *res-ci-são*.
+
+    *Observação sobre o 'S' de Prefixo:* O *s* que precede consoantes (de prefixos) forma sílaba com o prefixo antecedente.
+    *Exemplos:* *abs-tra-ir*, *ads-cre-ver*, *ins-cri-ção*, *ins-pe-tor*, *subs-cre-ver*.
+
+5.  **Regra Específica para Prefixo com *S* ou *X***:
+    *   O *s* dos prefixos *bis, cis, des, dis, trans* e o *x* do prefixo *ex* **não se separam** se a sílaba seguinte começar por **consoante**.
+        *Exemplos:* *bis-ne-to*, *cis-pla-ti-no*, *des-li-gar*, *dis-tra-ção*, *trans-por-tar*, *ex-tra-ir*.
+    *   Contudo, se a sílaba seguinte começar por **vogal**, eles **formam sílaba com esta** e se separam do elemento prefixal.
+        *Exemplos:* *bi-sa-vô*, *ci-san-di-no*, *de-ses-pe-rar*, *di-sen-té-ri-co*, *tran-sa-tlân-ti-co*, *e-xér-ci-to*.
+
+6.  **Vogais Idênticas e Consoantes Dobradas:**
+    As **vogais idênticas** e as letras **cc, cç, rr** e **ss** são separadas, ficando uma na sílaba que precede e a outra na sílaba seguinte.
+    *Exemplos:* *ca-a-tin-ga*, *co-or-de-nar*, *in-te-lec-ção*, *oc-ci-pi-tal*, *pror-ro-gar*, *res-sur-gir*.
+
+    *Observação sobre Hiatos:* As vogais de hiatos, **mesmo que diferentes**, também se separam.
+    *Exemplos:* *a-ta-ú-de*, *ca-í-eis*, *ca-ir*, *du-e-lo*, *fi-el*, *flu-iu*, *fru-ir*, *gra-ú-na*, *je-su-í-ta*, *le-al*, *mi-ú-do*, *po-ei-ra*, *ra-i-nha*, *sa-ú-de*, *vi-ví-eis*, *vo-ar*.
+
+7.  **Ditongos e Tritongos (Inseparáveis):**
+    Os elementos dos ditongos (crescentes e decrescentes) e os dos tritongos **não se separam**.
+    *Exemplos:* *ai-ro-so*, *a-ni-mais*, *au-ro-ra*, *a-ve-ri-gueis*, *ca-iu*, *cru-éis*, *en-jei-tar*, *fo-ga-réu*, *fu-giu*, *gló-ria*, *guai-ar*, *i-guais*, *ja-mais*, *joi-as*, *ó-dio*, *quais*, *sá-bio*, *sa-guão*, *sa-guões*, *su-bor-nou*, *ta-fuis*, *vá-rio*.
+
+    *Observação sobre GU e QU:* A vogal que segue o *u* precedido de *g* ou *q* **não é separada** dele, mesmo que seja acompanhada de consoante.
+    *Exemplos:* *am-bí-guo*, *e-qui-va-ler*, *guer-ra*, *u-bí-quo*.
+
+8.  **Translineação em Palavras Compostas (Hífen):**
+    Na translineação (passagem para a linha seguinte), se a partição de uma palavra composta (ou combinação) coincide com o hífen, deve-se **repetir o hífen** no início da linha seguinte, para clareza gráfica.
+    *Exemplo:* *vice-almirante*.
+
+### Elemento Essencial da Sílaba
+
+O fundamento de todas estas regras é a natureza da sílaba no português:
+
+*   **Sílaba:** É um fonema ou grupo de fonemas emitido num só impulso expiratório.
+*   **Elemento Essencial:** Em português, o **elemento essencial** ou **elemento silábico** da sílaba é a **vogal**. As semivogais (*i* e *u* assilábicas) acompanham a vogal na mesma sílaba.
+
+As regras de contagem de sílabas poéticas, embora não sejam apresentadas nas fontes como uma lista formal de "Regras de Contagem de Sílabas Poéticas", são intrinsecamente ligadas aos **fenômenos fonéticos** que governam a **prosódia** e o **ritmo** na língua, especialmente a **fonética sintática** e os mecanismos estilísticos utilizados na versificação.
+
+O **ritmo** é considerado **essencial e específico no verso**. A contagem métrica é influenciada pelas seguintes regras e fenômenos, que afetam a forma como os fonemas se agrupam em sílabas:
+
+### I. Fenômenos de Junção Vocal (Encontros Vocálicos)
+
+A contagem das sílabas poéticas (ou gramaticais) deve considerar os encontros vocálicos dentro e entre as palavras, que podem dar origem a **ditongos, tritongos e hiatos**.
+
+1.  **Sinérese (Ditonguismo):**
+    *   É a passagem de **duas vogais de um hiato a um ditongo crescente**.
+    *   A sinérese é um **fenômeno bem mais frequente** que a diérese, o que resultava numa **acentuada predominância do ditonguismo** a partir do século XVI.
+    *   Este fenômeno reduz a contagem silábica, agrupando duas vogais em uma única sílaba (exemplo: *su-a-ve* torna-se *sua-ve*).
+
+2.  **Diérese (Hiatismo):**
+    *   É a passagem de **semivogal a vogal**, transformando o ditongo num hiato.
+    *   A diérese aumenta a contagem silábica, separando o encontro vocálico em sílabas distintas (exemplo: *trai-ção* torna-se *tra-i-ção*).
+    *   A poesia antiga dava preferência ao **hiatismo**. Poetas modernos continuaram a usar a diérese, sobretudo como **efeito estilístico-fônico para ênfase** ou a ideia de grandeza.
+
+### II. Fenômenos de Fonética Sintática (Ligação entre Vocábulos)
+
+Quando não há pausa intermediária, a ligação dos vocábulos afeta a pronúncia e, consequentemente, a contagem métrica:
+
+1.  **Hiato Interverbal:** O hiato entre vocábulos (uma vogal final e uma vogal inicial do vocábulo seguinte) é **normalmente respeitado**.
+    *   Isto ocorre se a **vogal final é tônica** e o vocábulo seguinte começa com **vogal ou ditongo tônicos** (exemplo: *ali há*, *lá houve*, *li ontem*).
+    *   Também ocorre se a **vogal final é átona** e o vocábulo seguinte começa por **vogal tônica** (exemplo: *essa hora*, *terreno árido*).
+
+2.  **Ditongação Interverbal:** Pode ocorrer em certas ligações:
+    *   Se a vogal final é tônica e a inicial do vocábulo seguinte é átona (sendo *i, e, u* ou *o*), pode ocorrer a **ditongação** (exemplo: *segui aquela*, *já ouvi*).
+    *   No contexto da **próclise**, um dissílabo como *tuas* tem de ser proferido com uma sílaba, graças à próclise, transformando a vogal em semivogal (sinérese).
+    *   Em geral, quando uma **vogal final e a inicial do vocábulo seguinte são átonas**, pode ocorrer **ditongo**.
+
+3.  **Crase (Fusão):**
+    *   Se a vogal final é átona e a vogal inicial do vocábulo seguinte é tônica, a **fusão (crase) das duas vogais** pode ocorrer se forem idênticas, produzindo um alongamento da vogal (exemplo: *terra árida* pode se tornar *ter / rā / ri / da*).
+    *   Crase é definida como a **fusão de dois ou mais sons iguais num só**.
+
+4.  **Elisão:**
+    *   É o **desaparecimento de uma vogal final átona** em virtude do contato com a vogal inicial do vocábulo seguinte.
+    *   A elisão pode ocorrer quando o **final átono é *a*** e a **inicial é *a* ou *ã***.
+
+### III. Formação de Palavras Fonéticas (Clíticos)
+
+1.  **Clíticos e Vocábulo Fonético:** Palavras monossilábicas átonas (clíticos) perdem seu acento próprio e se unem ao vocábulo tônico que as precede (*enclíticos*) ou segue (*proclíticos*), formando um **vocábulo fonético**.
+2.  **Acentuação de Clíticos Enclíticos:** No cálculo da posição da sílaba tônica, os monossílabos átonos formam um todo com o vocábulo a que se ligam foneticamente, determinando a classificação oxítona, paroxítona ou proparoxítona do conjunto (exemplo: *fá-lo* é paroxítono).
+
+### IV. Recursos Gráficos para Métrica
+
+1.  **Apóstrofo:** O emprego do apóstrofo é limitado, mas é utilizado para **indicar a supressão de uma letra ou letras no verso, por exigência da metrificação** (exemplo: *c’roa*, *esp’rança*).
+2.  **Formas Verbais com Clíticos:** Na mesóclise e ênclise, especialmente com verbos terminados em *r, s* ou *z* seguidos de *lo, la, los, las*, a perda da consoante final e a assunção das formas *lo, la, los, las* nos pronomes pode alterar a estrutura silábica da forma verbal (exemplo: *pôr lo* se torna *pô-lo*).

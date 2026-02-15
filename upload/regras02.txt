@@ -1,0 +1,115 @@
+A sua questão abrange dois aspectos fundamentais da Prosódia e da Ortografia da língua portuguesa: a **identificação da sílaba tônica** e as **regras de acentuação gráfica**.
+
+As informações a seguir são extraídas dos excertos da *Moderna Gramática Portuguesa* de Evanildo Bechara.
+
+---
+
+### I. Identificação da Sílaba Tônica (Acento de Intensidade)
+
+O acento em português é de **intensidade** (acento de força, dinâmico, expiratório ou icto). Numa palavra, a sílaba proferida com maior esforço muscular e nitidez é chamada **tônica** (ou forte). As outras sílabas são ditas **átonas** (inacentuadas).
+
+As sílabas átonas podem ser:
+1.  **Pretônicas:** Estão antes da tônica (e.g., *avó, pagar*).
+2.  **Postônicas:** Estão depois da tônica (e.g., *tímido*).
+3.  **Subtônicas (ou semifortes):** Vogais que recebem um **acento secundário** de menor intensidade, geralmente na sílaba radical de vocábulos polissilábicos derivados (e.g., o *ra* em *rapidamente* ou o *li* em *polidamente*).
+
+Quanto à posição do acento tônico, os vocábulos de duas ou mais sílabas são classificados em:
+
+| Classificação | Posição do Acento Tônico | Exemplos |
+| :--- | :--- | :--- |
+| **Oxítonos (ou agudos)** | Recai na **última** sílaba | *material, principal, café* |
+| **Paroxítonos** | Recai na **penúltima** sílaba | *barro, poderoso, Pedro* |
+| **Proparoxítonos (ou esdrúxulos)** | Recai na **antepenúltima** sílaba | *sólida, felicíssimo* |
+
+O acento de intensidade desempenha um papel linguístico importante, sendo decisivo para a significação da palavra (e.g., **sábia** (adjetivo), **sabia** (verbo), **sabiá** (substantivo)).
+
+### II. Regras de Acentuação Gráfica
+
+O acento gráfico (agudo ou circunflexo) é utilizado para assinalar a sílaba tônica de certas palavras e seguir padrões de intensidade e distinção.
+
+#### A. Monossílabos Tônicos
+Levam acento agudo ou circunflexo os monossílabos tônicos terminados em:
+*   **-a, -as**: *já, lá, vás*.
+*   **-e, -es**: *fé, lê, pés*.
+*   **-o, -os**: *pó, dó, pós, sós*.
+
+#### B. Vocábulos de Mais de Uma Sílaba (Regras Gerais)
+
+**1. Proparoxítonos**
+Todos os proparoxítonos levam acento agudo ou circunflexo:
+*   Exemplos: *cálido, tépido, cátedra, sólido, límpido, cômodo*.
+*   Incluem-se nesta regra os vocábulos terminados por ditongo crescente (e.g., *aeródromo, álcali*).
+
+**2. Oxítonos**
+Levam acento agudo ou circunflexo os oxítonos terminados em:
+*   **-a, -as**: *cajás, vatapá, ananás, carajás*.
+*   **-e, -es**: *você, café, pontapés*.
+*   **-o, -os**: *cipó, jiló, avô, carijós*.
+*   **-em, -ens**: *também, ninguém, vinténs, armazéns*.
+*   **Observação**: Não são acentuadas palavras como *aqui, caqui, poti, caju*.
+
+**3. Paroxítonos**
+Levam acento agudo ou circunflexo os paroxítonos terminados em:
+*   **-i, -is**: *júri, cáqui, beribéri, lápis, tênis*.
+*   **-us**: *vênus, vírus, bônus*.
+*   **-r**: *caráter, revólver, éter*.
+*   **-l**: *útil, amável, nível, têxtil*.
+*   **-x**: *tórax, fênix, ônix*.
+*   **-n**: *éden, hífen*. (Mas os plurais *edens, hifens* não têm acento).
+*   **-um, -uns**: *álbum, álbuns, médium*.
+*   **-ão, -ãos**: *órgão, órfão, órgãos, órfãos*.
+*   **-ã, -ãs**: *órfã, ímã, órfãs, ímãs*.
+*   **-ps**: *bíceps, fórceps*.
+*   **-on(s)**: *rádon, rádons*. (Acentuam-se os nomes técnicos em -om: *iândom, rádom*).
+*   **Ditongo oral átono (decrescente ou crescente)**: Levam acento se a regra geral o exigir (e.g., *ágeis, jóquei, área, mágoa, régua, tênue*).
+
+#### C. Casos Especiais e Exceções
+
+**1. Ditongos Abertos**
+*   São sempre acentuadas as palavras oxítonas com os ditongos abertos grafados **-éis, -éu(s) ou -ói(s)**: *anéis, céu(s), herói(s)*.
+*   **Não** são acentuadas as palavras paroxítonas com os ditongos abertos **-ei** e **-oi**: *assembleia, boleia, ideia, heroico*.
+    *   Exceção: Palavras que se enquadrem noutra regra geral de acentuação, como paroxítonas terminadas em -r (e.g., *blêizer, contêiner, gêiser*).
+
+**2. Hiato Tônico I e U**
+*   Levam acento agudo o **i** e **u**, quando representam a **segunda vogal tônica de um hiato**, desde que:
+    *   Não formem sílaba com *r, l, m, n, z*.
+    *   Nem estejam seguidos do dígrafo *nh*.
+    *   Exemplos: *saúde, viúva, saída, caído, faísca, aí*.
+    *   Não são acentuados: *raiz* (mas *raízes*), *paul, ruim, ruins, rainha, moinho*.
+
+**3. Hiato Precedido de Ditongo Decrescente**
+*   **Não** serão acentuadas as vogais tônicas **i** e **u** das palavras paroxítonas quando estas vogais estiverem **precedidas de ditongo decrescente** (e.g., *baiuca, bocaiuva, feiinho*).
+*   **Serão** acentuadas as vogais tônicas **i** e **u** das palavras **oxítonas**, quando mesmo precedidas de ditongo decrescente, se estiverem em posição final, sozinhas na sílaba, ou seguidas de **s** (e.g., *Piauí, teiú, tuiuiús*).
+
+**4. Formas Verbais Homógrafas**
+*   **Vogais Repetidas (O/E)**: Não se acentuam os encontros vocálicos fechados (e.g., *pessoa, patroa, voo, enjoo*).
+*   **Diferenciais Obrigatórios**:
+    *   O verbo **pôde** (pretérito perfeito do indicativo, 3.ª pessoa do singular) leva acento circunflexo para se distinguir de **pode** (presente do indicativo).
+    *   O verbo **pôr** leva acento circunflexo para se distinguir da preposição átona *por*.
+*   **Diferencial Facultativo**:
+    *   A palavra **fôrma** (substantivo) pode ser acentuada (circunflexo) para distingui-la de *forma* (substantivo ou verbo), mas apenas em casos de ambiguidade.
+*   **Abolição dos Acentos Diferenciais**: Não se acentuam as palavras paroxítonas homógrafas de artigos, contrações, preposições e conjunções átonas. Assim, perdem o acento: *para* (verbo), *pela(s)*, *polo(s)*, etc..
+
+**5. Acentuação de Verbos Específicos**
+*   **3ª Pessoa do Plural de Ter e Vir**:
+    *   *Ele **tem** / Eles **têm***.
+    *   *Ele **vem** / Eles **vêm*** (Implícito pela regra, mas *vêm* é explicitado em nota).
+*   **3ª Pessoa de Derivados de Ter e Vir (Monossílabos Tônicos)**:
+    *   Singular leva acento agudo: *Ele **contém**, **convém***.
+    *   Plural leva acento circunflexo: *Eles **contêm**, **convêm***.
+*   **3ª Pessoa de Crer, Dar, Ler, Ver e Derivados**:
+    *   As formas com vogal dupla no plural **não são acentuadas**: *creem, deem, leem, veem*.
+    *   O singular leva acento circunflexo: *crê, lê, vê* (e.g., *ele crê, ele revê*).
+*   **Verbos em -GUIR e -QUIR**: Os verbos **ARGÜIR** e **REDARGÜIR** (sem trema) **não** levam acento agudo na vogal tônica *u* nas formas rizotônicas (e.g., *arguo, arguis, arguem*).
+
+**6. Formas Verbais com Pronomes Enclíticos**
+*   Levam acento agudo ou circunflexo a forma verbal terminada em *a, e, o* tônicos, seguida de *-lo, -la, -los, -las* (e.g., *fá-lo, movê-lo-ia, trá-lo-ás*).
+*   Levam acento as formas verbais oxítonas terminadas em *-air* e *-uir*, quando perdem o *r* final ao serem seguidas de *-lo(s), -la(s)* (e.g., *atraí-lo(s), possuí-la(s)*).
+
+**7. Advérbios e Derivados**
+*   **Supressão de acento em -mente**: Nos advérbios em **-mente**, o acento do adjetivo de origem é suprimido (e.g., *avidamente* de *ávido*, *somente* de *só*).
+*   **Supressão de acento em sufixos com -z**: Nas palavras que têm sufixos iniciados por **z**, o acento da base é suprimido se esta apresentar vogal tônica acentuada (e.g., *avozinha* de *avó*, *chapeuzinho* de *chapéu*).
+*   **A forma *pra***, redução de *para*, não é acentuada (*prá* é incorreto) nem recebe apóstrofo (*p'ra* é incorreto).
+
+**8. Trema**
+*   O trema não é usado em palavras portuguesas ou aportuguesadas (e.g., *aguentar, frequência, tranquilo*), mesmo que o *u* seja pronunciado e átono. (Contudo, o trema pode ser usado em palavras derivadas de nomes próprios estrangeiros que o possuam).
