@@ -142,7 +142,8 @@ class PTBRSyllabifier:
             'ai', 'ei', 'oi', 'ui',
             'au', 'eu', 'iu', 'ou',
             'ãe', 'ão', 'õe',
-            'ui', 'ói'
+            'ui', 'ói',
+            'ia', 'ie', 'io', 'ua', 'ue', 'uo'
         }
         return two_chars.lower() in diphthongs
 
