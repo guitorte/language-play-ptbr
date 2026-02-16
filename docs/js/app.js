@@ -362,6 +362,8 @@ function renderAnalysis(f) {
 similarBtn.addEventListener('click', doSimilar);
 
 let expandedSimilarCard = null; // track which card is expanded
+let similarCurrentResult = null; // store full result for pagination
+let similarDisplayedCount = 0; // how many we're currently showing
 
 function doSimilar() {
   const word = similarInput.value.trim().toLowerCase();
@@ -392,13 +394,16 @@ function doSimilar() {
   similarResults.innerHTML = '';
   similarHint.style.display = 'none';
   expandedSimilarCard = null;
+  similarDisplayedCount = 0;
 
   // Use requestAnimationFrame to not block the spinner
   requestAnimationFrame(() => {
     try {
-      const result = searchSimilar(word, allWords, { maxResults: 30 });
-      console.log('[RimaBR] Similar search completed:', result.results.length, 'results');
-      renderSimilarResults(result);
+      // Get many results but only display first batch
+      const result = searchSimilar(word, allWords, { maxResults: 300 });
+      console.log('[RimaBR] Similar search completed:', result.results.length, 'total results');
+      similarCurrentResult = result;
+      renderSimilarResults(result, 25); // show first 25
     } catch (err) {
       console.error('[RimaBR] Similar search error:', err);
       similarResults.innerHTML = '<div class="empty-state"><p>Erro na busca. Tente outra palavra.</p></div>';
@@ -408,41 +413,59 @@ function doSimilar() {
   });
 }
 
-function renderSimilarResults(result) {
-  similarResults.innerHTML = '';
+function loadMoreSimilar() {
+  if (!similarCurrentResult) return;
+  const newCount = similarDisplayedCount + 25;
+  console.log('[RimaBR] Loading more similar results:', newCount);
+  renderSimilarResults(similarCurrentResult, newCount);
+}
+
+function renderSimilarResults(result, displayCount = 25) {
   const q = result.query;
 
-  // Query word card
-  const queryHtml = `
-    <div class="analysis-card">
-      <div class="word-title">${esc(q.w)}</div>
-      <div class="syllables">${q.s.join(' · ')}</div>
-      <div class="tags">
-        <span class="tag stress">${stressLabel(q.t)}</span>
-        <span class="tag vowel">vogal: ${esc(q.v)}</span>
-        <span class="tag rhyme-key">rima: -${esc(q.r)}</span>
-        <span class="tag">${q.w.length} car. | ${q.n} síl.</span>
-      </div>
-    </div>
-    <div class="similar-stats-row">
-      Analisadas <strong>${result.totalScanned.toLocaleString('pt-BR')}</strong> palavras
-      &middot; Pré-filtradas <strong>${result.totalPrefiltered}</strong>
-      &middot; Exibindo <strong>${result.results.length}</strong> mais similares
-    </div>
-  `;
-  similarResults.insertAdjacentHTML('beforeend', queryHtml);
+  // Only clear and rebuild the query card on first load
+  if (similarDisplayedCount === 0) {
+    similarResults.innerHTML = '';
 
-  if (result.results.length === 0) {
-    similarResults.insertAdjacentHTML('beforeend', `
-      <div class="empty-state">
-        <p>Nenhuma palavra similar encontrada para "${esc(q.w)}".</p>
+    // Query word card
+    const queryHtml = `
+      <div class="analysis-card">
+        <div class="word-title">${esc(q.w)}</div>
+        <div class="syllables">${q.s.join(' · ')}</div>
+        <div class="tags">
+          <span class="tag stress">${stressLabel(q.t)}</span>
+          <span class="tag vowel">vogal: ${esc(q.v)}</span>
+          <span class="tag rhyme-key">rima: -${esc(q.r)}</span>
+          <span class="tag">${q.w.length} car. | ${q.n} síl.</span>
+        </div>
       </div>
-    `);
-    return;
+      <div class="similar-stats-row">
+        Analisadas <strong>${result.totalScanned.toLocaleString('pt-BR')}</strong> palavras
+        &middot; Encontradas <strong>${result.results.length}</strong> similares
+      </div>
+    `;
+    similarResults.insertAdjacentHTML('beforeend', queryHtml);
+
+    if (result.results.length === 0) {
+      similarResults.insertAdjacentHTML('beforeend', `
+        <div class="empty-state">
+          <p>Nenhuma palavra similar encontrada para "${esc(q.w)}".</p>
+        </div>
+      `);
+      similarDisplayedCount = displayCount;
+      return;
+    }
+
+    // Create the list container
+    similarResults.insertAdjacentHTML('beforeend', '<div class="sim-list" id="sim-list-container"></div>');
   }
 
+  // Render only up to displayCount results
+  const resultsToShow = result.results.slice(0, displayCount);
+  const listContainer = document.getElementById('sim-list-container');
+
   // Results list
-  const listHtml = result.results.map((r, idx) => {
+  const listHtml = resultsToShow.map((r, idx) => {
     const pct = Math.round(r.total * 100);
     const levelClass = simLevelClass(r.level);
 
@@ -472,28 +495,69 @@ function renderSimilarResults(result) {
     `;
   }).join('');
 
-  similarResults.insertAdjacentHTML('beforeend', `<div class="sim-list">${listHtml}</div>`);
+  // Replace or append to the list
+  if (similarDisplayedCount === 0) {
+    // First time: populate the container we just created
+    document.getElementById('sim-list-container').innerHTML = listHtml;
+  } else {
+    // Subsequent loads: append to existing list
+    document.getElementById('sim-list-container').insertAdjacentHTML('beforeend', listHtml);
+  }
 
-  // Toggle detail on click
-  similarResults.querySelectorAll('.sim-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const idx = card.dataset.idx;
-      const detail = document.getElementById(`sim-detail-${idx}`);
-      if (expandedSimilarCard && expandedSimilarCard !== detail) {
-        expandedSimilarCard.style.display = 'none';
-        expandedSimilarCard.closest('.sim-card').classList.remove('expanded');
-      }
-      if (detail.style.display === 'none') {
-        detail.style.display = 'block';
-        card.classList.add('expanded');
-        expandedSimilarCard = detail;
-      } else {
-        detail.style.display = 'none';
-        card.classList.remove('expanded');
-        expandedSimilarCard = null;
-      }
-    });
-  });
+  // Add "Load More" button if there are more results to show
+  const loadMoreBtn = document.getElementById('sim-load-more-btn');
+  if (loadMoreBtn) loadMoreBtn.remove();
+
+  if (displayCount < result.results.length) {
+    const remaining = result.results.length - displayCount;
+    const nextBatch = Math.min(25, remaining);
+    const loadMoreHtml = `
+      <div style="text-align:center;margin-top:1.5rem;margin-bottom:1rem">
+        <button id="sim-load-more-btn" class="action-btn" style="min-width:200px">
+          Carregar mais ${nextBatch} de ${remaining}
+        </button>
+      </div>
+    `;
+    similarResults.insertAdjacentHTML('beforeend', loadMoreHtml);
+    document.getElementById('sim-load-more-btn').addEventListener('click', loadMoreSimilar);
+  }
+
+  similarDisplayedCount = displayCount;
+
+  // Use event delegation for dynamic cards
+  // Remove old delegated listener if it exists
+  const oldHandler = similarResults._simCardClickHandler;
+  if (oldHandler) {
+    similarResults.removeEventListener('click', oldHandler);
+  }
+
+  // Add new delegated click handler
+  const cardClickHandler = (e) => {
+    const card = e.target.closest('.sim-card');
+    if (!card) return;
+
+    const idx = card.dataset.idx;
+    const detail = document.getElementById(`sim-detail-${idx}`);
+    if (!detail) return;
+
+    if (expandedSimilarCard && expandedSimilarCard !== detail) {
+      expandedSimilarCard.style.display = 'none';
+      expandedSimilarCard.closest('.sim-card').classList.remove('expanded');
+    }
+
+    if (detail.style.display === 'none') {
+      detail.style.display = 'block';
+      card.classList.add('expanded');
+      expandedSimilarCard = detail;
+    } else {
+      detail.style.display = 'none';
+      card.classList.remove('expanded');
+      expandedSimilarCard = null;
+    }
+  };
+
+  similarResults._simCardClickHandler = cardClickHandler;
+  similarResults.addEventListener('click', cardClickHandler);
 }
 
 function renderSimilarDetail(r) {
@@ -550,9 +614,9 @@ async function doSearch() {
   try {
     const result = await searchRhymes(word, {
       includeNear: nearToggle.checked,
-      maxResults: 60,
+      maxResults: 150, // fetch more, display in batches
     });
-    renderSearchResults(result);
+    renderSearchResults(result, { displayPerfect: 30, displayNear: 30 });
   } catch (err) {
     console.error('Search error:', err);
     searchResults.innerHTML = '<div class="empty-state"><p>Erro na busca. Tente outra palavra.</p></div>';
@@ -561,7 +625,15 @@ async function doSearch() {
   }
 }
 
-function renderSearchResults(result) {
+let searchCurrentResult = null;
+let searchDisplayCounts = { perfect: 30, near: 30 };
+
+function renderSearchResults(result, displayCounts = { displayPerfect: 30, displayNear: 30 }) {
+  // Store result for pagination
+  searchCurrentResult = result;
+  const { displayPerfect, displayNear } = displayCounts;
+  searchDisplayCounts = { perfect: displayPerfect, near: displayNear };
+
   searchResults.innerHTML = '';
 
   // Analysis card for the queried word
@@ -581,14 +653,16 @@ function renderSearchResults(result) {
   searchResults.insertAdjacentHTML('beforeend', analysisHtml);
 
   if (result.perfect.length > 0) {
+    const perfectToShow = result.perfect.slice(0, displayPerfect);
     searchResults.insertAdjacentHTML('beforeend', renderSection(
-      'Rimas perfeitas', result.perfect, result.totalPerfect
+      'Rimas perfeitas', perfectToShow, result.totalPerfect, 'perfect', displayPerfect
     ));
   }
 
   if (result.near.length > 0) {
+    const nearToShow = result.near.slice(0, displayNear);
     searchResults.insertAdjacentHTML('beforeend', renderSection(
-      'Rimas aproximadas', result.near, result.totalNear
+      'Rimas aproximadas', nearToShow, result.totalNear, 'near', displayNear
     ));
   }
 
@@ -602,19 +676,84 @@ function renderSearchResults(result) {
     `);
   }
 
-  // Click to re-search
-  searchResults.querySelectorAll('.word-card').forEach(card => {
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', () => {
-      const w = card.querySelector('.word').textContent;
-      searchInput.value = w;
-      doSearch();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  });
+  attachSearchCardHandlers();
 }
 
-function renderSection(title, items, total) {
+function attachSearchCardHandlers() {
+  // Use event delegation
+  const oldHandler = searchResults._searchCardClickHandler;
+  if (oldHandler) {
+    searchResults.removeEventListener('click', oldHandler);
+  }
+
+  const cardClickHandler = (e) => {
+    const card = e.target.closest('.word-card');
+    if (!card) return;
+    const w = card.querySelector('.word').textContent;
+    searchInput.value = w;
+    doSearch();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  searchResults._searchCardClickHandler = cardClickHandler;
+  searchResults.addEventListener('click', cardClickHandler);
+}
+
+function loadMoreSearchResults(type) {
+  if (!searchCurrentResult) return;
+  const newCount = searchDisplayCounts[type] + 20;
+  searchDisplayCounts[type] = newCount;
+
+  const container = document.getElementById(`search-section-${type}`);
+  if (!container) return;
+
+  const results = type === 'perfect' ? searchCurrentResult.perfect : searchCurrentResult.near;
+  const nextItems = results.slice(searchDisplayCounts[type] - 20, newCount);
+
+  if (nextItems.length > 0) {
+    const cardsHtml = nextItems.map(r => `
+      <div class="word-card">
+        <div class="word">${esc(r.word)}</div>
+        <div class="meta">
+          <div class="score-bar">
+            <div class="fill ${r.level}" style="width:${Math.round(r.total * 100)}%"></div>
+          </div>
+          <span class="score-label">${Math.round(r.total * 100)}%</span>
+        </div>
+      </div>
+    `).join('');
+
+    const gridContainer = container.querySelector('.word-grid');
+    if (gridContainer) {
+      gridContainer.insertAdjacentHTML('beforeend', cardsHtml);
+    }
+  }
+
+  // Update or remove the load-more button
+  const loadMoreBtn = document.getElementById(`search-load-more-${type}`);
+  if (loadMoreBtn) loadMoreBtn.remove();
+
+  const total = type === 'perfect' ? searchCurrentResult.totalPerfect : searchCurrentResult.totalNear;
+  const currentDisplay = searchDisplayCounts[type];
+
+  if (currentDisplay < total) {
+    const remaining = total - currentDisplay;
+    const nextBatch = Math.min(20, remaining);
+    const btnHtml = `
+      <div style="text-align:center;margin-top:1rem">
+        <button id="search-load-more-${type}" class="action-btn" style="min-width:180px">
+          Carregar mais ${nextBatch} de ${remaining}
+        </button>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', btnHtml);
+    document.getElementById(`search-load-more-${type}`).addEventListener('click', () => loadMoreSearchResults(type));
+  }
+
+  attachSearchCardHandlers();
+}
+
+function renderSection(title, items, total, type, displayed) {
   const cards = items.map(r => `
     <div class="word-card">
       <div class="word">${esc(r.word)}</div>
@@ -627,12 +766,32 @@ function renderSection(title, items, total) {
     </div>
   `).join('');
 
-  return `
-    <div class="results-section">
-      <h2>${title} <span class="count">(${items.length}${total > items.length ? ' de ' + total : ''})</span></h2>
+  const remaining = total - displayed;
+  const loadMoreBtn = remaining > 0 ? `
+    <div style="text-align:center;margin-top:1rem">
+      <button id="search-load-more-${type}" class="action-btn" style="min-width:180px">
+        Carregar mais ${Math.min(20, remaining)} de ${remaining}
+      </button>
+    </div>
+  ` : '';
+
+  const html = `
+    <div class="results-section" id="search-section-${type}">
+      <h2>${title} <span class="count">(${displayed}${total > displayed ? ' de ' + total : ''})</span></h2>
       <div class="word-grid">${cards}</div>
+      ${loadMoreBtn}
     </div>
   `;
+
+  // Schedule handler attachment after render
+  if (loadMoreBtn) {
+    setTimeout(() => {
+      const btn = document.getElementById(`search-load-more-${type}`);
+      if (btn) btn.addEventListener('click', () => loadMoreSearchResults(type));
+    }, 0);
+  }
+
+  return html;
 }
 
 function stressLabel(t) {
