@@ -3,54 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RimaBR - Dicionario de Rimas do Portugues Brasileiro</title>
-  <meta name="description" content="Encontre rimas perfeitas e aproximadas em portugues brasileiro. Ferramenta gratuita com analise fonetica de mais de 39.000 palavras.">
+  <title>RimaBR - Explorador Fonético do Português Brasileiro</title>
+  <meta name="description" content="Explore o sistema de correspondência fonética do português brasileiro. Compare palavras, visualize análises e entenda como funciona a rima.">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
     <header>
       <h1>RimaBR</h1>
-      <p>Dicionario de rimas do portugues brasileiro</p>
-      <div class="stats" id="stats">Carregando...</div>
+      <p class="subtitle">Explorador fonético do português brasileiro</p>
     </header>
 
-    <div class="search-box">
-      <input
-        type="text"
-        id="search-input"
-        placeholder="Digite uma palavra..."
-        autocomplete="off"
-        spellcheck="false"
-        disabled
-      >
-      <button id="search-btn" disabled>Buscar</button>
-      <div class="autocomplete" id="autocomplete"></div>
-    </div>
+    <!-- Tab Navigation -->
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="compare" role="tab" aria-selected="true">Comparar</button>
+      <button class="tab" data-tab="analyze" role="tab" aria-selected="false">Analisar</button>
+      <button class="tab" data-tab="search" role="tab" aria-selected="false">Buscar</button>
+    </nav>
 
-    <div class="options">
-      <label class="toggle">
-        <input type="checkbox" id="near-toggle" checked>
-        Incluir rimas aproximadas
-      </label>
-    </div>
-
-    <div class="loading" id="loading" style="display:none">
-      <span class="spinner"></span> Buscando rimas...
-    </div>
-
-    <div id="results">
-      <div class="empty-state">
-        <div class="icon">~</div>
-        <p>Digite uma palavra para encontrar rimas.</p>
-        <p style="margin-top:0.5rem;font-size:0.85rem">Exemplos: amor, coracao, saudade, liberdade</p>
+    <!-- ==================== COMPARE TAB ==================== -->
+    <section id="tab-compare" class="tab-content active">
+      <div class="compare-inputs">
+        <div class="input-group">
+          <label for="word-a">Palavra A</label>
+          <div class="search-box">
+            <input type="text" id="word-a" placeholder="ex: amor" autocomplete="off" spellcheck="false">
+            <div class="autocomplete" id="ac-a"></div>
+          </div>
+        </div>
+        <div class="compare-vs">vs</div>
+        <div class="input-group">
+          <label for="word-b">Palavra B</label>
+          <div class="search-box">
+            <input type="text" id="word-b" placeholder="ex: calor" autocomplete="off" spellcheck="false">
+            <div class="autocomplete" id="ac-b"></div>
+          </div>
+        </div>
+        <button id="compare-btn" class="action-btn">Comparar</button>
       </div>
-    </div>
+
+      <!-- Context Switcher -->
+      <div class="context-switcher" id="context-switcher" style="display:none">
+        <span class="context-label">Contexto:</span>
+        <div class="context-pills">
+          <button class="pill active" data-ctx="general">Geral</button>
+          <button class="pill" data-ctx="strict_rhyme">Rima Estrita</button>
+          <button class="pill" data-ctx="assonance">Assonância</button>
+          <button class="pill" data-ctx="hip_hop">Hip-Hop</button>
+        </div>
+      </div>
+
+      <div id="compare-results"></div>
+
+      <div class="empty-hint" id="compare-hint">
+        <p>Digite duas palavras para comparar sua correspondência fonética.</p>
+        <p class="examples">Exemplos: amor / calor, coração / paixão, saudade / cidade</p>
+      </div>
+    </section>
+
+    <!-- ==================== ANALYZE TAB ==================== -->
+    <section id="tab-analyze" class="tab-content">
+      <div class="analyze-inputs">
+        <div class="input-group wide">
+          <label for="word-analyze">Palavra</label>
+          <div class="search-box">
+            <input type="text" id="word-analyze" placeholder="ex: coração" autocomplete="off" spellcheck="false">
+            <div class="autocomplete" id="ac-analyze"></div>
+          </div>
+        </div>
+        <button id="analyze-btn" class="action-btn">Analisar</button>
+      </div>
+
+      <div id="analyze-results"></div>
+
+      <div class="empty-hint" id="analyze-hint">
+        <p>Digite uma palavra para ver sua anatomia fonética completa.</p>
+        <p class="examples">Sílabas, acentuação, vogal tônica, sequências vocálicas e consonantais, prefixo e sufixo.</p>
+      </div>
+    </section>
+
+    <!-- ==================== SEARCH TAB ==================== -->
+    <section id="tab-search" class="tab-content">
+      <div class="search-inputs">
+        <div class="input-group wide">
+          <div class="search-box">
+            <input type="text" id="search-input" placeholder="Digite uma palavra..." autocomplete="off" spellcheck="false" disabled>
+            <div class="autocomplete" id="ac-search"></div>
+          </div>
+        </div>
+        <button id="search-btn" class="action-btn" disabled>Buscar</button>
+      </div>
+
+      <div class="options">
+        <label class="toggle">
+          <input type="checkbox" id="near-toggle" checked>
+          Incluir rimas aproximadas
+        </label>
+      </div>
+
+      <div class="loading" id="loading" style="display:none">
+        <span class="spinner"></span> Buscando rimas...
+      </div>
+
+      <div id="search-results"></div>
+
+      <div class="empty-hint" id="search-hint">
+        <p>Digite uma palavra para encontrar rimas no dicionário.</p>
+        <div class="stats" id="stats">Carregando...</div>
+      </div>
+    </section>
 
     <footer>
-      <p>RimaBR &mdash; Analise fonetica para portugues brasileiro</p>
+      <p>RimaBR &mdash; Sistema de correspondência fonética para português brasileiro</p>
       <p style="margin-top:0.3rem">
         <a href="https://github.com/guitorte/language-play-ptbr">GitHub</a>
       </p>

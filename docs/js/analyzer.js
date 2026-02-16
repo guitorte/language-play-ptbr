@@ -1,7 +1,7 @@
 /**
  * PT-BR Phonetic Analyzer (JavaScript port)
- * Analyzes phonetic structure of Brazilian Portuguese words.
- * Used client-side for words not in the pre-computed index.
+ * Full phonetic decomposition for Brazilian Portuguese words.
+ * Powers the Compare, Analyze, and Search modes.
  */
 
 const VOWELS = new Set('aeiouáéíóúâêôãõàèìòù');
@@ -18,6 +18,19 @@ const DIPHTHONGS = new Set([
   'ai','ei','oi','ui','au','eu','iu','ou','ãe','ão','õe','ói',
   'ia','ie','io','ua','ue','uo'
 ]);
+
+// Common PT-BR prefixes (longest first for greedy match)
+const PREFIXES = [
+  'super','inter','intra','extra','contra','entre','anti','auto',
+  'des','pre','pro','sub','re','in','im','ir'
+];
+
+// Common PT-BR suffixes (longest first for greedy match)
+const SUFFIXES = [
+  'mente','agem','ção','são','dor','dora','eiro','eira',
+  'ismo','ista','eza','ice','ura',
+  'ado','ada','ato','ata','ido','ida','oso','osa','ez'
+];
 
 function isVowel(c) { return VOWELS.has(c); }
 function isConsonant(c) { return CONSONANTS.has(c); }
@@ -112,7 +125,7 @@ function syllabify(word) {
 
 /**
  * Detect stress position and type.
- * Returns { index, type } where index is 0-based syllable index.
+ * Returns { index, type, fromEnd } where index is 0-based syllable index.
  */
 function detectStress(word, syllables) {
   let pos = -1;
@@ -156,29 +169,104 @@ function extractRhymeKey(word, syllables, stressIdx) {
 }
 
 /**
- * Analyze a word and return its phonetic features.
+ * Extract tonic vowel from tonic syllable.
+ */
+function extractTonicVowel(syllable) {
+  for (const c of syllable) {
+    if (isVowel(c)) return c;
+  }
+  return '';
+}
+
+/**
+ * Extract onset consonant from tonic syllable.
+ */
+function extractTonicConsonant(syllable) {
+  for (const c of syllable) {
+    if (isConsonant(c)) return c;
+  }
+  return null;
+}
+
+/**
+ * Extract ordered vowel sequence from a word.
+ */
+function extractVowels(word) {
+  return [...word].filter(c => isVowel(c));
+}
+
+/**
+ * Extract ordered consonant sequence from a word.
+ */
+function extractConsonants(word) {
+  return [...word].filter(c => isConsonant(c));
+}
+
+/**
+ * Detect common PT-BR prefix.
+ */
+function detectPrefix(word) {
+  for (const p of PREFIXES) {
+    if (word.startsWith(p) && word.length > p.length) return p;
+  }
+  return null;
+}
+
+/**
+ * Detect common PT-BR suffix.
+ */
+function detectSuffix(word) {
+  for (const s of SUFFIXES) {
+    if (word.endsWith(s) && word.length > s.length) return s;
+  }
+  return null;
+}
+
+/**
+ * Full phonetic analysis of a word.
+ * Returns both the compact format (for search compatibility) and
+ * the extended format (for Compare/Analyze views).
  */
 function analyze(word) {
   word = word.toLowerCase().trim();
   const syllables = syllabify(word);
   const stress = detectStress(word, syllables);
   const tonicSyl = syllables[stress.index] || '';
-  let tonicVowel = '';
-  for (const c of tonicSyl) {
-    if (isVowel(c)) { tonicVowel = c; break; }
-  }
+  const tonicVowel = extractTonicVowel(tonicSyl);
+  const tonicConsonant = extractTonicConsonant(tonicSyl);
   const rhymeKey = extractRhymeKey(word, syllables, stress.index);
+  const vowels = extractVowels(word);
+  const consonants = extractConsonants(word);
+  const prefix = detectPrefix(word);
+  const suffix = detectSuffix(word);
 
   return {
+    // Compact fields (backward-compatible with search index)
     w: word,
     s: syllables,
     n: syllables.length,
     t: stress.type.slice(0, 2), // 'ox', 'pa', 'pr'
     v: tonicVowel,
     r: rhymeKey,
+    // Extended fields (for Compare/Analyze)
     stressType: stress.type,
+    stressIndex: stress.index,
     stressFromEnd: stress.fromEnd,
+    tonicSyllable: tonicSyl,
+    tonicVowel,
+    tonicConsonant,
+    vowelSequence: vowels,
+    consonantSequence: consonants,
+    prefix,
+    suffix,
   };
 }
 
-export { analyze, syllabify, detectStress, extractRhymeKey, isVowel, isConsonant };
+export {
+  analyze, syllabify, detectStress, extractRhymeKey,
+  isVowel, isConsonant,
+  extractVowels, extractConsonants,
+  extractTonicVowel, extractTonicConsonant,
+  detectPrefix, detectSuffix,
+  PREFIXES, SUFFIXES,
+};
