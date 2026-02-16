@@ -67,9 +67,14 @@ initSearch().then(({ totalWords }) => {
   searchBtn.disabled = false;
   similarInput.disabled = false;
   similarBtn.disabled = false;
+  console.log('[RimaBR] Search initialized:', totalWords, 'words');
 }).catch(err => {
-  console.error('Failed to init search:', err);
-  statsEl.textContent = 'Modo offline (comparar e analisar funcionam sem dados)';
+  console.error('[RimaBR] Failed to init search:', err);
+  statsEl.textContent = 'Modo offline — Compare e Analisar disponíveis';
+  // Enable Similar input even without data (will show friendly error when used)
+  similarInput.disabled = false;
+  similarBtn.disabled = false;
+  console.warn('[RimaBR] Similar tab enabled but search data unavailable');
 });
 
 // ===== Tab Navigation =====
@@ -360,15 +365,29 @@ let expandedSimilarCard = null; // track which card is expanded
 
 function doSimilar() {
   const word = similarInput.value.trim().toLowerCase();
-  if (!word || word.length < 2) return;
+  if (!word || word.length < 2) {
+    console.log('[RimaBR] Similar search: input too short or empty');
+    return;
+  }
   Object.values(acBoxes).forEach(box => box.classList.remove('open'));
 
   const allWords = getAllWords();
   if (!allWords) {
-    similarResults.innerHTML = '<div class="empty-state"><p>Dicionário ainda carregando...</p></div>';
+    console.error('[RimaBR] Similar search: word list not available');
+    similarHint.style.display = 'none';
+    similarResults.innerHTML = `
+      <div class="empty-state">
+        <p><strong>Dicionário não carregado</strong></p>
+        <p style="margin-top:0.5rem">A busca por palavras similares requer o dicionário completo.</p>
+        <p style="margin-top:0.3rem;font-size:0.85rem;color:var(--text-dim)">
+          Verifique sua conexão e recarregue a página.
+        </p>
+      </div>
+    `;
     return;
   }
 
+  console.log('[RimaBR] Similar search starting for:', word);
   similarLoading.style.display = 'block';
   similarResults.innerHTML = '';
   similarHint.style.display = 'none';
@@ -378,9 +397,10 @@ function doSimilar() {
   requestAnimationFrame(() => {
     try {
       const result = searchSimilar(word, allWords, { maxResults: 30 });
+      console.log('[RimaBR] Similar search completed:', result.results.length, 'results');
       renderSimilarResults(result);
     } catch (err) {
-      console.error('Similar search error:', err);
+      console.error('[RimaBR] Similar search error:', err);
       similarResults.innerHTML = '<div class="empty-state"><p>Erro na busca. Tente outra palavra.</p></div>';
     } finally {
       similarLoading.style.display = 'none';
