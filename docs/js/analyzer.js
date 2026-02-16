@@ -15,7 +15,8 @@ const INSEPARABLE_CLUSTERS = new Set([
 const DIGRAPHS = new Set(['ch','lh','nh','rr','ss','qu','gu','sc','sç','xc']);
 
 const DIPHTHONGS = new Set([
-  'ai','ei','oi','ui','au','eu','iu','ou','ãe','ão','õe','ói'
+  'ai','ei','oi','ui','au','eu','iu','ou','ãe','ão','õe','ói',
+  'ia','ie','io','ua','ue','uo'
 ]);
 
 function isVowel(c) { return VOWELS.has(c); }
@@ -103,11 +104,7 @@ function syllabify(word) {
   }
 
   if (current) {
-    if (syllables.length > 0) {
-      syllables[syllables.length - 1] += current;
-    } else {
-      syllables.push(current);
-    }
+    syllables.push(current);
   }
 
   return syllables.length > 0 ? syllables : [word];
