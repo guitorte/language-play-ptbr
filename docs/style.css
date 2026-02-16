@@ -111,6 +111,7 @@ header .subtitle {
   flex-shrink: 0;
 }
 
+.similar-inputs,
 .analyze-inputs, .search-inputs {
   display: flex;
   gap: 0.8rem;
@@ -706,6 +707,152 @@ header .subtitle {
   color: var(--text-dim);
   min-width: 2.2rem;
   text-align: right;
+}
+
+/* ===== SIMILAR VIEW ===== */
+
+.similar-stats-row {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 1.2rem;
+}
+
+.similar-stats-row strong {
+  color: var(--accent-light);
+}
+
+.sim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sim-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.sim-card:hover {
+  border-color: var(--accent);
+}
+
+.sim-card.expanded {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+
+.sim-card-main {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sim-rank {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.sim-word {
+  font-weight: 600;
+  font-size: 1rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-pct {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: monospace;
+  min-width: 3rem;
+  text-align: right;
+}
+
+.sim-pct.perfect { color: var(--green); }
+.sim-pct.strong { color: var(--accent-light); }
+.sim-pct.good { color: var(--yellow); }
+.sim-pct.weak { color: var(--orange); }
+.sim-pct.poor, .sim-pct.none { color: var(--red); }
+
+.sim-level-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  min-width: 4.5rem;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sim-level-label.perfect { color: var(--green); }
+.sim-level-label.strong { color: var(--accent-light); }
+.sim-level-label.good { color: var(--yellow); }
+.sim-level-label.weak { color: var(--orange); }
+.sim-level-label.poor, .sim-level-label.none { color: var(--red); }
+
+/* Mini dimension bars in list view */
+.sim-dims-preview {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding-left: 2.1rem;
+}
+
+.sim-dim-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.sim-dim-mini-label {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  min-width: 1.8rem;
+}
+
+.sim-dim-mini-bar {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sim-dim-mini-bar .fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.sim-dim-mini-bar .fill.high { background: var(--green); }
+.sim-dim-mini-bar .fill.mid { background: var(--yellow); }
+.sim-dim-mini-bar .fill.low { background: var(--orange); }
+.sim-dim-mini-bar .fill.none { background: var(--red); }
+
+/* Expanded detail inside sim card */
+.sim-card-detail {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
+.sim-dim-detail {
+  margin-bottom: 0.7rem;
+}
+
+.sim-dim-detail:last-child {
+  margin-bottom: 0;
 }
 
 /* ===== Empty State (search) ===== */
