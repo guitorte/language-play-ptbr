@@ -20,6 +20,7 @@
     <nav class="tabs" role="tablist">
       <button class="tab active" data-tab="compare" role="tab" aria-selected="true">Comparar</button>
       <button class="tab" data-tab="analyze" role="tab" aria-selected="false">Analisar</button>
+      <button class="tab" data-tab="similar" role="tab" aria-selected="false">Similares</button>
       <button class="tab" data-tab="search" role="tab" aria-selected="false">Buscar</button>
     </nav>
 
@@ -81,6 +82,32 @@
       <div class="empty-hint" id="analyze-hint">
         <p>Digite uma palavra para ver sua anatomia fonética completa.</p>
         <p class="examples">Sílabas, acentuação, vogal tônica, sequências vocálicas e consonantais, prefixo e sufixo.</p>
+      </div>
+    </section>
+
+    <!-- ==================== SIMILAR TAB ==================== -->
+    <section id="tab-similar" class="tab-content">
+      <div class="similar-inputs">
+        <div class="input-group wide">
+          <label for="word-similar">Palavra</label>
+          <div class="search-box">
+            <input type="text" id="word-similar" placeholder="ex: recato" autocomplete="off" spellcheck="false" disabled>
+            <div class="autocomplete" id="ac-similar"></div>
+          </div>
+        </div>
+        <button id="similar-btn" class="action-btn" disabled>Buscar Similares</button>
+      </div>
+
+      <div class="loading" id="similar-loading" style="display:none">
+        <span class="spinner"></span> Buscando palavras similares...
+      </div>
+
+      <div id="similar-results"></div>
+
+      <div class="empty-hint" id="similar-hint">
+        <p>Digite uma palavra para encontrar as mais semelhantes no dicionário.</p>
+        <p class="examples">Considera semelhança ortográfica, fonética, estrutural e morfológica juntas.</p>
+        <p class="examples">Exemplo: "recato" encontra recado, acato, recito, acetato...</p>
       </div>
     </section>
 

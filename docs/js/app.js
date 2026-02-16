@@ -5,7 +5,8 @@
 
 import { analyze } from './analyzer.js';
 import { compareWords } from './compare.js';
-import { init as initSearch, searchRhymes, suggest } from './search.js';
+import { init as initSearch, searchRhymes, suggest, getAllWords } from './search.js';
+import { searchSimilar } from './similarity.js';
 
 // ===== State =====
 
@@ -42,11 +43,19 @@ const searchResults = document.getElementById('search-results');
 const searchHint = document.getElementById('search-hint');
 const statsEl = document.getElementById('stats');
 
+// Similar
+const similarInput = document.getElementById('word-similar');
+const similarBtn = document.getElementById('similar-btn');
+const similarLoading = document.getElementById('similar-loading');
+const similarResults = document.getElementById('similar-results');
+const similarHint = document.getElementById('similar-hint');
+
 // Autocomplete boxes
 const acBoxes = {
   a: document.getElementById('ac-a'),
   b: document.getElementById('ac-b'),
   analyze: document.getElementById('ac-analyze'),
+  similar: document.getElementById('ac-similar'),
   search: document.getElementById('ac-search'),
 };
 
@@ -56,6 +65,8 @@ initSearch().then(({ totalWords }) => {
   statsEl.innerHTML = `<span>${totalWords.toLocaleString('pt-BR')}</span> palavras indexadas`;
   searchInput.disabled = false;
   searchBtn.disabled = false;
+  similarInput.disabled = false;
+  similarBtn.disabled = false;
 }).catch(err => {
   console.error('Failed to init search:', err);
   statsEl.textContent = 'Modo offline (comparar e analisar funcionam sem dados)';
@@ -160,6 +171,7 @@ document.addEventListener('click', (e) => {
 setupAutocomplete(wordAInput, acBoxes.a, doCompare);
 setupAutocomplete(wordBInput, acBoxes.b, doCompare);
 setupAutocomplete(analyzeInput, acBoxes.analyze, doAnalyze);
+setupAutocomplete(similarInput, acBoxes.similar, doSimilar);
 setupAutocomplete(searchInput, acBoxes.search, doSearch);
 
 // ===== COMPARE MODE =====
@@ -338,6 +350,168 @@ function renderAnalysis(f) {
       </div>
     </div>
   `;
+}
+
+// ===== SIMILAR MODE =====
+
+similarBtn.addEventListener('click', doSimilar);
+
+let expandedSimilarCard = null; // track which card is expanded
+
+function doSimilar() {
+  const word = similarInput.value.trim().toLowerCase();
+  if (!word || word.length < 2) return;
+  Object.values(acBoxes).forEach(box => box.classList.remove('open'));
+
+  const allWords = getAllWords();
+  if (!allWords) {
+    similarResults.innerHTML = '<div class="empty-state"><p>Dicionário ainda carregando...</p></div>';
+    return;
+  }
+
+  similarLoading.style.display = 'block';
+  similarResults.innerHTML = '';
+  similarHint.style.display = 'none';
+  expandedSimilarCard = null;
+
+  // Use requestAnimationFrame to not block the spinner
+  requestAnimationFrame(() => {
+    try {
+      const result = searchSimilar(word, allWords, { maxResults: 30 });
+      renderSimilarResults(result);
+    } catch (err) {
+      console.error('Similar search error:', err);
+      similarResults.innerHTML = '<div class="empty-state"><p>Erro na busca. Tente outra palavra.</p></div>';
+    } finally {
+      similarLoading.style.display = 'none';
+    }
+  });
+}
+
+function renderSimilarResults(result) {
+  similarResults.innerHTML = '';
+  const q = result.query;
+
+  // Query word card
+  const queryHtml = `
+    <div class="analysis-card">
+      <div class="word-title">${esc(q.w)}</div>
+      <div class="syllables">${q.s.join(' · ')}</div>
+      <div class="tags">
+        <span class="tag stress">${stressLabel(q.t)}</span>
+        <span class="tag vowel">vogal: ${esc(q.v)}</span>
+        <span class="tag rhyme-key">rima: -${esc(q.r)}</span>
+        <span class="tag">${q.w.length} car. | ${q.n} síl.</span>
+      </div>
+    </div>
+    <div class="similar-stats-row">
+      Analisadas <strong>${result.totalScanned.toLocaleString('pt-BR')}</strong> palavras
+      &middot; Pré-filtradas <strong>${result.totalPrefiltered}</strong>
+      &middot; Exibindo <strong>${result.results.length}</strong> mais similares
+    </div>
+  `;
+  similarResults.insertAdjacentHTML('beforeend', queryHtml);
+
+  if (result.results.length === 0) {
+    similarResults.insertAdjacentHTML('beforeend', `
+      <div class="empty-state">
+        <p>Nenhuma palavra similar encontrada para "${esc(q.w)}".</p>
+      </div>
+    `);
+    return;
+  }
+
+  // Results list
+  const listHtml = result.results.map((r, idx) => {
+    const pct = Math.round(r.total * 100);
+    const levelClass = simLevelClass(r.level);
+
+    // Dimension mini-bars for inline preview
+    const dimBars = r.dimensions.map(d => {
+      const dp = Math.round(d.score * 100);
+      const bc = dp >= 70 ? 'high' : dp >= 40 ? 'mid' : dp >= 20 ? 'low' : 'none';
+      return `<span class="sim-dim-mini" title="${esc(d.name)}: ${dp}%">
+        <span class="sim-dim-mini-label">${esc(d.name.slice(0, 3))}</span>
+        <span class="sim-dim-mini-bar"><span class="fill ${bc}" style="width:${dp}%"></span></span>
+      </span>`;
+    }).join('');
+
+    return `
+      <div class="sim-card" data-idx="${idx}">
+        <div class="sim-card-main">
+          <span class="sim-rank">${idx + 1}</span>
+          <span class="sim-word">${esc(r.word)}</span>
+          <span class="sim-pct ${levelClass}">${pct}%</span>
+          <span class="sim-level-label ${levelClass}">${esc(r.levelLabel)}</span>
+        </div>
+        <div class="sim-dims-preview">${dimBars}</div>
+        <div class="sim-card-detail" id="sim-detail-${idx}" style="display:none">
+          ${renderSimilarDetail(r)}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  similarResults.insertAdjacentHTML('beforeend', `<div class="sim-list">${listHtml}</div>`);
+
+  // Toggle detail on click
+  similarResults.querySelectorAll('.sim-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const idx = card.dataset.idx;
+      const detail = document.getElementById(`sim-detail-${idx}`);
+      if (expandedSimilarCard && expandedSimilarCard !== detail) {
+        expandedSimilarCard.style.display = 'none';
+        expandedSimilarCard.closest('.sim-card').classList.remove('expanded');
+      }
+      if (detail.style.display === 'none') {
+        detail.style.display = 'block';
+        card.classList.add('expanded');
+        expandedSimilarCard = detail;
+      } else {
+        detail.style.display = 'none';
+        card.classList.remove('expanded');
+        expandedSimilarCard = null;
+      }
+    });
+  });
+}
+
+function renderSimilarDetail(r) {
+  return r.dimensions.map(d => {
+    const pct = Math.round(d.score * 100);
+    const barClass = pct >= 70 ? 'high' : pct >= 40 ? 'mid' : pct >= 20 ? 'low' : 'none';
+    const weightPct = Math.round(d.weight * 100);
+
+    const checksHtml = d.checks.map(c => {
+      const cls = c.pass === true ? 'pass' : c.pass === null ? 'partial' : 'fail';
+      const icon = c.pass === true ? '+' : c.pass === null ? '~' : '-';
+      return `<li class="${cls}"><span class="icon">${icon}</span>${esc(c.text)}</li>`;
+    }).join('');
+
+    return `
+      <div class="sim-dim-detail">
+        <div class="dim-header">
+          <span class="dim-name">${esc(d.name)}</span>
+          <span class="dim-score">${pct}%</span>
+        </div>
+        <div class="dim-bar"><div class="fill ${barClass}" style="width:${pct}%"></div></div>
+        <div class="dim-weight">Peso: ${weightPct}% | Contribuição: ${Math.round(d.weighted * 100)}pts</div>
+        <ul class="dim-checks">${checksHtml}</ul>
+      </div>
+    `;
+  }).join('');
+}
+
+function simLevelClass(level) {
+  const map = {
+    very_high: 'perfect',
+    high: 'strong',
+    moderate: 'good',
+    low: 'weak',
+    very_low: 'poor',
+    none: 'none',
+  };
+  return map[level] || 'none';
 }
 
 // ===== SEARCH MODE (existing, preserved) =====

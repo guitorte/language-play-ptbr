@@ -221,4 +221,12 @@ function suggest(prefix, limit = 10) {
   return results;
 }
 
-export { init, searchRhymes, suggest };
+/**
+ * Return the full autocomplete word list (for similarity search).
+ * Returns null if not yet initialized.
+ */
+function getAllWords() {
+  return autocomplete;
+}
+
+export { init, searchRhymes, suggest, getAllWords };
