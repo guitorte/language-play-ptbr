@@ -229,4 +229,11 @@ function getAllWords() {
   return autocomplete;
 }
 
-export { init, searchRhymes, suggest, getAllWords };
+/**
+ * Return the loaded manifest (null if not yet initialized).
+ */
+function getManifest() {
+  return manifest;
+}
+
+export { init, searchRhymes, suggest, getAllWords, getManifest, loadChunk };

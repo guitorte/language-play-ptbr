@@ -1,16 +1,17 @@
 /**
  * RimaBR - Phonetic Match Explorer
- * Tab-based UI: Compare | Analyze | Search
+ * Tab-based UI: Rimas | Compare | Analyze | Similar | Search
  */
 
 import { analyze } from './analyzer.js';
 import { compareWords } from './compare.js';
 import { init as initSearch, searchRhymes, suggest, getAllWords } from './search.js';
 import { searchSimilar } from './similarity.js';
+import { searchCategorizedRhymes } from './rhyme-search.js';
 
 // ===== State =====
 
-let activeTab = 'compare';
+let activeTab = 'rimas';
 let currentContext = 'general';
 let lastCompareWords = null; // { a, b } for context re-scoring
 
@@ -50,6 +51,14 @@ const similarLoading = document.getElementById('similar-loading');
 const similarResults = document.getElementById('similar-results');
 const similarHint = document.getElementById('similar-hint');
 
+// Rimas (categorized rhyme search)
+const rimasInput = document.getElementById('rimas-input');
+const rimasBtn = document.getElementById('rimas-btn');
+const rimasLoading = document.getElementById('rimas-loading');
+const rimasResults = document.getElementById('rimas-results');
+const rimasHint = document.getElementById('rimas-hint');
+const rimasStats = document.getElementById('rimas-stats');
+
 // Autocomplete boxes
 const acBoxes = {
   a: document.getElementById('ac-a'),
@@ -57,23 +66,30 @@ const acBoxes = {
   analyze: document.getElementById('ac-analyze'),
   similar: document.getElementById('ac-similar'),
   search: document.getElementById('ac-search'),
+  rimas: document.getElementById('ac-rimas'),
 };
 
 // ===== Initialization =====
 
 initSearch().then(({ totalWords }) => {
-  statsEl.innerHTML = `<span>${totalWords.toLocaleString('pt-BR')}</span> palavras indexadas`;
+  const wordCountLabel = `<span>${totalWords.toLocaleString('pt-BR')}</span> palavras indexadas`;
+  statsEl.innerHTML = wordCountLabel;
+  rimasStats.innerHTML = wordCountLabel;
   searchInput.disabled = false;
   searchBtn.disabled = false;
   similarInput.disabled = false;
   similarBtn.disabled = false;
+  rimasInput.disabled = false;
+  rimasBtn.disabled = false;
   console.log('[RimaBR] Search initialized:', totalWords, 'words');
 }).catch(err => {
   console.error('[RimaBR] Failed to init search:', err);
   statsEl.textContent = 'Modo offline — Compare e Analisar disponíveis';
-  // Enable Similar input even without data (will show friendly error when used)
+  rimasStats.textContent = 'Modo offline — Compare e Analisar disponíveis';
   similarInput.disabled = false;
   similarBtn.disabled = false;
+  rimasInput.disabled = false;
+  rimasBtn.disabled = false;
   console.warn('[RimaBR] Similar tab enabled but search data unavailable');
 });
 
@@ -178,6 +194,7 @@ setupAutocomplete(wordBInput, acBoxes.b, doCompare);
 setupAutocomplete(analyzeInput, acBoxes.analyze, doAnalyze);
 setupAutocomplete(similarInput, acBoxes.similar, doSimilar);
 setupAutocomplete(searchInput, acBoxes.search, doSearch);
+setupAutocomplete(rimasInput, acBoxes.rimas, doRimas);
 
 // ===== COMPARE MODE =====
 
@@ -596,6 +613,230 @@ function simLevelClass(level) {
     none: 'none',
   };
   return map[level] || 'none';
+}
+
+// ===== RIMAS MODE (categorized rhyme search) =====
+
+rimasBtn.addEventListener('click', doRimas);
+
+let rimasCurrentResult = null;
+let rimasDisplayCounts = { perfect: 30, toante: 30, consonantal: 30, approximate: 30 };
+
+async function doRimas() {
+  const word = rimasInput.value.trim().toLowerCase();
+  if (!word || word.length < 2) return;
+  Object.values(acBoxes).forEach(box => box.classList.remove('open'));
+
+  rimasLoading.style.display = 'block';
+  rimasResults.innerHTML = '';
+  rimasHint.style.display = 'none';
+
+  try {
+    const result = await searchCategorizedRhymes(word, { maxPerCategory: 100 });
+    rimasCurrentResult = result;
+    rimasDisplayCounts = { perfect: 30, toante: 30, consonantal: 30, approximate: 30 };
+    renderRimasResults(result);
+  } catch (err) {
+    console.error('[RimaBR] Rimas search error:', err);
+    rimasResults.innerHTML = '<div class="empty-state"><p>Erro na busca. Tente outra palavra.</p></div>';
+  } finally {
+    rimasLoading.style.display = 'none';
+  }
+}
+
+function renderRimasResults(result) {
+  rimasResults.innerHTML = '';
+  const m = result.motherEntry;
+
+  // Analysis card for the queried word
+  const vowelPatternStr = result.vowelPattern.join(' ');
+  const consPatternStr = result.consonantPattern.join(' ');
+
+  const analysisHtml = `
+    <div class="analysis-card">
+      <div class="word-title">${esc(m.w)}</div>
+      <div class="syllables">${m.s.join(' · ')}</div>
+      <div class="tags">
+        <span class="tag stress">${stressLabel(m.t)}</span>
+        <span class="tag vowel">vogal: ${esc(m.v)}</span>
+        <span class="tag rhyme-key">rima: -${esc(m.r)}</span>
+        <span class="tag">${m.n} sil.</span>
+      </div>
+      <div class="rimas-patterns">
+        <span class="rimas-pattern-tag">
+          <span class="rimas-pattern-label">Padrao vocalico:</span>
+          <span class="rimas-pattern-value vowel">${esc(vowelPatternStr) || '—'}</span>
+        </span>
+        <span class="rimas-pattern-tag">
+          <span class="rimas-pattern-label">Padrao consonantal:</span>
+          <span class="rimas-pattern-value">${esc(consPatternStr) || '—'}</span>
+        </span>
+      </div>
+    </div>
+  `;
+  rimasResults.insertAdjacentHTML('beforeend', analysisHtml);
+
+  // Category definitions
+  const categoryDefs = [
+    {
+      key: 'perfect',
+      title: 'Rimas Perfeitas (Consoantes)',
+      desc: 'Correspondencia total de som a partir da tonica',
+      icon: '=',
+      color: 'perfect',
+    },
+    {
+      key: 'toante',
+      title: 'Rimas Toantes (Assonancia)',
+      desc: 'Mesmas vogais, consoantes diferentes',
+      icon: '~',
+      color: 'strong',
+    },
+    {
+      key: 'consonantal',
+      title: 'Rimas Consonantais',
+      desc: 'Mesmas consoantes, vogais diferentes',
+      icon: '#',
+      color: 'good',
+    },
+    {
+      key: 'approximate',
+      title: 'Rimas Aproximadas (Slant)',
+      desc: 'Sons parcialmente similares',
+      icon: '%',
+      color: 'weak',
+    },
+  ];
+
+  let totalFound = 0;
+
+  for (const def of categoryDefs) {
+    const cat = result.categories[def.key];
+    if (!cat || cat.items.length === 0) continue;
+
+    totalFound += cat.items.length;
+    const displayCount = rimasDisplayCounts[def.key];
+    const itemsToShow = cat.items.slice(0, displayCount);
+
+    const rhymeKeysPreview = cat.rhymeKeys
+      .slice(0, 8)
+      .map(rk => `-${rk}`)
+      .join(', ');
+    const moreKeys = cat.totalKeys > 8 ? ` (+${cat.totalKeys - 8})` : '';
+
+    const sectionHtml = `
+      <div class="rimas-category" id="rimas-cat-${def.key}">
+        <div class="rimas-cat-header ${def.color}">
+          <div class="rimas-cat-title">
+            <span class="rimas-cat-icon">${def.icon}</span>
+            ${def.title}
+            <span class="count">(${cat.items.length})</span>
+          </div>
+          <div class="rimas-cat-desc">${def.desc}</div>
+          <div class="rimas-cat-keys">${esc(rhymeKeysPreview)}${moreKeys}</div>
+        </div>
+        <div class="word-grid" id="rimas-grid-${def.key}">
+          ${itemsToShow.map(r => renderRimasCard(r)).join('')}
+        </div>
+        ${cat.items.length > displayCount ? renderRimasLoadMore(def.key, cat.items.length, displayCount) : ''}
+      </div>
+    `;
+    rimasResults.insertAdjacentHTML('beforeend', sectionHtml);
+  }
+
+  if (totalFound === 0) {
+    rimasResults.insertAdjacentHTML('beforeend', `
+      <div class="empty-state">
+        <div class="icon">~</div>
+        <p>Nenhuma rima encontrada para "<strong>${esc(m.w)}</strong>".</p>
+      </div>
+    `);
+  }
+
+  // Wire up load-more buttons and card clicks
+  attachRimasHandlers();
+}
+
+function renderRimasCard(r) {
+  const pct = Math.round(r.total * 100);
+  return `
+    <div class="word-card rimas-word-card" data-word="${esc(r.word)}">
+      <div class="word">${esc(r.word)}</div>
+      <div class="meta">
+        <div class="score-bar">
+          <div class="fill ${r.level}" style="width:${pct}%"></div>
+        </div>
+        <span class="score-label">${pct}%</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderRimasLoadMore(key, total, displayed) {
+  const remaining = total - displayed;
+  const nextBatch = Math.min(30, remaining);
+  return `
+    <div style="text-align:center;margin-top:1rem">
+      <button id="rimas-load-more-${key}" class="action-btn" style="min-width:180px">
+        Carregar mais ${nextBatch} de ${remaining}
+      </button>
+    </div>
+  `;
+}
+
+function loadMoreRimas(categoryKey) {
+  if (!rimasCurrentResult) return;
+  const cat = rimasCurrentResult.categories[categoryKey];
+  if (!cat) return;
+
+  const newCount = rimasDisplayCounts[categoryKey] + 30;
+  rimasDisplayCounts[categoryKey] = newCount;
+
+  const grid = document.getElementById(`rimas-grid-${categoryKey}`);
+  const oldBtn = document.getElementById(`rimas-load-more-${categoryKey}`);
+  if (oldBtn) oldBtn.parentElement.remove();
+
+  // Append new cards
+  const newItems = cat.items.slice(newCount - 30, newCount);
+  grid.insertAdjacentHTML('beforeend', newItems.map(r => renderRimasCard(r)).join(''));
+
+  // Add new load-more button if needed
+  if (newCount < cat.items.length) {
+    const container = document.getElementById(`rimas-cat-${categoryKey}`);
+    container.insertAdjacentHTML('beforeend', renderRimasLoadMore(categoryKey, cat.items.length, newCount));
+    attachRimasHandlers();
+  }
+}
+
+function attachRimasHandlers() {
+  // Load-more buttons
+  for (const key of ['perfect', 'toante', 'consonantal', 'approximate']) {
+    const btn = document.getElementById(`rimas-load-more-${key}`);
+    if (btn && !btn._rimasWired) {
+      btn._rimasWired = true;
+      btn.addEventListener('click', () => loadMoreRimas(key));
+    }
+  }
+
+  // Card clicks → search for that word
+  const oldHandler = rimasResults._rimasCardClickHandler;
+  if (oldHandler) {
+    rimasResults.removeEventListener('click', oldHandler);
+  }
+
+  const cardClickHandler = (e) => {
+    const card = e.target.closest('.rimas-word-card');
+    if (!card) return;
+    const w = card.dataset.word;
+    if (w) {
+      rimasInput.value = w;
+      doRimas();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  rimasResults._rimasCardClickHandler = cardClickHandler;
+  rimasResults.addEventListener('click', cardClickHandler);
 }
 
 // ===== SEARCH MODE (existing, preserved) =====
