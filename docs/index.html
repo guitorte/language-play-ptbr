@@ -18,14 +18,46 @@
 
     <!-- Tab Navigation -->
     <nav class="tabs" role="tablist">
-      <button class="tab active" data-tab="compare" role="tab" aria-selected="true">Comparar</button>
+      <button class="tab active" data-tab="rimas" role="tab" aria-selected="true">Rimas</button>
+      <button class="tab" data-tab="compare" role="tab" aria-selected="false">Comparar</button>
       <button class="tab" data-tab="analyze" role="tab" aria-selected="false">Analisar</button>
       <button class="tab" data-tab="similar" role="tab" aria-selected="false">Similares</button>
       <button class="tab" data-tab="search" role="tab" aria-selected="false">Buscar</button>
     </nav>
 
+    <!-- ==================== RIMAS TAB ==================== -->
+    <section id="tab-rimas" class="tab-content active">
+      <div class="rimas-inputs">
+        <div class="input-group wide">
+          <label for="rimas-input">Palavra</label>
+          <div class="search-box">
+            <input type="text" id="rimas-input" placeholder="ex: parado" autocomplete="off" spellcheck="false" disabled>
+            <div class="autocomplete" id="ac-rimas"></div>
+          </div>
+        </div>
+        <button id="rimas-btn" class="action-btn" disabled>Buscar Rimas</button>
+      </div>
+
+      <div class="loading" id="rimas-loading" style="display:none">
+        <span class="spinner"></span> Buscando rimas por categoria...
+      </div>
+
+      <div id="rimas-results"></div>
+
+      <div class="empty-hint" id="rimas-hint">
+        <p>Digite uma palavra para encontrar rimas de todos os tipos.</p>
+        <p class="examples">
+          <strong>Perfeitas:</strong> mesma terminacao desde a tonica (parado / embalado)<br>
+          <strong>Toantes:</strong> mesmas vogais, consoantes diferentes (parado / carro)<br>
+          <strong>Consonantais:</strong> mesmas consoantes, vogais diferentes (parado / perdido)<br>
+          <strong>Aproximadas:</strong> sons parcialmente similares
+        </p>
+        <div class="stats" id="rimas-stats">Carregando...</div>
+      </div>
+    </section>
+
     <!-- ==================== COMPARE TAB ==================== -->
-    <section id="tab-compare" class="tab-content active">
+    <section id="tab-compare" class="tab-content">
       <div class="compare-inputs">
         <div class="input-group">
           <label for="word-a">Palavra A</label>
