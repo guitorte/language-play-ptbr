@@ -1,6 +1,7 @@
 /**
  * Search orchestration layer.
  * Loads manifest, fetches chunks on demand, and coordinates rhyme search.
+ * Supports switching between compact (~39K) and full (~268K) dictionaries.
  */
 
 import { analyze } from './analyzer.js';
@@ -10,8 +11,36 @@ let manifest = null;
 let autocomplete = null;
 const chunkCache = new Map(); // file path -> parsed JSON
 
-// Derive base URL for data files relative to this module
-const BASE = new URL('../data/', import.meta.url).href;
+// Dictionary paths: 'data' (compact, default), 'data-full', 'data-compact'
+let currentDict = 'data';
+let BASE = new URL('../data/', import.meta.url).href;
+
+/**
+ * Get the current dictionary name ('compact' or 'full').
+ */
+function getCurrentDict() {
+  if (currentDict === 'data-full') return 'full';
+  return 'compact';
+}
+
+/**
+ * Switch dictionary and reinitialize.
+ * @param {'compact'|'full'} dict
+ * @returns {Promise<{totalWords: number}>}
+ */
+async function switchDict(dict) {
+  const folder = dict === 'full' ? 'data-full' : 'data';
+  if (folder === currentDict && manifest) {
+    return { totalWords: manifest.totalWords };
+  }
+  currentDict = folder;
+  BASE = new URL(`../${folder}/`, import.meta.url).href;
+  // Clear cache since chunk paths changed
+  chunkCache.clear();
+  manifest = null;
+  autocomplete = null;
+  return init();
+}
 
 /**
  * Initialize: load manifest and autocomplete data.
@@ -31,7 +60,8 @@ async function init() {
  * Injects rhyme key `r` into compact entries (stripped during build to save space).
  */
 async function loadChunk(filePath) {
-  if (chunkCache.has(filePath)) return chunkCache.get(filePath);
+  const cacheKey = currentDict + ':' + filePath;
+  if (chunkCache.has(cacheKey)) return chunkCache.get(cacheKey);
   const res = await fetch(BASE + filePath);
   const data = await res.json();
   // Inject rhyme key into entries that don't have it
@@ -42,7 +72,7 @@ async function loadChunk(filePath) {
       }
     }
   }
-  chunkCache.set(filePath, data);
+  chunkCache.set(cacheKey, data);
   return data;
 }
 
@@ -235,4 +265,4 @@ function getManifest() {
   return manifest;
 }
 
-export { init, searchRhymes, suggest, getAllWords, getManifest, loadChunk };
+export { init, searchRhymes, suggest, getAllWords, getManifest, loadChunk, switchDict, getCurrentDict };

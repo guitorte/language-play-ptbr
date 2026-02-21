@@ -61,6 +61,52 @@ header .subtitle {
   font-size: 0.95rem;
 }
 
+/* Dictionary switcher */
+.dict-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+}
+
+.dict-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-left: 0.3rem;
+}
+
+.dict-btn {
+  padding: 0.25rem 0.7rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dict-btn:hover { color: var(--text); border-color: var(--border); }
+
+.dict-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.dict-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 /* ===== Tab Navigation ===== */
 
 .tabs {
