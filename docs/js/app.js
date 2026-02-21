@@ -5,7 +5,7 @@
 
 import { analyze } from './analyzer.js';
 import { compareWords } from './compare.js';
-import { init as initSearch, searchRhymes, suggest, getAllWords } from './search.js';
+import { init as initSearch, searchRhymes, suggest, getAllWords, switchDict, getCurrentDict } from './search.js';
 import { searchSimilar } from './similarity.js';
 import { searchCategorizedRhymes } from './rhyme-search.js';
 
@@ -73,26 +73,60 @@ const acBoxes = {
 
 // ===== Initialization =====
 
-initSearch().then(({ totalWords }) => {
+function updateWordCount(totalWords) {
   const wordCountLabel = `<span>${totalWords.toLocaleString('pt-BR')}</span> palavras indexadas`;
   statsEl.innerHTML = wordCountLabel;
   rimasStats.innerHTML = wordCountLabel;
+}
+
+function enableInputs() {
   searchInput.disabled = false;
   searchBtn.disabled = false;
   similarInput.disabled = false;
   similarBtn.disabled = false;
   rimasInput.disabled = false;
   rimasBtn.disabled = false;
+}
+
+initSearch().then(({ totalWords }) => {
+  updateWordCount(totalWords);
+  enableInputs();
   console.log('[RimaBR] Search initialized:', totalWords, 'words');
 }).catch(err => {
   console.error('[RimaBR] Failed to init search:', err);
   statsEl.textContent = 'Modo offline — Compare e Analisar disponíveis';
   rimasStats.textContent = 'Modo offline — Compare e Analisar disponíveis';
-  similarInput.disabled = false;
-  similarBtn.disabled = false;
-  rimasInput.disabled = false;
-  rimasBtn.disabled = false;
+  enableInputs();
   console.warn('[RimaBR] Similar tab enabled but search data unavailable');
+});
+
+// ===== Dictionary Switcher =====
+
+const dictBtnCompact = document.getElementById('dict-btn-compact');
+const dictBtnFull = document.getElementById('dict-btn-full');
+
+document.getElementById('dict-switcher').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.dict-btn');
+  if (!btn || btn.classList.contains('active') || btn.classList.contains('loading')) return;
+
+  const dict = btn.dataset.dict;
+  dictBtnCompact.classList.remove('active');
+  dictBtnFull.classList.remove('active');
+  btn.classList.add('loading');
+
+  try {
+    const { totalWords } = await switchDict(dict);
+    btn.classList.remove('loading');
+    btn.classList.add('active');
+    updateWordCount(totalWords);
+    console.log(`[RimaBR] Switched to ${dict} dictionary:`, totalWords, 'words');
+  } catch (err) {
+    console.error('[RimaBR] Failed to switch dictionary:', err);
+    btn.classList.remove('loading');
+    // Re-activate the previous button
+    const prev = getCurrentDict();
+    document.getElementById(`dict-btn-${prev}`).classList.add('active');
+  }
 });
 
 // ===== Tab Navigation =====
