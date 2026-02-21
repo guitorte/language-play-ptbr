@@ -79,27 +79,17 @@ async function searchRhymes(word, opts = {}) {
   const maxResults = opts.maxResults || 50;
   const includeNear = opts.includeNear !== false;
 
-  // Step 1: Analyze the input word
-  let motherEntry = null;
-  let rhymeKey = null;
+  // Step 1: Analyze the input word (always use full analysis for motherEntry)
+  const motherEntry = analyze(word);
+  let rhymeKey = motherEntry.r;
 
-  // Try to find in pre-computed index first
-  // Scan autocomplete for quick membership check
+  // Try to find in pre-computed index for a potentially more accurate rhyme key
   const inIndex = autocomplete && binarySearch(autocomplete, word);
-
   if (inIndex) {
-    // Find which rhyme key contains this word
     const result = await findWordInIndex(word);
     if (result) {
-      motherEntry = result.entry;
       rhymeKey = result.rhymeKey;
     }
-  }
-
-  // If not found in index, analyze on the fly
-  if (!motherEntry) {
-    motherEntry = analyze(word);
-    rhymeKey = motherEntry.r;
   }
 
   // Step 2: Gather perfect rhyme candidates (same rhyme key)
