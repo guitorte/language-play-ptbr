@@ -864,6 +864,29 @@ header .subtitle {
   margin-bottom: 1rem;
 }
 
+/* Rimas filter pills */
+.rimas-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.rimas-filter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rimas-filter-pills {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
 .rimas-patterns {
   display: flex;
   gap: 0.6rem;
@@ -1003,7 +1026,14 @@ footer a:hover { text-decoration: underline; }
   .container { padding: 1.2rem 1rem; }
   header h1 { font-size: 1.6rem; }
 
-  .compare-inputs {
+  .tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .tab { font-size: 0.85rem; padding: 0.6rem 0.6rem; white-space: nowrap; }
+
+  .compare-inputs,
+  .rimas-inputs,
+  .similar-inputs,
+  .analyze-inputs,
+  .search-inputs {
     flex-direction: column;
     align-items: stretch;
   }
@@ -1012,8 +1042,14 @@ footer a:hover { text-decoration: underline; }
     padding: 0.3rem 0;
   }
 
+  .rimas-filter { gap: 0.4rem; }
+  .rimas-filter-label { font-size: 0.72rem; }
+
   .features-pair { grid-template-columns: 1fr; }
   .dimensions { grid-template-columns: 1fr; }
   .analyze-features { grid-template-columns: 1fr; }
   .word-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+
+  .sim-dims-preview { padding-left: 0; flex-wrap: wrap; }
+  .sim-card-main { flex-wrap: wrap; }
 }

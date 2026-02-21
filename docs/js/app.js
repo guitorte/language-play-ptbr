@@ -58,6 +58,8 @@ const rimasLoading = document.getElementById('rimas-loading');
 const rimasResults = document.getElementById('rimas-results');
 const rimasHint = document.getElementById('rimas-hint');
 const rimasStats = document.getElementById('rimas-stats');
+const rimasFilter = document.getElementById('rimas-filter');
+const rimasFilterPills = document.querySelectorAll('.pill[data-rimas-filter]');
 
 // Autocomplete boxes
 const acBoxes = {
@@ -477,12 +479,14 @@ function renderSimilarResults(result, displayCount = 25) {
     similarResults.insertAdjacentHTML('beforeend', '<div class="sim-list" id="sim-list-container"></div>');
   }
 
-  // Render only up to displayCount results
-  const resultsToShow = result.results.slice(0, displayCount);
+  // Only render NEW items (from current count to new count) to avoid duplication
+  const startIdx = similarDisplayedCount;
+  const resultsToShow = result.results.slice(startIdx, displayCount);
   const listContainer = document.getElementById('sim-list-container');
 
   // Results list
-  const listHtml = resultsToShow.map((r, idx) => {
+  const listHtml = resultsToShow.map((r, i) => {
+    const idx = startIdx + i;
     const pct = Math.round(r.total * 100);
     const levelClass = simLevelClass(r.level);
 
@@ -512,14 +516,8 @@ function renderSimilarResults(result, displayCount = 25) {
     `;
   }).join('');
 
-  // Replace or append to the list
-  if (similarDisplayedCount === 0) {
-    // First time: populate the container we just created
-    document.getElementById('sim-list-container').innerHTML = listHtml;
-  } else {
-    // Subsequent loads: append to existing list
-    document.getElementById('sim-list-container').insertAdjacentHTML('beforeend', listHtml);
-  }
+  // Always append (on first load, container is empty so append = set)
+  listContainer.insertAdjacentHTML('beforeend', listHtml);
 
   // Add "Load More" button if there are more results to show
   const loadMoreBtn = document.getElementById('sim-load-more-btn');
@@ -621,6 +619,20 @@ rimasBtn.addEventListener('click', doRimas);
 
 let rimasCurrentResult = null;
 let rimasDisplayCounts = { perfect: 30, toante: 30, consonantal: 30, approximate: 30 };
+let rimasActiveFilter = 'all'; // 'all', 'vowels', 'consonants'
+
+// Rimas filter pills handler
+rimasFilterPills.forEach(pill => {
+  pill.addEventListener('click', () => {
+    rimasActiveFilter = pill.dataset.rimasFilter;
+    rimasFilterPills.forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    if (rimasCurrentResult) {
+      rimasDisplayCounts = { perfect: 30, toante: 30, consonantal: 30, approximate: 30 };
+      renderRimasResults(rimasCurrentResult);
+    }
+  });
+});
 
 async function doRimas() {
   const word = rimasInput.value.trim().toLowerCase();
@@ -630,11 +642,13 @@ async function doRimas() {
   rimasLoading.style.display = 'block';
   rimasResults.innerHTML = '';
   rimasHint.style.display = 'none';
+  rimasFilter.style.display = 'none';
 
   try {
     const result = await searchCategorizedRhymes(word, { maxPerCategory: 100 });
     rimasCurrentResult = result;
     rimasDisplayCounts = { perfect: 30, toante: 30, consonantal: 30, approximate: 30 };
+    rimasFilter.style.display = 'flex';
     renderRimasResults(result);
   } catch (err) {
     console.error('[RimaBR] Rimas search error:', err);
@@ -677,7 +691,7 @@ function renderRimasResults(result) {
   rimasResults.insertAdjacentHTML('beforeend', analysisHtml);
 
   // Category definitions
-  const categoryDefs = [
+  const allCategoryDefs = [
     {
       key: 'perfect',
       title: 'Rimas Perfeitas (Consoantes)',
@@ -707,6 +721,16 @@ function renderRimasResults(result) {
       color: 'weak',
     },
   ];
+
+  // Filter categories based on active filter
+  let categoryDefs;
+  if (rimasActiveFilter === 'vowels') {
+    categoryDefs = allCategoryDefs.filter(d => d.key === 'toante');
+  } else if (rimasActiveFilter === 'consonants') {
+    categoryDefs = allCategoryDefs.filter(d => d.key === 'consonantal');
+  } else {
+    categoryDefs = allCategoryDefs;
+  }
 
   let totalFound = 0;
 
@@ -745,10 +769,13 @@ function renderRimasResults(result) {
   }
 
   if (totalFound === 0) {
+    const filterMsg = rimasActiveFilter === 'vowels' ? ' com as mesmas vogais chave' :
+                      rimasActiveFilter === 'consonants' ? ' com as mesmas consoantes chave' : '';
     rimasResults.insertAdjacentHTML('beforeend', `
       <div class="empty-state">
         <div class="icon">~</div>
-        <p>Nenhuma rima encontrada para "<strong>${esc(m.w)}</strong>".</p>
+        <p>Nenhuma rima encontrada para "<strong>${esc(m.w)}</strong>"${filterMsg}.</p>
+        ${rimasActiveFilter !== 'all' ? '<p style="margin-top:0.4rem">Tente o filtro "Todas" para ver todos os tipos.</p>' : ''}
       </div>
     `);
   }
