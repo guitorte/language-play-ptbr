@@ -28,11 +28,20 @@ async function init() {
 
 /**
  * Fetch and cache a chunk file.
+ * Injects rhyme key `r` into compact entries (stripped during build to save space).
  */
 async function loadChunk(filePath) {
   if (chunkCache.has(filePath)) return chunkCache.get(filePath);
   const res = await fetch(BASE + filePath);
   const data = await res.json();
+  // Inject rhyme key into entries that don't have it
+  for (const [rk, entries] of Object.entries(data)) {
+    if (Array.isArray(entries)) {
+      for (const e of entries) {
+        if (!e.r) e.r = rk;
+      }
+    }
+  }
   chunkCache.set(filePath, data);
   return data;
 }
