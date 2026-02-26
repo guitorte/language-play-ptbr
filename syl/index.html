@@ -3,286 +3,566 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dicionário de Rimas Inteligente</title>
+    <title>Explorador de Sonoridades</title>
     <style>
-        :root { --primary: #2C3E50; --accent: #E74C3C; --bg: #ECF0F1; }
+        :root {
+            --primary: #2C3E50;
+            --accent:  #E74C3C;
+            --bg:      #ECF0F1;
+            --green:   #27AE60;
+            --blue:    #2980B9;
+            --amber:   #E67E22;
+        }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--primary); padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
-        .container { width: 100%; max-width: 900px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
-        h1 { text-align: center; margin-top: 0; color: var(--primary); }
-        .search-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        input[type="text"] { flex: 1; min-width: 200px; padding: 12px; font-size: 16px; border: 1px solid #BDC3C7; border-radius: 4px; outline: none; transition: border 0.3s; }
+        .container { width: 100%; max-width: 960px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
+        h1 { text-align: center; margin-top: 0; color: var(--primary); font-size: 22px; }
+
+        /* Search controls */
+        .search-box { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        input[type="text"] { flex: 1; min-width: 180px; padding: 11px; font-size: 16px; border: 1px solid #BDC3C7; border-radius: 4px; outline: none; transition: border 0.2s; }
         input[type="text"]:focus { border-color: var(--accent); }
-        select { padding: 12px; font-size: 16px; border: 1px solid #BDC3C7; border-radius: 4px; outline: none; background: white; }
-        button { background: var(--primary); color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 4px; cursor: pointer; transition: background 0.3s; font-weight: bold; }
+        select { padding: 10px; font-size: 14px; border: 1px solid #BDC3C7; border-radius: 4px; background: white; cursor: pointer; }
+        button { background: var(--primary); color: white; border: none; padding: 11px 20px; font-size: 15px; border-radius: 4px; cursor: pointer; transition: background 0.2s; font-weight: bold; }
         button:hover { background: var(--accent); }
         button:disabled { background: #95A5A6; cursor: not-allowed; }
-        .status { text-align: center; font-size: 15px; color: #7f8c8d; margin-bottom: 25px; padding: 10px; background: #F4F6F6; border-radius: 4px; }
-        #resultadosMsg { margin-bottom: 15px; font-size: 16px; }
-        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .word-card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 12px 8px; border-radius: 6px; text-align: center; font-size: 17px; transition: transform 0.2s, border-color 0.2s; }
-        .word-card:hover { transform: translateY(-3px); border-color: var(--accent); background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .status { text-align: center; font-size: 14px; color: #7f8c8d; margin-bottom: 20px; padding: 8px 12px; background: #F4F6F6; border-radius: 4px; }
+
+        /* Phonetic profile of the input word */
+        .perfil-box { background: #f8f9fa; border-left: 3px solid var(--accent); padding: 12px 16px; margin-bottom: 14px; border-radius: 0 4px 4px 0; display: none; }
+        .perfil-word { font-size: 20px; letter-spacing: 2px; margin-bottom: 5px; }
+        .tonica-inline { color: var(--accent); font-weight: bold; }
+        .perfil-data { font-size: 12px; color: #666; line-height: 1.8; }
+        .tag { display: inline-block; background: #e8ecef; border-radius: 3px; padding: 1px 6px; margin: 1px 3px 1px 0; }
+
+        /* Facet panel */
+        .facet-panel { background: #fef9e7; border: 1px solid #f0c040; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; display: none; }
+        .facet-header { font-weight: bold; font-size: 13px; margin-bottom: 10px; color: #555; }
+        .facet-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .facet-label { font-size: 12px; color: #888; min-width: 62px; }
+        .facet-btn { padding: 3px 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 20px; background: white; cursor: pointer; transition: all 0.15s; font-weight: normal; }
+        .facet-btn:hover { border-color: var(--accent); color: var(--accent); background: white; }
+        .facet-btn.ativo { background: var(--primary); color: white; border-color: var(--primary); }
+        .facet-clear { margin-top: 6px; background: none; color: #aaa; border: none; font-size: 11px; cursor: pointer; padding: 0; font-weight: normal; }
+        .facet-clear:hover { color: var(--accent); background: none; }
+
+        /* Score legend */
+        .legenda { display: none; flex-wrap: wrap; gap: 14px; font-size: 12px; color: #888; margin-bottom: 10px; }
+        .ldot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+
+        /* Results grid */
+        #resultadosMsg { margin-bottom: 10px; font-size: 14px; color: #555; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 9px; }
+        .word-card {
+            background: #f8f9fa; border: 2px solid #e2e6ea;
+            padding: 10px 6px 5px; border-radius: 6px;
+            text-align: center; font-size: 16px;
+            cursor: pointer; transition: transform 0.12s, box-shadow 0.12s;
+            position: relative;
+        }
+        .word-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: white; }
+        .word-card.sc-alta   { border-color: var(--green); }
+        .word-card.sc-media  { border-color: var(--blue); }
+        .word-card.sc-baixa  { border-color: var(--amber); }
         .tonica { font-weight: bold; color: var(--accent); }
+        .score-num { display: block; font-size: 10px; color: #bbb; margin-top: 3px; }
+
+        /* Pagination */
+        .paginacao { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 18px; font-size: 13px; color: #666; }
+        .paginacao button { padding: 6px 14px; font-size: 13px; font-weight: normal; }
     </style>
 </head>
 <body>
+<div class="container">
+    <h1>Explorador de Sonoridades</h1>
+    <div class="status" id="statusText">Aguardando inicialização...</div>
 
-    <div class="container">
-        <h1>Dicionário de Rimas</h1>
-        <div class="status" id="statusText">Aguardando inicialização...</div>
-        
-        <div class="search-box">
-            <input type="text" id="inputPalavra" placeholder="Digite uma palavra (ex: amor, cidade, céu)...">
-            <select id="tipoRima">
-                <option value="perfeita">Rima Perfeita (Tônica até o fim)</option>
-                <option value="consoante">Rima Final (Últimas 2 letras)</option>
-            </select>
-            <select id="filtroSilabas">
-                <option value="todas">Qualquer tamanho</option>
-                <option value="mesma">Mesmo Nº de Sílabas</option>
-            </select>
-            <button id="btnBuscar" onclick="buscarRimas()" disabled>Buscar Rimas</button>
-        </div>
-
-        <div id="resultadosMsg"></div>
-        <div class="results-grid" id="resultadosGrid"></div>
+    <div class="search-box">
+        <input type="text" id="inputPalavra" placeholder="Ex: abstrato, amor, sílaba, cidade...">
+        <select id="modoFonetico">
+            <optgroup label="Correspondência exata">
+                <option value="rima">Rima perfeita</option>
+                <option value="final">Rima final (últ. 2 letras)</option>
+            </optgroup>
+            <optgroup label="Proximidade fonética — ordenada por score">
+                <option value="assonancia" selected>Assonância (vogais tônicas)</option>
+                <option value="onset">Eco consonantal (onset)</option>
+                <option value="espinha">Espinha vocal (DNA de vogais)</option>
+                <option value="vizinhanca">Vizinhança sonora (qualquer critério)</option>
+                <option value="ritmo">Padrão rítmico (sílabas + acento)</option>
+            </optgroup>
+        </select>
+        <select id="filtroSilabas">
+            <option value="todas">Qualquer tamanho</option>
+            <option value="mesma">Mesmo Nº de sílabas</option>
+        </select>
+        <button id="btnBuscar" onclick="buscarRimas()" disabled>Buscar</button>
     </div>
 
-    <script>
-        // --- 1. MOTOR PROSÓDICO (Regras Gramaticais) ---
-        const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+    <div class="perfil-box" id="perfilAlvo"></div>
+    <div class="facet-panel" id="facetPanel"></div>
 
-        function tratarHiatosVogais(blocoVoc, pLower) {
-            if (blocoVoc.length <= 1) return [blocoVoc];
-            let resultado = [], atual = blocoVoc[0];
-            for (let i = 1; i < blocoVoc.length; i++) {
-                let char = blocoVoc[i], par = (atual.slice(-1) + char).toLowerCase();
-                let formamDitongo = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe|ia|ie|io|ua|ue|uo)$/.test(par);
-                let vogaisIdenticas = par[0] === par[1];
-                let temHiatoAcentuado = /[aeiouáéíóúâêôãõü][íú]/.test(par);
-                let ehHiatoFinal = /^(ai|ui|au|oe)$/.test(par) && (pLower.endsWith(par + "r") || pLower.endsWith(par + "z") || pLower.endsWith(par + "l"));
-                let seguidoDeNh = pLower.includes(par + "nh");
-                let formaHiatoComDitongo = false;
-                if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
-                    let proximo = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
-                    if (/^(iu|ia|io|ie|ui)$/.test(char + proximo)) formaHiatoComDitongo = true;
-                }
+    <div class="legenda" id="legenda">
+        <span><span class="ldot" style="background:var(--green)"></span>Rima perfeita (≥160)</span>
+        <span><span class="ldot" style="background:var(--blue)"></span>Alta proximidade (≥100)</span>
+        <span><span class="ldot" style="background:var(--amber)"></span>Assonância (≥60)</span>
+        <span><span class="ldot" style="background:#ddd"></span>Proximidade leve (&lt;60)</span>
+    </div>
 
-                if (formamDitongo && !temHiatoAcentuado && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !formaHiatoComDitongo) {
-                    atual += char;
-                } else {
-                    resultado.push(atual); atual = char;
-                }
-            }
-            resultado.push(atual); return resultado;
+    <div id="resultadosMsg"></div>
+    <div class="results-grid" id="resultadosGrid"></div>
+    <div class="paginacao" id="paginacao"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// 1. MOTOR PROSÓDICO — algoritmo de silabificação (inalterado)
+// ═══════════════════════════════════════════════════════════════
+const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+
+function tratarHiatosVogais(blocoVoc, pLower) {
+    if (blocoVoc.length <= 1) return [blocoVoc];
+    let resultado = [], atual = blocoVoc[0];
+    for (let i = 1; i < blocoVoc.length; i++) {
+        let char = blocoVoc[i], par = (atual.slice(-1) + char).toLowerCase();
+        let formamDitongo   = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe|ia|ie|io|ua|ue|uo)$/.test(par);
+        let vogaisIdenticas = par[0] === par[1];
+        let temHiatoAcent   = /[aeiouáéíóúâêôãõü][íú]/.test(par);
+        let ehHiatoFinal    = /^(ai|ui|au|oe)$/.test(par) &&
+                              (pLower.endsWith(par+"r") || pLower.endsWith(par+"z") || pLower.endsWith(par+"l"));
+        let seguidoDeNh     = pLower.includes(par+"nh");
+        let formaHiatoDit   = false;
+        if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
+            let prox = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
+            if (/^(iu|ia|io|ie|ui)$/.test(char + prox)) formaHiatoDit = true;
         }
+        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !formaHiatoDit)
+            atual += char;
+        else { resultado.push(atual); atual = char; }
+    }
+    resultado.push(atual);
+    return resultado;
+}
 
-        function separarConsoantes(cBlock) {
-            if (cBlock.length <= 1) return ["", cBlock];
-            let textLower = cBlock.toLowerCase();
-            if (cBlock.length === 2) {
-                if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(textLower)) return ["", cBlock];
-                return [cBlock.slice(0, 1), cBlock.slice(1)];
-            }
-            if (cBlock.length >= 3) {
-                if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(textLower.slice(-2))) return [cBlock.slice(0, -2), cBlock.slice(-2)];
-                return [cBlock.slice(0, -1), cBlock.slice(-1)];
-            }
-            return ["", cBlock];
+function separarConsoantes(cBlock) {
+    if (cBlock.length <= 1) return ["", cBlock];
+    let tL = cBlock.toLowerCase();
+    if (cBlock.length === 2) {
+        if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL)) return ["", cBlock];
+        return [cBlock.slice(0,1), cBlock.slice(1)];
+    }
+    if (cBlock.length >= 3) {
+        if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL.slice(-2)))
+            return [cBlock.slice(0,-2), cBlock.slice(-2)];
+        return [cBlock.slice(0,-1), cBlock.slice(-1)];
+    }
+    return ["", cBlock];
+}
+
+function silabificar(palavra) {
+    let blocos = [], tipoAt = '', textoAt = '';
+    for (let i = 0; i < palavra.length; i++) {
+        let ch = palavra[i], chL = ch.toLowerCase();
+        if ((chL==='q'||chL==='g') && palavra[i+1] && palavra[i+1].toLowerCase()==='u' && palavra[i+2] && vRegex.test(palavra[i+2])) {
+            if (tipoAt==='V') { blocos.push({tipo:'V',texto:textoAt}); textoAt=''; }
+            blocos.push({tipo:'C',texto:ch+palavra[i+1]}); i++; tipoAt=''; continue;
         }
+        let tipo = vRegex.test(ch) ? 'V' : 'C';
+        if (tipo !== tipoAt) { if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt}); tipoAt=tipo; textoAt=ch; }
+        else textoAt += ch;
+    }
+    if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt});
 
-        function silabificar(palavra) {
-            let blocos = [], tipoAtual = '', textoAtual = '';
-            for (let i = 0; i < palavra.length; i++) {
-                let char = palavra[i], charLower = char.toLowerCase();
-                if ((charLower === 'q' || charLower === 'g') && palavra[i+1] && palavra[i+1].toLowerCase() === 'u' && palavra[i+2] && vRegex.test(palavra[i+2])) {
-                    if (tipoAtual === 'V') { blocos.push({tipo: 'V', texto: textoAtual}); textoAtual = ''; }
-                    blocos.push({tipo: 'C', texto: char + palavra[i+1]}); i++; tipoAtual = ''; continue;
-                }
-                let tipo = vRegex.test(char) ? 'V' : 'C';
-                if (tipo !== tipoAtual) {
-                    if (textoAtual !== '') blocos.push({tipo: tipoAtual, texto: textoAtual});
-                    tipoAtual = tipo; textoAtual = char;
-                } else { textoAtual += char; }
-            }
-            if (textoAtual !== '') blocos.push({tipo: tipoAtual, texto: textoAtual});
+    let bExp = [];
+    for (let b of blocos) {
+        if (b.tipo==='V') tratarHiatosVogais(b.texto, palavra.toLowerCase()).forEach(v => bExp.push({tipo:'V',texto:v}));
+        else bExp.push(b);
+    }
+    let idxV = bExp.reduce((acc,b,i) => (b.tipo==='V' ? [...acc,i] : acc), []);
+    if (!idxV.length) return [palavra];
 
-            let blocosExpandidos = [];
-            for (let b of blocos) {
-                if (b.tipo === 'V') tratarHiatosVogais(b.texto, palavra.toLowerCase()).forEach(v => blocosExpandidos.push({tipo: 'V', texto: v}));
-                else blocosExpandidos.push(b);
-            }
+    let sil = new Array(idxV.length).fill("");
+    for (let i = 0; i < idxV[0]; i++) sil[0] += bExp[i].texto;
+    for (let k = 0; k < idxV.length - 1; k++) {
+        sil[k] += bExp[idxV[k]].texto;
+        let cT = "";
+        for (let j = idxV[k]+1; j < idxV[k+1]; j++) cT += bExp[j].texto;
+        let [esq, dir] = separarConsoantes(cT);
+        sil[k] += esq; sil[k+1] += dir;
+    }
+    let uV = idxV[idxV.length-1];
+    sil[sil.length-1] += bExp[uV].texto;
+    for (let i = uV+1; i < bExp.length; i++) sil[sil.length-1] += bExp[i].texto;
+    return sil;
+}
 
-            let indicesV = [];
-            for (let i = 0; i < blocosExpandidos.length; i++) if (blocosExpandidos[i].tipo === 'V') indicesV.push(i);
-            if (indicesV.length === 0) return [palavra];
+function identificarTonica(silabas, palavraOriginal) {
+    let t = palavraOriginal.toLowerCase();
+    for (let i=0; i<silabas.length; i++) if (/[áéíóúâêô]/i.test(silabas[i])) return i;
+    for (let i=0; i<silabas.length; i++) if (/[ãõ]/i.test(silabas[i])) return i;
+    if (t.match(/(r|l|z|x|i|is|u|us|im|ins|um|uns)$/)) return silabas.length - 1;
+    if (t.match(/(a|as|e|es|o|os|am|em|ens)$/))        return Math.max(0, silabas.length - 2);
+    return Math.max(0, silabas.length - 2);
+}
 
-            let silabas = new Array(indicesV.length).fill("");
-            for (let i = 0; i < indicesV[0]; i++) silabas[0] += blocosExpandidos[i].texto;
+function extrairBaseRima(silabas, ti) {
+    let pf = silabas.slice(ti).join('');
+    let m  = pf.match(vRegex);
+    return m ? pf.slice(m.index).toLowerCase() : pf.toLowerCase();
+}
 
-            for (let k = 0; k < indicesV.length - 1; k++) {
-                silabas[k] += blocosExpandidos[indicesV[k]].texto;
-                let cTexto = "";
-                for (let j = indicesV[k] + 1; j < indicesV[k+1]; j++) cTexto += blocosExpandidos[j].texto;
-                let [esq, dir] = separarConsoantes(cTexto);
-                silabas[k] += esq; silabas[k+1] += dir;
-            }
+// ═══════════════════════════════════════════════════════════════
+// 2. CAMPOS FONÉTICOS ADICIONAIS
+// ═══════════════════════════════════════════════════════════════
 
-            let ultimaV = indicesV[indicesV.length - 1];
-            silabas[silabas.length - 1] += blocosExpandidos[ultimaV].texto;
-            for (let i = ultimaV + 1; i < blocosExpandidos.length; i++) silabas[silabas.length - 1] += blocosExpandidos[i].texto;
+// Remove acentos gráficos agudos/circunflexos; mantém ã e õ (classe nasal distinta)
+function normV(s) {
+    return s.toLowerCase()
+        .replace(/[áàâ]/g,'a').replace(/[éê]/g,'e').replace(/í/g,'i')
+        .replace(/[óô]/g,'o').replace(/[úü]/g,'u');
+}
 
-            return silabas;
+// Cluster: plosiva+líquida (pl) · fricativa+líquida (fl) · africada (af) · outros
+const CLUSTER_FAM = {
+    br:'pl', cr:'pl', dr:'pl', fr:'fl', gr:'pl', pr:'pl',
+    tr:'pl', vr:'fl', bl:'pl', cl:'pl', fl:'fl', gl:'pl', pl:'pl', tl:'pl',
+    ch:'af', lh:'lp', nh:'np'
+};
+const FAM_LABEL = {
+    pl:'plosiva+líquida', fl:'fricativa+líquida',
+    af:'africada', lp:'lateral palatal', np:'nasal palatal',
+    si:'simples', vz:'—', cx:'complexo'
+};
+const ACENT_LABEL = { ox:'Oxítona', px:'Paroxítona', ppx:'Proparoxítona', spx:'Superproparox.' };
+
+function calcOnset(sil) {
+    let m = sil.match(/^([^aeiouáàâãéêíóôõúü]*)/i);
+    return m ? m[1].toLowerCase() : '';
+}
+function calcVogalT(sil) {
+    let m = sil.match(/[aeiouáàâãéêíóôõúü]/i);
+    return m ? normV(m[0]) : '';
+}
+function calcVogaisRima(sil, ti) {
+    return normV(sil.slice(ti).join('')).replace(/[^aeiouãõ]/g,'');
+}
+function calcEspinha(palavra) {
+    return normV(palavra).replace(/[^aeiouãõ]/g,'');
+}
+// Sorted unique consonants from tonic syllable to end
+function calcAssC(sil, ti) {
+    let span = sil.slice(ti).join('').toLowerCase().replace(/[aeiouáàâãéêíóôõúü]/g,'');
+    return [...new Set(span)].sort().join('');
+}
+function calcFam(onset) {
+    if (!onset) return 'vz';
+    if (onset.length === 1) return 'si';
+    return CLUSTER_FAM[onset] || 'cx';
+}
+function calcAcent(sil, ti) {
+    let d = sil.length - 1 - ti;
+    return d===0?'ox' : d===1?'px' : d===2?'ppx' : 'spx';
+}
+
+function perfilFonetico(palavra) {
+    let pL = palavra.toLowerCase().trim();
+    if (!pL || !/[a-záàâãéêíóôõúü]/i.test(pL)) return null;
+    let sil   = silabificar(pL);
+    let ti    = identificarTonica(sil, pL);
+    let onset = calcOnset(sil[ti]);
+    return {
+        palavra:         pL,
+        silabas:         sil,
+        tonicaIndex:     ti,
+        numSilabas:      sil.length,
+        rimaPerfeita:    extrairBaseRima(sil, ti),
+        terminacao:      pL.slice(-2),
+        onsetTonico:     onset,
+        vogalTonica:     calcVogalT(sil[ti]),
+        vogaisRima:      calcVogaisRima(sil, ti),
+        espinhaVocal:    calcEspinha(pL),
+        assConsonantal:  calcAssC(sil, ti),
+        familiaCluster:  calcFam(onset),
+        acentuacao:      calcAcent(sil, ti)
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 3. SISTEMA DE PONTUAÇÃO COMPOSTA
+// ═══════════════════════════════════════════════════════════════
+//
+//  Rima perfeita          +100  (tônica→fim: tudo igual)
+//  Assonância             + 60  (tônica→fim: vogais iguais)
+//  Eco consonantal exato  + 50  (onset tônico idêntico)
+//  Consonante compartilh. + 25  (onset tem ≥1 consoante em comum)
+//  Família de cluster     + 20  (mesmo tipo estrutural: plos+líq etc.)
+//  Assin. consonantal     + 30  (consoantes do span, Jaccard ≥ 0.5)
+//  Espinha vocal          + 40  (sequência de vogais da palavra toda)
+//  Vogal tônica           + 15  (só a vogal central coincide)
+//  Padrão rítmico         + 10  (nº sílabas + tipo de acento)
+
+function calcScore(item, alvo) {
+    let s = 0;
+
+    // Rima perfeita
+    if (item.rimaPerfeita === alvo.rimaPerfeita) s += 100;
+
+    // Assonância — vogaisRima
+    if (alvo.vogaisRima && item.vogaisRima === alvo.vogaisRima) s += 60;
+
+    // Onset tônico
+    if (alvo.onsetTonico) {
+        if (item.onsetTonico === alvo.onsetTonico) {
+            s += 50;
+        } else if (item.onsetTonico) {
+            let sA = new Set(alvo.onsetTonico), sB = new Set(item.onsetTonico);
+            if ([...sA].some(c => sB.has(c))) s += 25;
         }
+    }
 
-        function identificarTonica(silabas, palavraOriginal) {
-            let term = palavraOriginal.toLowerCase();
-            for (let i = 0; i < silabas.length; i++) if (/[áéíóúâêô]/i.test(silabas[i])) return i;
-            for (let i = 0; i < silabas.length; i++) if (/[ãõ]/i.test(silabas[i])) return i;
-            if (term.match(/(r|l|z|x|i|is|u|us|im|ins|um|uns)$/)) return silabas.length - 1;
-            if (term.match(/(a|as|e|es|o|os|am|em|ens)$/)) return Math.max(0, silabas.length - 2);
-            return Math.max(0, silabas.length - 2);
-        }
+    // Família de cluster (só relevante para clusters de 2+)
+    if (alvo.familiaCluster !== 'vz' && alvo.familiaCluster !== 'si'
+        && item.familiaCluster === alvo.familiaCluster) s += 20;
 
-        function extrairBaseRima(silabas, indexTonica) {
-            let parteFinal = silabas.slice(indexTonica).join('');
-            let matchVogal = parteFinal.match(vRegex);
-            if (matchVogal) return parteFinal.slice(matchVogal.index).toLowerCase();
-            return parteFinal.toLowerCase();
-        }
+    // Assinatura consonantal — Jaccard ≥ 0.5
+    if (alvo.assConsonantal && item.assConsonantal) {
+        let sA = new Set(alvo.assConsonantal), sB = new Set(item.assConsonantal);
+        let inter = [...sA].filter(c => sB.has(c)).length;
+        let union = new Set([...sA, ...sB]).size;
+        if (union > 0 && inter / union >= 0.5) s += 30;
+    }
 
+    // Espinha vocal (DNA de vogais completo)
+    if (alvo.espinhaVocal.length > 1 && item.espinhaVocal === alvo.espinhaVocal) s += 40;
 
-        // --- 2. SISTEMA DE INDEXAÇÃO (Carrega o TXT do GitHub Pages) ---
-        let dicionarioIndexado = [];
+    // Vogal tônica
+    if (alvo.vogalTonica && item.vogalTonica === alvo.vogalTonica) s += 15;
 
-        async function indexarDicionario() {
-            let statusEl = document.getElementById("statusText");
-            let btnBuscar = document.getElementById("btnBuscar");
-            
-            statusEl.innerText = "Baixando lista de palavras (palavras.txt)...";
-            
-            try {
-                // Fetch com caminho relativo (funciona perfeito no GitHub Pages)
-                const response = await fetch('./palavras.txt');
-                
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-                
-                const textoBruto = await response.text();
-                
-                // Quebra as linhas e limpa espaços vazios
-                const dicionarioBruto = textoBruto.split(/\r?\n/)
-                    .map(p => p.trim())
-                    .filter(p => p.length > 0);
-                
-                statusEl.innerText = `Processando a prosódia de ${dicionarioBruto.length} palavras...`;
-                
-                // Dá um pequeno timeout para o navegador renderizar a mensagem acima antes de travar processando
-                setTimeout(() => {
-                    let startTime = performance.now();
-                    
-                    dicionarioIndexado = dicionarioBruto.map(palavra => {
-                        let pLimpa = palavra.toLowerCase();
-                        let silabas = silabificar(pLimpa);
-                        let tonicaIndex = identificarTonica(silabas, pLimpa);
-                        let rimaPerfeita = extrairBaseRima(silabas, tonicaIndex);
-                        
-                        return {
-                            palavra: pLimpa,
-                            silabas: silabas,
-                            tonicaIndex: tonicaIndex,
-                            numSilabas: silabas.length,
-                            rimaPerfeita: rimaPerfeita,
-                            terminacao: pLimpa.slice(-2)
-                        };
-                    });
+    // Padrão rítmico
+    if (item.numSilabas === alvo.numSilabas && item.acentuacao === alvo.acentuacao) s += 10;
 
-                    let timeTaken = (performance.now() - startTime).toFixed(2);
-                    statusEl.innerHTML = `✅ Dicionário Pronto! <b>${dicionarioIndexado.length}</b> palavras indexadas em ${timeTaken}ms.`;
-                    
-                    // Libera o botão de busca
-                    btnBuscar.disabled = false;
-                    document.getElementById("inputPalavra").focus();
-                }, 50);
-                
-            } catch (erro) {
-                statusEl.innerHTML = `<span style="color: red;"><b>Erro ao carregar 'palavras.txt'.</b> Verifique se o arquivo está na mesma pasta do index.html no seu repositório.</span>`;
-                console.error(erro);
-            }
-        }
+    return s;
+}
 
-        // --- 3. SISTEMA DE BUSCA ---
-        function buscarRimas() {
-            let inputEl = document.getElementById("inputPalavra");
-            let alvo = inputEl.value.trim().toLowerCase();
-            
-            if (!alvo) {
-                inputEl.focus();
-                return;
-            }
+// ═══════════════════════════════════════════════════════════════
+// 4. INDEXAÇÃO
+// ═══════════════════════════════════════════════════════════════
+let dicionarioIndexado = [];
 
-            // O sistema é inteligente: processa a palavra alvo mesmo que ela não exista no TXT!
-            let silabasAlvo = silabificar(alvo);
-            let tonicaIndexAlvo = identificarTonica(silabasAlvo, alvo);
-            let baseRimaAlvo = extrairBaseRima(silabasAlvo, tonicaIndexAlvo);
-            let numSilabasAlvo = silabasAlvo.length;
-            let terminacaoAlvo = alvo.slice(-2);
+async function indexarDicionario() {
+    let stEl  = document.getElementById("statusText");
+    let btnBs = document.getElementById("btnBuscar");
+    stEl.innerText = "Baixando palavras...";
+    try {
+        const resp = await fetch('./palavras.txt');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const txt  = await resp.text();
+        const lista = txt.split(/\r?\n/).map(p => p.trim())
+                         .filter(p => p.length > 1 && /[a-záàâãéêíóôõúü]/i.test(p));
+        stEl.innerText = `Indexando ${lista.length} palavras...`;
+        setTimeout(() => {
+            let t0 = performance.now();
+            dicionarioIndexado = lista.map(p => perfilFonetico(p)).filter(Boolean);
+            stEl.innerHTML = `✅ <b>${dicionarioIndexado.length}</b> palavras indexadas em ${(performance.now()-t0).toFixed(0)}ms`;
+            btnBs.disabled = false;
+            document.getElementById("inputPalavra").focus();
+        }, 50);
+    } catch(e) {
+        stEl.innerHTML = `<span style="color:red"><b>Erro ao carregar palavras.txt</b></span>`;
+        console.error(e);
+    }
+}
 
-            let tipoRima = document.getElementById("tipoRima").value;
-            let filtroSilabas = document.getElementById("filtroSilabas").value;
+// ═══════════════════════════════════════════════════════════════
+// 5. MODOS DE BUSCA
+// ═══════════════════════════════════════════════════════════════
+// Cada modo define um critério de inclusão; todos ordenam por score.
+const MODOS = {
+    rima:       { fn: (i,a)     => i.rimaPerfeita === a.rimaPerfeita,                        label: 'Rima perfeita' },
+    final:      { fn: (i,a)     => i.terminacao === a.terminacao,                             label: 'Rima final' },
+    assonancia: { fn: (i,a)     => Boolean(a.vogaisRima) && i.vogaisRima === a.vogaisRima,    label: 'Assonância' },
+    onset:      { fn: (i,a)     => Boolean(a.onsetTonico) && i.onsetTonico === a.onsetTonico, label: 'Eco consonantal' },
+    espinha:    { fn: (i,a)     => a.espinhaVocal.length > 1 && i.espinhaVocal === a.espinhaVocal, label: 'Espinha vocal' },
+    vizinhanca: { fn: (i,a,sc)  => sc >= 40,  score: true, label: 'Vizinhança sonora' },
+    ritmo:      { fn: (i,a)     => i.numSilabas === a.numSilabas && i.acentuacao === a.acentuacao, label: 'Padrão rítmico' }
+};
 
-            // Filtro super-rápido na memória
-            let resultados = dicionarioIndexado.filter(item => {
-                if (item.palavra === alvo) return false; 
-                if (filtroSilabas === "mesma" && item.numSilabas !== numSilabasAlvo) return false;
+let alvoAtual = null;
 
-                if (tipoRima === "perfeita") {
-                    return item.rimaPerfeita === baseRimaAlvo;
-                } else if (tipoRima === "consoante") {
-                    return item.terminacao === terminacaoAlvo;
-                }
-            });
+function buscarRimas() {
+    let raw = document.getElementById("inputPalavra").value.trim();
+    if (!raw) return;
+    let alvo = perfilFonetico(raw);
+    if (!alvo) return;
+    alvoAtual = alvo;
 
-            renderizarResultados(resultados, alvo, baseRimaAlvo);
-        }
+    let modo      = MODOS[document.getElementById("modoFonetico").value];
+    let filtroSil = document.getElementById("filtroSilabas").value;
 
-        function renderizarResultados(resultados, alvo, rimaBase) {
-            let msg = document.getElementById("resultadosMsg");
-            let grid = document.getElementById("resultadosGrid");
-            grid.innerHTML = "";
+    let resultados = dicionarioIndexado
+        .filter(i => i.palavra !== alvo.palavra)
+        .filter(i => filtroSil === 'mesma' ? i.numSilabas === alvo.numSilabas : true)
+        .map(i  => { let sc = calcScore(i, alvo); return { ...i, score: sc }; })
+        .filter(i => modo.score ? modo.fn(i, alvo, i.score) : modo.fn(i, alvo))
+        .sort((a, b) => b.score - a.score);
 
-            if (resultados.length === 0) {
-                msg.innerHTML = `<p>Nenhuma rima encontrada para <b>${alvo}</b> (Base fonética: "<b>-${rimaBase}</b>").</p>`;
-                return;
-            }
+    mostrarPerfil(alvo);
+    iniciarRender(resultados, modo.label);
+}
 
-            msg.innerHTML = `<p>Encontradas <b>${resultados.length}</b> palavras rimando com <b>${alvo}</b> (Sílaba tônica + terminação: "<b>-${rimaBase}</b>"):</p>`;
+// ═══════════════════════════════════════════════════════════════
+// 6. RENDERIZAÇÃO — paginação + facetas
+// ═══════════════════════════════════════════════════════════════
+const POR_PAG = 60;
+let resultadosBase = [], resultadosFiltrados = [], pagAtual = 0;
+let facetAtivos    = { sil: null, acent: null };
 
-            resultados.forEach(item => {
-                let div = document.createElement("div");
-                div.className = "word-card";
-                
-                let palavraHTML = item.silabas.map((s, i) => {
-                    return i === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s;
-                }).join("");
+function iniciarRender(resultados, label) {
+    resultadosBase     = resultados;
+    resultadosFiltrados = resultados;
+    facetAtivos        = { sil: null, acent: null };
+    pagAtual           = 0;
+    renderMsg(`<b>${resultados.length}</b> palavras · modo: <b>${label}</b> · ordenadas por proximidade fonética`);
+    if (resultados.length > 100) renderFacetas();
+    else document.getElementById("facetPanel").style.display = 'none';
+    renderPagina();
+    document.getElementById("legenda").style.display = resultados.length ? 'flex' : 'none';
+}
 
-                div.innerHTML = palavraHTML;
-                grid.appendChild(div);
-            });
-        }
+function renderMsg(html) {
+    document.getElementById("resultadosMsg").innerHTML = html ? `<p>${html}</p>` : '';
+}
 
-        // Permite buscar apertando "Enter"
-        document.getElementById("inputPalavra").addEventListener("keypress", function(event) {
-            if (event.key === "Enter" && !document.getElementById("btnBuscar").disabled) {
-                event.preventDefault();
-                buscarRimas();
-            }
-        });
+function renderFacetas() {
+    let painel = document.getElementById("facetPanel");
+    let porSil = {}, porAcent = {};
+    resultadosBase.forEach(r => {
+        porSil[r.numSilabas]  = (porSil[r.numSilabas]  || 0) + 1;
+        porAcent[r.acentuacao] = (porAcent[r.acentuacao] || 0) + 1;
+    });
 
-        // Inicia o processo de leitura do TXT assim que a página carrega
-        window.onload = indexarDicionario;
+    let silBtn = Object.keys(porSil).sort((a,b) => +a - +b).map(k =>
+        `<button class="facet-btn${facetAtivos.sil===+k?' ativo':''}" onclick="setFaceta('sil',${k})">${k} síl. <small>(${porSil[k]})</small></button>`
+    ).join('');
 
-    </script>
+    let acentBtn = Object.entries(porAcent).map(([k,v]) =>
+        `<button class="facet-btn${facetAtivos.acent===k?' ativo':''}" onclick="setFaceta('acent','${k}')">${ACENT_LABEL[k]||k} <small>(${v})</small></button>`
+    ).join('');
+
+    painel.innerHTML = `
+        <div class="facet-header">Refinar ${resultadosBase.length} resultados:</div>
+        <div class="facet-row"><span class="facet-label">Sílabas</span>${silBtn}</div>
+        <div class="facet-row"><span class="facet-label">Acento</span>${acentBtn}</div>
+        <button class="facet-clear" onclick="limparFacetas()">✕ Limpar filtros</button>
+    `;
+    painel.style.display = 'block';
+}
+
+function setFaceta(tipo, valor) {
+    facetAtivos[tipo] = facetAtivos[tipo] === valor ? null : valor; // toggle
+    resultadosFiltrados = resultadosBase.filter(r => {
+        if (facetAtivos.sil   !== null && r.numSilabas  !== facetAtivos.sil)   return false;
+        if (facetAtivos.acent !== null && r.acentuacao  !== facetAtivos.acent) return false;
+        return true;
+    });
+    pagAtual = 0;
+    renderFacetas();
+    renderPagina();
+    renderMsg(`<b>${resultadosFiltrados.length}</b> palavras após filtro`);
+}
+
+function limparFacetas() {
+    facetAtivos = { sil: null, acent: null };
+    resultadosFiltrados = resultadosBase;
+    pagAtual = 0;
+    renderFacetas();
+    renderPagina();
+    renderMsg(`<b>${resultadosFiltrados.length}</b> palavras`);
+}
+
+function renderPagina() {
+    let grid  = document.getElementById("resultadosGrid");
+    let pagEl = document.getElementById("paginacao");
+    grid.innerHTML = '';
+
+    let total = resultadosFiltrados.length;
+    let fatia = resultadosFiltrados.slice(pagAtual * POR_PAG, (pagAtual + 1) * POR_PAG);
+
+    if (!total) {
+        grid.innerHTML = '<p style="color:#aaa;text-align:center;grid-column:1/-1">Nenhuma palavra encontrada.</p>';
+        pagEl.innerHTML = '';
+        return;
+    }
+
+    fatia.forEach(item => {
+        let div = document.createElement("div");
+        let sc  = item.score;
+        div.className = 'word-card' + (sc>=160?' sc-alta' : sc>=100?' sc-media' : sc>=60?' sc-baixa' : '');
+
+        let html = item.silabas.map((s, i) =>
+            i === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s
+        ).join('');
+        div.innerHTML = `${html}<span class="score-num">${sc}</span>`;
+        div.title = `Score de proximidade: ${sc}`;
+
+        // Clicking a result word triggers a new search for it
+        div.onclick = () => {
+            document.getElementById("inputPalavra").value = item.palavra;
+            buscarRimas();
+        };
+        grid.appendChild(div);
+    });
+
+    // Pagination
+    let totalPag = Math.ceil(total / POR_PAG);
+    pagEl.innerHTML = totalPag <= 1 ? '' :
+        `<button onclick="irPag(${pagAtual-1})" ${pagAtual===0?'disabled':''}>← Ant.</button>
+         <span>${pagAtual+1} / ${totalPag} &nbsp;·&nbsp; ${total} palavras</span>
+         <button onclick="irPag(${pagAtual+1})" ${pagAtual>=totalPag-1?'disabled':''}>Próx. →</button>`;
+}
+
+function irPag(n) {
+    let tot = Math.ceil(resultadosFiltrados.length / POR_PAG);
+    if (n < 0 || n >= tot) return;
+    pagAtual = n;
+    renderPagina();
+    document.getElementById("resultadosGrid").scrollIntoView({ behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 7. PERFIL FONÉTICO DO ALVO
+// ═══════════════════════════════════════════════════════════════
+function mostrarPerfil(alvo) {
+    let box    = document.getElementById("perfilAlvo");
+    let silHTML = alvo.silabas.map((s, i) =>
+        i === alvo.tonicaIndex ? `<b class="tonica-inline">${s.toUpperCase()}</b>` : s
+    ).join('·');
+
+    let famInfo = (alvo.familiaCluster !== 'si' && alvo.familiaCluster !== 'vz')
+        ? ` <small>(${FAM_LABEL[alvo.familiaCluster]||alvo.familiaCluster})</small>` : '';
+
+    box.innerHTML = `
+        <div class="perfil-word">${silHTML}</div>
+        <div class="perfil-data">
+            <span class="tag">${ACENT_LABEL[alvo.acentuacao]||alvo.acentuacao}</span>
+            <span class="tag">${alvo.numSilabas} síl.</span>
+            <span class="tag">vogal tônica: /${alvo.vogalTonica}/</span>
+            <span class="tag">onset: ${alvo.onsetTonico||'∅'}${famInfo}</span>
+            <span class="tag">vogais tôn.→fim: ${alvo.vogaisRima||'—'}</span>
+            <span class="tag">espinha: ${alvo.espinhaVocal||'—'}</span>
+            <span class="tag">assin. cons.: ${alvo.assConsonantal||'—'}</span>
+        </div>
+    `;
+    box.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 8. INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════════════════
+document.getElementById("inputPalavra").addEventListener("keypress", e => {
+    if (e.key === "Enter" && !document.getElementById("btnBuscar").disabled) buscarRimas();
+});
+
+window.onload = indexarDicionario;
+</script>
 </body>
-  </html>
-  
+</html>
