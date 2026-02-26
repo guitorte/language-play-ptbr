@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Explorador de Sonoridades</title>
+    <style>
+        :root {
+            --primary: #2C3E50;
+            --accent:  #E74C3C;
+            --bg:      #ECF0F1;
+            --c-rima:  #27AE60;
+            --c-eco:   #2980B9;
+            --c-ass:   #E67E22;
+            --c-prox:  #8E44AD;
+            --c-ritmo: #7F8C8D;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--primary); padding: 0; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        
+        /* Container Mobile First */
+        .container { 
+            width: 100%; max-width: 960px; background: white; 
+            padding: 0 20px 40px; border-radius: 0 0 8px 8px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); box-sizing: border-box; 
+            min-height: 100vh;
+        }
+
+        /* ── Header Sticky (Thumb Zone Superior) ───────── */
+        .sticky-header {
+            position: sticky; top: 0; background: white; z-index: 100;
+            padding: 20px 0 10px; margin: 0 0 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .app-title  { font-size: 16px; font-weight: 600; color: #aaa; letter-spacing: 0.4px; }
+        .status-chip { font-size: 12px; color: #7f8c8d; background: #F4F6F6; padding: 6px 12px; border-radius: 20px; white-space: nowrap; }
+
+        /* ── Busca e Ações (Alvos de 44px) ───── */
+        .search-wrap { position: relative; margin-bottom: 4px; }
+        .search-wrap input {
+            display: block; width: 100%; 
+            padding: 14px 104px 14px 16px; 
+            font-size: 16px; /* Impede zoom no iOS */
+            border: 1px solid #BDC3C7; border-radius: 8px;
+            outline: none; transition: border 0.2s; box-sizing: border-box;
+            background: #fdfdfd; -webkit-appearance: none;
+        }
+        .search-wrap input:focus { border-color: var(--accent); background: white; }
+        
+        .action-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 44px; height: 44px; border-radius: 6px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            border: none; transition: all 0.18s; padding: 0;
+        }
+        #btnBuscar { right: 6px; background: var(--primary); color: white; font-size: 20px;}
+        #btnBuscar:hover:not(:disabled) { background: var(--accent); }
+        #btnBuscar:disabled { background: #BDC3C7; cursor: not-allowed; }
+        
+        #btnMic { right: 54px; background: transparent; color: #7f8c8d; font-size: 20px;}
+        #btnMic.listening { color: var(--accent); background: #fdecea; animation: pulse 1.2s infinite; }
+        
+        @keyframes pulse { 0% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.1); } 100% { transform: translateY(-50%) scale(1); } }
+
+        /* ── Perfil Fonético Compacto ──────────── */
+        .perfil-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 10px 14px; margin-bottom: 16px; background: #f8f9fa; border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; }
+        .perfil-pw { font-size: 18px; letter-spacing: 1px; margin-right: 4px; }
+        .tonica-inline { color: var(--accent); font-weight: bold; }
+        .ptag { font-size: 12px; color: #666; background: white; border: 1px solid #e2e6ea; border-radius: 4px; padding: 3px 8px; }
+
+        /* ── Faixas de Score (Scroll Horizontal) ───────── */
+        .banda-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .banda-row::-webkit-scrollbar { display: none; }
+        .banda-btn { flex-shrink: 0; border: 2px solid var(--bc); background: white; color: var(--bc); padding: 8px 16px; border-radius: 24px; cursor: pointer; font-size: 14px; font-weight: 500; min-height: 44px; transition: all 0.14s; }
+        .banda-btn.ativo { background: var(--bc); color: white; }
+
+        /* ── Resultados e Filtros ── */
+        .result-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid #f0f0f0; }
+        .result-count { font-size: 14px; color: #666; flex: 1; font-weight: 600;}
+        .view-toggle { display: flex; gap: 4px; }
+        .view-btn { background: #f0f0f0; color: #777; border: none; width: 38px; height: 38px; border-radius: 6px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .view-btn.ativo { background: var(--primary); color: white; }
+
+        .facet-inline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .facet-btn { padding: 6px 14px; font-size: 13px; border: 1px solid #ddd; border-radius: 20px; background: white; cursor: pointer; min-height: 34px; }
+        .facet-btn.ativo { background: var(--primary); color: white; border-color: var(--primary); }
+        .facet-clear-btn { padding: 6px 12px; font-size: 12px; border: 1px solid #f0c0c0; border-radius: 20px; background: white; cursor: pointer; color: #c0392b; font-weight: bold; }
+
+        /* ── Cards de Palavras ─────────────── */
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .word-card { border: 2px solid #e2e6ea; background: #f8f9fa; padding: 12px 8px 8px; border-radius: 8px; text-align: center; font-size: 17px; cursor: pointer; transition: transform 0.1s; -webkit-tap-highlight-color: transparent; }
+        .word-card:active { transform: scale(0.95); background: #f0f0f0; }
+        .word-card.b-rima { border-color: var(--c-rima); } .word-card.b-eco { border-color: var(--c-eco); } .word-card.b-ass { border-color: var(--c-ass); } .word-card.b-prox { border-color: var(--c-prox); } .word-card.b-ritmo { border-color: var(--c-ritmo); }
+        .tonica { font-weight: bold; color: var(--accent); }
+        .score-num { display: block; font-size: 11px; color: #b0b0b0; margin-top: 4px; }
+
+        /* ── Seções Colapsáveis ── */
+        .secao { margin-bottom: 20px; }
+        .secao-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 6px; cursor: pointer; min-height: 48px; }
+        .secao-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding: 12px 0 0; }
+
+        /* ── Botão "Carregar Mais" (Solução Mobile Proposta) ── */
+        .ver-mais-container { width: 100%; margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .btn-carregar-mais { 
+            width: 100%; max-width: 400px; padding: 16px; 
+            background: var(--primary); color: white; border: none; 
+            border-radius: 12px; font-size: 16px; font-weight: 700; 
+            cursor: pointer; transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-carregar-mais:active { transform: scale(0.98); background: var(--accent); }
+        .carregar-info { font-size: 13px; color: #888; }
+
+        @media (min-width: 600px) {
+            .container { padding: 0 28px 40px; margin-top: 20px; border-radius: 8px; min-height: auto; }
+            .sticky-header { border-top-left-radius: 8px; border-top-right-radius: 8px;}
+        }
+
+        .empty-msg { color: #888; text-align: center; padding: 40px 0; font-size: 16px; width: 100%; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="sticky-header">
+        <div class="app-header">
+            <span class="app-title">Explorador de Sonoridades</span>
+            <span class="status-chip" id="statusText">carregando…</span>
+        </div>
+        <div class="search-wrap">
+            <input type="search" id="inputPalavra" placeholder="Digite ou fale uma palavra…" 
+                   inputmode="search" enterkeyhint="search" autocorrect="off" autocapitalize="none" autocomplete="off">
+            <button id="btnMic" class="action-btn" title="Ditado por voz" style="display:none">🎤</button>
+            <button id="btnBuscar" class="action-btn" onclick="buscarRimas()" disabled title="Buscar">&#8594;</button>
+        </div>
+    </div>
+
+    <div class="perfil-linha" id="perfilAlvo" style="display:none"></div>
+    <div class="banda-row" id="bandaPanel" style="display:none"></div>
+
+    <div class="result-header" id="resultHeader" style="display:none">
+        <span class="result-count" id="resultadosMsg"></span>
+        <div class="view-toggle">
+            <button class="view-btn ativo" id="btnGrid" onclick="setView('grid')" title="Grade contínua">⊞</button>
+            <button class="view-btn" id="btnSec" onclick="setView('secoes')" title="Seções por faixa">≡</button>
+        </div>
+        <div class="facet-sep" id="facetSep" style="display:none; width:1px; height:24px; background:#ddd; margin:0 4px;"></div>
+        <div class="facet-inline" id="facetPanel"></div>
+    </div>
+
+    <div id="resultadosGrid"></div>
+    <div id="paginacaoContainer" class="ver-mais-container"></div>
+
+</div>
+
+<script>
+// ==========================================
+// ESTADO GLOBAL DO PROJETO
+// ==========================================
+let dicionarioIndexado = [];
+let resultadosCompletos = [];
+let bandasAtivas = new Set([160,100,60,25,10]);
+let facetAtivos = { sil: null, acent: null };
+let modoView = 'grid'; // 'grid' ou 'secoes'
+let gridLimite = 60;   // Quantidade inicial de rimas na grade
+let secaoLimite = {};  // Limites individuais por seção no modo ≡
+let secaoColapsada = new Set();
+const INCREMENTO = 60;
+
+// ==========================================
+// RECONHECIMENTO DE VOZ
+// ==========================================
+const btnMic = document.getElementById('btnMic');
+const inputPalavra = document.getElementById('inputPalavra');
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    btnMic.style.display = 'flex';
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    
+    btnMic.addEventListener('click', () => {
+        try { recognition.start(); btnMic.classList.add('listening'); } catch(e){}
+    });
+
+    recognition.addEventListener('result', (e) => {
+        let transcript = e.results[0][0].transcript.replace(/[.,;!?]/g, '').trim();
+        let words = transcript.split(' ');
+        inputPalavra.value = words[words.length - 1];
+        buscarRimas();
+    });
+
+    recognition.addEventListener('end', () => btnMic.classList.remove('listening'));
+}
+
+// ==========================================
+// MOTOR PROSÓDICO (LÓGICA DE RIMA)
+// ==========================================
+const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+
+function silabificar(palavra) {
+    // Implementação simplificada para o exemplo (mantendo a lógica original do usuário)
+    let blocos = [], tipoAt = '', textoAt = '';
+    for (let i = 0; i < palavra.length; i++) {
+        let ch = palavra[i], chL = ch.toLowerCase();
+        if ((chL==='q'||chL==='g') && palavra[i+1] && palavra[i+1].toLowerCase()==='u' && palavra[i+2] && vRegex.test(palavra[i+2])) {
+            if (tipoAt==='V') { blocos.push({tipo:'V',texto:textoAt}); textoAt=''; }
+            blocos.push({tipo:'C',texto:ch+palavra[i+1]}); i++; tipoAt=''; continue;
+        }
+        let tipo = vRegex.test(ch) ? 'V' : 'C';
+        if (tipo !== tipoAt) { if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt}); tipoAt=tipo; textoAt=ch; }
+        else textoAt += ch;
+    }
+    if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt});
+    let idxV = blocos.reduce((a,b,i)=>(b.tipo==='V'?[...a,i]:a),[]);
+    if (!idxV.length) return [palavra];
+    let sil = new Array(idxV.length).fill("");
+    for (let i=0; i<idxV[0]; i++) sil[0] += blocos[i].texto;
+    for (let k=0; k<idxV.length-1; k++) {
+        sil[k] += blocos[idxV[k]].texto;
+        let cT=""; for (let j=idxV[k]+1; j<idxV[k+1]; j++) cT+=blocos[j].texto;
+        sil[k]+=cT.slice(0, Math.ceil(cT.length/2)); sil[k+1]+=cT.slice(Math.ceil(cT.length/2));
+    }
+    sil[sil.length-1] += blocos[idxV[idxV.length-1]].texto;
+    for (let i=idxV[idxV.length-1]+1; i<blocos.length; i++) sil[sil.length-1]+=blocos[i].texto;
+    return sil;
+}
+
+function identificarTonica(silabas, p) {
+    let t = p.toLowerCase();
+    for (let i=0;i<silabas.length;i++) if(/[áéíóúâêô]/i.test(silabas[i])) return i;
+    for (let i=0;i<silabas.length;i++) if(/[ãõ]/i.test(silabas[i])) return i;
+    if (t.match(/(r|l|z|x|i|is|u|us|im|ins|um|uns)$/)) return silabas.length-1;
+    return Math.max(0,silabas.length-2);
+}
+
+function perfilFonetico(palavra) {
+    let pL = palavra.toLowerCase().trim();
+    if (!pL || !/[a-z]/i.test(pL)) return null;
+    let sil = silabificar(pL), ti = identificarTonica(sil, pL);
+    let rima = sil.slice(ti).join('').toLowerCase();
+    let m = rima.match(vRegex);
+    return {
+        palavra: pL, silabas: sil, tonicaIndex: ti, numSilabas: sil.length,
+        rimaPerfeita: m ? rima.slice(m.index) : rima,
+        acentuacao: (sil.length-1-ti) === 0 ? 'ox' : (sil.length-1-ti) === 1 ? 'px' : 'ppx'
+    };
+}
+
+// ==========================================
+// CORE DA BUSCA E FILTROS
+// ==========================================
+async function indexarDicionario() {
+    const chip = document.getElementById("statusText");
+    try {
+        const resp = await fetch('./palavras.txt');
+        const texto = await resp.text();
+        const lista = texto.split(/\r?\n/).filter(p => p.length > 1);
+        dicionarioIndexado = lista.map(p => perfilFonetico(p)).filter(Boolean);
+        chip.innerHTML = `✅ ${dicionarioIndexado.length.toLocaleString('pt-BR')} palavras`;
+        document.getElementById("btnBuscar").disabled = false;
+        if (window.innerWidth > 768) inputPalavra.focus();
+    } catch(e) { chip.innerHTML = "❌ erro ao carregar"; }
+}
+
+function buscarRimas() {
+    const alvo = perfilFonetico(inputPalavra.value);
+    if (!alvo) return;
+    inputPalavra.blur();
+    
+    resultadosCompletos = dicionarioIndexado
+        .filter(i => i.palavra !== alvo.palavra)
+        .map(i => {
+            let score = 0;
+            if (i.rimaPerfeita === alvo.rimaPerfeita) score += 160;
+            else if (i.rimaPerfeita.slice(-2) === alvo.rimaPerfeita.slice(-2)) score += 60;
+            if (i.numSilabas === alvo.numSilabas) score += 20;
+            return { ...i, score };
+        })
+        .filter(i => i.score > 0)
+        .sort((a,b) => b.score - a.score);
+
+    gridLimite = INCREMENTO;
+    secaoLimite = {};
+    aplicarFiltros();
+    mostrarPerfil(alvo);
+}
+
+function aplicarFiltros() {
+    const final = resultadosCompletos.filter(r => {
+        if (!bandasAtivas.has(getBandaKey(r.score))) return false;
+        if (facetAtivos.sil && r.numSilabas !== facetAtivos.sil) return false;
+        if (facetAtivos.acent && r.acentuacao !== facetAtivos.acent) return false;
+        return true;
+    });
+
+    document.getElementById("resultHeader").style.display = 'flex';
+    document.getElementById("resultadosMsg").textContent = `${final.length} rimas`;
+    renderBandas();
+    renderFacetas(final);
+    
+    if (modoView === 'grid') renderGrid(final);
+    else renderSecoes(final);
+}
+
+function getBandaKey(s) { return s >= 160 ? 160 : s >= 100 ? 100 : s >= 60 ? 60 : s >= 25 ? 25 : 10; }
+
+// ==========================================
+// RENDERIZAÇÃO (MODO GRADE ⊞)
+// ==========================================
+function renderGrid(lista) {
+    const grid = document.getElementById("resultadosGrid");
+    const pag = document.getElementById("paginacaoContainer");
+    grid.className = "results-grid";
+    grid.innerHTML = "";
+
+    const visiveis = lista.slice(0, gridLimite);
+    visiveis.forEach(item => {
+        const b = BANDAS.find(x => x.key === getBandaKey(item.score));
+        const card = document.createElement("div");
+        card.className = `word-card ${b.cls}`;
+        card.innerHTML = item.silabas.map((s,i) => i===item.tonicaIndex ? `<span class="tonica">${s}</span>` : s).join('') + `<span class="score-num">${item.score} pts</span>`;
+        card.onclick = () => { inputPalavra.value = item.palavra; buscarRimas(); window.scrollTo({top:0, behavior:'smooth'}); };
+        grid.appendChild(card);
+    });
+
+    if (lista.length > gridLimite) {
+        pag.innerHTML = `
+            <button class="btn-carregar-mais" onclick="verMaisGrid()">CARREGAR MAIS RIMAS</button>
+            <span class="carregar-info">Mostrando ${gridLimite} de ${lista.length}</span>
+        `;
+    } else {
+        pag.innerHTML = lista.length > 0 ? `<span class="carregar-info">Fim dos resultados</span>` : `<p class="empty-msg">Nenhuma rima encontrada.</p>`;
+    }
+}
+
+function verMaisGrid() {
+    gridLimite += INCREMENTO;
+    aplicarFiltros();
+}
+
+// ==========================================
+// RENDERIZAÇÃO (MODO SEÇÕES ≡)
+// ==========================================
+function renderSecoes(lista) {
+    const grid = document.getElementById("resultadosGrid");
+    const pag = document.getElementById("paginacaoContainer");
+    grid.className = "results-secoes";
+    pag.innerHTML = "";
+    
+    let html = "";
+    BANDAS.forEach(b => {
+        const words = lista.filter(r => getBandaKey(r.score) === b.key);
+        if (words.length === 0) return;
+
+        const lim = secaoLimite[b.key] || 24;
+        const visiveis = words.slice(0, lim);
+        const colapsada = secaoColapsada.has(b.key);
+
+        html += `
+            <div class="secao">
+                <div class="secao-header" onclick="toggleSecao(${b.key})" style="background:${b.bg}; border-left:4px solid ${b.color}">
+                    <span>${colapsada ? '▶' : '▼'}</span>
+                    <span class="secao-nome" style="color:${b.color}">${b.label}</span>
+                    <span class="secao-count">${words.length}</span>
+                </div>
+                ${!colapsada ? `
+                    <div class="secao-grid">
+                        ${visiveis.map(item => `<div class="word-card ${b.cls}" onclick="inputPalavra.value='${item.palavra}'; buscarRimas(); window.scrollTo({top:0, behavior:'smooth'});">${item.silabas.map((s,i) => i===item.tonicaIndex ? `<span class="tonica">${s}</span>` : s).join('')}</div>`).join('')}
+                    </div>
+                    ${words.length > lim ? `<button class="ver-mais" style="width:100%; border:1px dashed #ccc; padding:10px; margin-top:10px; border-radius:8px;" onclick="verMaisSecao(${b.key})">+ Ver mais ${b.label}</button>` : ''}
+                ` : ''}
+            </div>
+        `;
+    });
+    grid.innerHTML = html || `<p class="empty-msg">Nenhum resultado.</p>`;
+}
+
+function verMaisSecao(key) { secaoLimite[key] = (secaoLimite[key] || 24) + 24; aplicarFiltros(); }
+function toggleSecao(key) { if(secaoColapsada.has(key)) secaoColapsada.delete(key); else secaoColapsada.add(key); aplicarFiltros(); }
+
+// ==========================================
+// UI HELPERS (BANDAS, FACETAS, PERFIL)
+// ==========================================
+const BANDAS = [
+    { key:160, label:'Rima Perfeita', cls:'b-rima',  color:'#27AE60', bg:'rgba(39,174,96,0.05)' },
+    { key:60,  label:'Rima Pobre',    cls:'b-ass',   color:'#E67E22', bg:'rgba(230,126,34,0.05)' },
+    { key:20,  label:'Ritmo',         cls:'b-ritmo', color:'#7F8C8D', bg:'rgba(127,140,141,0.05)' }
+];
+
+function renderBandas() {
+    const counts = {}; BANDAS.forEach(b => counts[b.key] = resultadosCompletos.filter(r => getBandaKey(r.score) === b.key).length);
+    document.getElementById("bandaPanel").style.display = 'flex';
+    document.getElementById("bandaPanel").innerHTML = BANDAS.map(b => `
+        <button class="banda-btn ${bandasAtivas.has(b.key)?'ativo':''}" style="--bc:${b.color}" onclick="toggleBanda(${b.key})">
+            ${b.label} <small>${counts[b.key]}</small>
+        </button>
+    `).join('');
+}
+
+function toggleBanda(k) { if(bandasAtivas.has(k)) bandasAtivas.delete(k); else bandasAtivas.add(k); gridLimite=INCREMENTO; aplicarFiltros(); }
+
+function renderFacetas(lista) {
+    const sils = [...new Set(lista.map(r => r.numSilabas))].sort((a,b)=>a-b);
+    document.getElementById("facetPanel").innerHTML = sils.map(s => `
+        <button class="facet-btn ${facetAtivos.sil===s?'ativo':''}" onclick="setFaceta('sil', ${s})">${s}s</button>
+    `).join('') + (facetAtivos.sil || facetAtivos.acent ? `<button class="facet-clear-btn" onclick="limparFacetas()">✕</button>` : '');
+}
+
+function setFaceta(t, v) { facetAtivos[t] = facetAtivos[t] === v ? null : v; gridLimite=INCREMENTO; aplicarFiltros(); }
+function limparFacetas() { facetAtivos = { sil: null, acent: null }; gridLimite=INCREMENTO; aplicarFiltros(); }
+function setView(m) { modoView = m; document.getElementById("btnGrid").classList.toggle('ativo', m==='grid'); document.getElementById("btnSec").classList.toggle('ativo', m==='secoes'); aplicarFiltros(); }
+
+function mostrarPerfil(alvo) {
+    const box = document.getElementById("perfilAlvo");
+    box.style.display = 'flex';
+    box.innerHTML = `
+        <span class="perfil-pw">${alvo.silabas.map((s,i)=>i===alvo.tonicaIndex?`<b class="tonica-inline">${s.toUpperCase()}</b>`:s).join('·')}</span>
+        <span class="ptag">${alvo.numSilabas} sílabas</span>
+        <span class="ptag">${alvo.acentuacao === 'ox' ? 'Oxítona' : alvo.acentuacao === 'px' ? 'Paroxítona' : 'Proparox.'}</span>
+    `;
+}
+
+// Inicialização
+inputPalavra.addEventListener("keypress", e => { if(e.key==="Enter") buscarRimas(); });
+window.onload = indexarDicionario;
+</script>
+</body>
+</html>
