@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador Silábico e Prosódico (Avançado)</title>
+    <style>
+        :root {
+            --primary: #2C3E50;
+            --secondary: #34495E;
+            --accent: #E74C3C;
+            --bg: #ECF0F1;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { text-align: center; color: var(--primary); }
+        .container {
+            width: 100%; max-width: 800px; background: white;
+            padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%; height: 120px; padding: 10px; font-size: 16px;
+            border: 1px solid #BDC3C7; border-radius: 4px; resize: vertical; box-sizing: border-box;
+        }
+        button {
+            margin-top: 15px; background-color: var(--primary); color: white;
+            border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%;
+        }
+        button:hover { background-color: var(--accent); }
+        .resultado-box {
+            margin-top: 20px; padding: 15px; background-color: #F8F9F9;
+            border-left: 4px solid var(--accent); min-height: 100px; font-size: 18px; line-height: 1.8; white-space: pre-wrap;
+        }
+        .palavra { display: inline-block; margin-right: 5px; }
+        .silaba { color: var(--secondary); }
+        .tonica {
+            font-weight: bold; color: var(--accent); background-color: #fadbd8;
+            padding: 1px 3px; border-radius: 3px;
+        }
+        .legenda { margin-top: 10px; font-size: 14px; color: #7F8C8D; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Analisador Silábico Avançado</h1>
+        <p>Aplica regras estritas para hiatos, grupos consonantais, prefixos (ex: <i>abstrair, nascer</i>) e identifica a sílaba tônica.</p>
+        
+        <textarea id="inputText">Ele decidiu abstrair os problemas. O transporte transatlântico é seguro.
+Ao nascer do sol, viu a caatinga. O juiz caiu na raiz do problema.
+Exército, pneu, rainha, saúde e ritmo!</textarea>
+        
+        <button onclick="processarTexto()">Processar Texto</button>
+
+        <div class="resultado-box" id="output"></div>
+        <div class="legenda">Sílaba tônica destacada em <span class="tonica">vermelho</span>.</div>
+    </div>
+
+    <script>
+        const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+
+// 1. TRATAMENTO DE HIATOS (Regras 6 e 7) Atualizado para "rainha" e "caiu"
+function tratarHiatosVogais(blocoVoc, palavraOriginal) {
+    if (blocoVoc.length <= 1) return [blocoVoc];
+    let resultado = [];
+    let atual = blocoVoc[0];
+    let pLower = palavraOriginal.toLowerCase();
+
+    for (let i = 1; i < blocoVoc.length; i++) {
+        let char = blocoVoc[i];
+        let par = (atual.slice(-1) + char).toLowerCase();
+        
+        // Padrões gerais de ditongos
+        let formamDitongo = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe|ia|ie|io|ua|ue|uo)$/.test(par);
+        
+        // Exceção 1: Vogais idênticas SEMPRE separam (ca-a-tin-ga)
+        let vogaisIdenticas = par[0] === par[1];
+        
+        // Exceção 2: Segunda vogal acentuada (sa-ú-de)
+        let temHiatoAcentuado = /[aeiouáéíóúâêôãõü][íú]/.test(par);
+        
+        // Exceção 3: Verbos e palavras terminadas em -air, -uir, -aiz, -oer
+        let ehHiatoFinal = false;
+        if (/^(ai|ui|au|oe)$/.test(par) && (pLower.endsWith(par + "r") || pLower.endsWith(par + "z") || pLower.endsWith(par + "l"))) {
+            ehHiatoFinal = true;
+        }
+
+        // Exceção 4 (O caso "rainha"): Vogais seguidas de 'nh' forçam hiato (ra-i-nha, mo-i-nho)
+        // Se a palavra contém o par vocálico seguido de 'nh', eles se separam.
+        let seguidoDeNh = pLower.includes(par + "nh");
+
+        // Exceção 5 (O caso "caiu"): Hiato seguido de ditongo.
+        // Se temos um "a", "e" ou "o" e o PRÓXIMO caractere forma um ditongo com 'u' ou 'i' (ex: a-iu, a-io)
+        let formaHiatoComDitongo = false;
+        if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
+            let proximoChar = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
+            // Se o char atual e o próximo formam 'iu', 'ia', 'io' (ex: a + iu)
+            if (/^(iu|ia|io|ie|ui)$/.test(char + proximoChar)) {
+                formaHiatoComDitongo = true;
+            }
+        }
+
+        if (formamDitongo && !temHiatoAcentuado && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !formaHiatoComDitongo) {
+            atual += char; // Mantém na mesma sílaba (Ditongo)
+        } else {
+            resultado.push(atual); // Quebra a sílaba (Hiato)
+            atual = char;
+        }
+    }
+    resultado.push(atual);
+    return resultado;
+}
+        // 2. SEPARADOR INTELIGENTE DE CONSOANTES (Regras 1, 2, 3, 4 e 5)
+        function separarConsoantes(cBlock) {
+            if (cBlock.length <= 1) return ["", cBlock];
+
+            let textLower = cBlock.toLowerCase();
+            const inseparaveis = /^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/;
+            const separaveisDuplas = /^(rr|ss|cc|cç|sc|sç|xc)$/;
+
+            // Se forem 2 consoantes
+            if (cBlock.length === 2) {
+                if (inseparaveis.test(textLower)) return ["", cBlock]; // ex: br -> vai pra direita (a-bra-ço)
+                return [cBlock.slice(0, 1), cBlock.slice(1)];          // ex: bd -> separa (ab-di-car), sc -> (nas-cer)
+            }
+
+            // Se forem 3 ou mais consoantes (Ex: bstr, nsp, nsc)
+            if (cBlock.length >= 3) {
+                let ultimasDuas = textLower.slice(-2);
+                
+                // Se as duas últimas formam um grupo inseparável (ex: 'tr' em 'bstr')
+                // O prefixo 'bs' fica na sílaba anterior e 'tr' vai para a próxima (abs-tra-ir)
+                if (inseparaveis.test(ultimasDuas)) {
+                    return [cBlock.slice(0, -2), cBlock.slice(-2)];
+                } else {
+                    // Se não formam grupo (ex: 'nst' em 'ins-tan-te'), a última vai pra direita
+                    return [cBlock.slice(0, -1), cBlock.slice(-1)];
+                }
+            }
+            return ["", cBlock];
+        }
+
+        // 3. MOTOR DE SILABIFICAÇÃO
+        function silabificar(palavra) {
+            let blocos = [];
+            let tipoAtual = '';
+            let textoAtual = '';
+
+            // Agrupa Vogais (V) e Consoantes (C)
+            for (let i = 0; i < palavra.length; i++) {
+                let char = palavra[i];
+                let charLower = char.toLowerCase();
+                
+                // Tratamento especial para qu / gu (mantém o U junto da consoante)
+                if ((charLower === 'q' || charLower === 'g') && palavra[i+1] && palavra[i+1].toLowerCase() === 'u') {
+                    if (palavra[i+2] && vRegex.test(palavra[i+2])) {
+                        if (tipoAtual === 'V') { blocos.push({tipo: 'V', texto: textoAtual}); textoAtual = ''; }
+                        blocos.push({tipo: 'C', texto: char + palavra[i+1]}); 
+                        i++; // Pula o 'u'
+                        tipoAtual = '';
+                        continue;
+                    }
+                }
+
+                let tipo = vRegex.test(char) ? 'V' : 'C';
+
+                if (tipo !== tipoAtual) {
+                    if (textoAtual !== '') blocos.push({tipo: tipoAtual, texto: textoAtual});
+                    tipoAtual = tipo;
+                    textoAtual = char;
+                } else { textoAtual += char; }
+            }
+            if (textoAtual !== '') blocos.push({tipo: tipoAtual, texto: textoAtual});
+
+            // Expande Vogais (Hiatos)
+            let blocosExpandidos = [];
+            for (let b of blocos) {
+                if (b.tipo === 'V') {
+                    let vSeparadas = tratarHiatosVogais(b.texto, palavra);
+                    vSeparadas.forEach(v => blocosExpandidos.push({tipo: 'V', texto: v}));
+                } else {
+                    blocosExpandidos.push(b);
+                }
+            }
+
+            let indicesV = [];
+            for (let i = 0; i < blocosExpandidos.length; i++) {
+                if (blocosExpandidos[i].tipo === 'V') indicesV.push(i);
+            }
+
+            if (indicesV.length === 0) return [palavra]; // Palavras sem vogais normais (abreviações)
+
+            let silabas = new Array(indicesV.length).fill("");
+
+            // 1ª Sílaba pega consoantes iniciais (Ex: "pn" em "pneu-má-ti-co")
+            for (let i = 0; i < indicesV[0]; i++) {
+                silabas[0] += blocosExpandidos[i].texto;
+            }
+
+            // Divisão do miolo da palavra
+            for (let k = 0; k < indicesV.length - 1; k++) {
+                silabas[k] += blocosExpandidos[indicesV[k]].texto; // Adiciona a vogal à sílaba atual
+
+                let inicioC = indicesV[k] + 1;
+                let fimC = indicesV[k+1];
+                let cTexto = "";
+                for (let j = inicioC; j < fimC; j++) cTexto += blocosExpandidos[j].texto;
+
+                let [esquerdaC, direitaC] = separarConsoantes(cTexto);
+                silabas[k] += esquerdaC;       // Finaliza sílaba atual
+                silabas[k+1] += direitaC;      // Inicia a próxima sílaba
+            }
+
+            // Última sílaba pega o resto
+            let ultimaV = indicesV[indicesV.length - 1];
+            silabas[silabas.length - 1] += blocosExpandidos[ultimaV].texto;
+            for (let i = ultimaV + 1; i < blocosExpandidos.length; i++) {
+                silabas[silabas.length - 1] += blocosExpandidos[i].texto;
+            }
+
+            return silabas;
+        }
+
+        // 4. IDENTIFICADOR DA SÍLABA TÔNICA
+        function identificarTonica(silabas, palavraOriginal) {
+            const acentos = /[áéíóúâêô]/i;
+            for (let i = 0; i < silabas.length; i++) {
+                if (acentos.test(silabas[i])) return i;
+            }
+
+            const til = /[ãõ]/i;
+            for (let i = 0; i < silabas.length; i++) {
+                if (til.test(silabas[i])) return i; 
+            }
+
+            let term = palavraOriginal.toLowerCase();
+            
+            // Oxítonas: Terminadas em R, L, Z, X, I, U, IM, UM
+            if (term.match(/(r|l|z|x|i|is|u|us|im|ins|um|uns)$/)) {
+                return silabas.length - 1; 
+            }
+
+            // Paroxítonas (Regra geral)
+            if (term.match(/(a|as|e|es|o|os|am|em|ens)$/)) {
+                return Math.max(0, silabas.length - 2); 
+            }
+
+            return Math.max(0, silabas.length - 2);
+        }
+
+        // 5. RENDERIZAÇÃO
+        function processarTexto() {
+            let texto = document.getElementById("inputText").value;
+            let output = document.getElementById("output");
+            output.innerHTML = "";
+
+            let tokens = texto.split(/([a-zA-ZáàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ]+)/);
+
+            for (let token of tokens) {
+                if (/^[a-zA-ZáàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ]+$/.test(token)) {
+                    let silabas = silabificar(token);
+                    let indexTonica = identificarTonica(silabas, token);
+                    
+                    let spans = silabas.map((s, i) => {
+                        let classe = (i === indexTonica) ? "silaba tonica" : "silaba";
+                        return `<span class="${classe}">${s}</span>`;
+                    });
+
+                    output.innerHTML += `<span class="palavra">${spans.join("-")}</span>`;
+                } else {
+                    output.innerHTML += token.replace(/\n/g, '<br>');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
