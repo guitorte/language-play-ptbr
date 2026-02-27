@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <title>Sintetizador Fonético PRO</title>
+    <style>
+        :root {
+            --primary: #1A252C; --accent: #E74C3C; --accent-hover: #C0392B;
+            --bg: #F4F7F6; --surface: #FFFFFF; --border: #E0E6ED;
+            --text: #2C3E50; --text-light: #7F8C8D; --lock: #F39C12;
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg); color: var(--text); 
+            margin: 0; padding: 0; display: flex; flex-direction: column; 
+            height: 100dvh; overflow: hidden; 
+        }
+
+        /* ── ZONA DE VISUALIZAÇÃO ───────── */
+        #viewport {
+            flex: 1; overflow-y: auto; padding: 20px 20px 10px; 
+            scroll-behavior: smooth; overscroll-behavior-y: contain;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+        .title { font-size: 24px; font-weight: 800; color: var(--primary); margin: 0; line-height: 1; }
+        .subtitle { font-size: 13px; color: var(--text-light); font-weight: 600; }
+        #status-chip { background: #E8F8F5; color: #117A65; padding: 4px 10px; border-radius: 12px; font-size: 11px; }
+
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; padding-bottom: 40px;}
+        .word-card {
+            background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+            padding: 16px 8px; text-align: center; font-size: 16px; font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: all 0.1s; cursor: pointer;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .word-card:active { transform: scale(0.95); background: #f8f9fa; border-color: var(--accent);}
+        .word-card .score { font-size: 11px; color: var(--accent); font-weight: 700; }
+        .tonica { color: var(--accent); font-weight: 800; }
+
+        /* ── ZONA DO POLEGAR (Painel Inteligente) ───────── */
+        #bottom-panel {
+            flex-shrink: 0; background: var(--surface); border-radius: 24px 24px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column;
+            z-index: 100; padding-bottom: var(--safe-area-bottom);
+            /* A transição visual suave será no wrapper interno */
+        }
+
+        .panel-handle-zone { padding: 12px 0 4px; cursor: pointer; display: flex; justify-content: center; }
+        .panel-handle { width: 44px; height: 5px; background: #D1D8E0; border-radius: 3px; transition: background 0.2s;}
+        .panel-handle-zone:active .panel-handle { background: var(--text-light); }
+
+        .tabs { display: flex; padding: 0 10px; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            flex: 1; background: none; border: none; padding: 14px 0;
+            font-size: 14px; font-weight: 700; color: var(--text-light);
+            cursor: pointer; position: relative; transition: color 0.2s;
+        }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 10%; width: 80%;
+            height: 3px; background: var(--accent); border-radius: 3px 3px 0 0;
+        }
+
+        /* O TRUQUE DO AUTO-COLLAPSE: max-height animado */
+        .tab-wrapper {
+            max-height: 55vh; /* Altura máxima segura */
+            transition: max-height 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow: hidden;
+            background: var(--surface);
+        }
+        #bottom-panel.collapsed .tab-wrapper {
+            max-height: 0; /* Esconde o conteúdo, mantém as abas */
+        }
+
+        .tab-content { padding: 20px; overflow-y: auto; max-height: 50vh; display: none; overscroll-behavior-y: contain;}
+        .tab-content.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Controles Internos */
+        .search-box { position: relative; margin-bottom: 16px; }
+        .search-box input {
+            width: 100%; padding: 16px; font-size: 16px;
+            background: var(--bg); border: 2px solid var(--border); border-radius: 12px;
+            outline: none; transition: border 0.2s; font-weight: 600;
+        }
+        .search-box input:focus { border-color: var(--accent); background: white; }
+        
+        .lego-container { display: flex; flex-wrap: wrap; gap: 8px; }
+        .lego-pill {
+            background: white; border: 2px solid var(--border); padding: 8px 14px;
+            border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text-light);
+            cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.1s;
+        }
+        .lego-pill.locked { background: #FFF9F0; border-color: var(--lock); color: #D68910; }
+        .lego-pill:active { transform: scale(0.92); }
+
+        .slider-group { margin-bottom: 20px; }
+        .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--primary); }
+        .slider-val { color: var(--accent); background: var(--bg); padding: 2px 8px; border-radius: 8px;}
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; height: 36px; margin: 0; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%;
+            background: var(--surface); border: 2px solid var(--primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; margin-top: -10px;
+        }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: var(--border); border-radius: 4px; }
+        input[type=range]:active::-webkit-slider-thumb { background: var(--accent); border-color: var(--accent); transform: scale(1.15); }
+
+        .builder-section { margin-bottom: 24px; }
+        .builder-label { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: block; color: var(--text-light); }
+        .stepper { display: flex; align-items: center; gap: 16px; background: var(--bg); padding: 6px; border-radius: 16px; width: max-content; }
+        .step-btn { width: 44px; height: 44px; border-radius: 12px; border: none; background: white; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .step-btn:active { transform: scale(0.9); background: var(--border); }
+        .step-val { font-size: 16px; font-weight: 800; width: 40px; text-align: center; }
+
+        .radio-group { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+        .radio-group::-webkit-scrollbar { display: none; }
+        .radio-btn {
+            padding: 12px 16px; border-radius: 12px; border: 2px solid var(--border);
+            background: white; font-size: 14px; font-weight: 600; color: var(--text-light);
+            cursor: pointer; white-space: nowrap; transition: all 0.1s;
+        }
+        .radio-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
+        .radio-btn:active { transform: scale(0.92); }
+
+        .vowel-grid { display: flex; gap: 10px; }
+        .vowel-btn {
+            width: 46px; height: 46px; border-radius: 23px; border: 2px solid var(--border);
+            background: white; font-size: 18px; font-weight: 800; color: var(--text-light);
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.1s;
+        }
+        .vowel-btn.selected { background: var(--accent); border-color: var(--accent); color: white; transform: scale(1.1); box-shadow: 0 4px 10px rgba(231,76,60,0.3); }
+
+        .empty-state { text-align: center; color: var(--text-light); padding: 40px 20px; font-size: 15px; line-height: 1.5; grid-column: 1 / -1;}
+        .loader { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: var(--accent); animation: spin 1s ease-in-out infinite; margin-bottom: 10px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Sentinel para Infinite Scroll */
+        #sentinel { width: 100%; height: 20px; grid-column: 1 / -1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- VISOR -->
+    <div id="viewport">
+        <div class="header">
+            <div>
+                <h1 class="title">Sintetizador</h1>
+                <div class="subtitle" id="status-chip">Carregando BD...</div>
+            </div>
+            <div class="subtitle" id="result-count">0 resultados</div>
+        </div>
+        <div class="results-grid" id="grid-resultados">
+            <div class="empty-state"><div class="loader"></div><br>Carregando palavras.txt...</div>
+        </div>
+    </div>
+
+    <!-- LABORATÓRIO (Polegar) -->
+    <div id="bottom-panel">
+        <div class="panel-handle-zone" onclick="togglePanelCollapse()">
+            <div class="panel-handle"></div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-base')">🔍 Molde</button>
+            <button class="tab-btn" onclick="switchTab('tab-pesos')">🎛️ Pesos</button>
+            <button class="tab-btn" onclick="switchTab('tab-build')">🏗️ Raio-X</button>
+        </div>
+
+        <!-- WRAPPER PARA ANIMAÇÃO DE RECOLHIMENTO -->
+        <div class="tab-wrapper">
+            <!-- ABA 1: MOLDE -->
+            <div id="tab-base" class="tab-content active">
+                <div class="search-box">
+                    <input type="search" id="inputPalavra" placeholder="Digite uma palavra-base..." 
+                           inputmode="search" enterkeyhint="search" autocorrect="off" autocapitalize="none" disabled>
+                </div>
+                <div class="builder-label" style="display:none" id="lego-label">Toque para travar/destravar características:</div>
+                <div class="lego-container" id="lego-panel"></div>
+            </div>
+
+            <!-- ABA 2: EQUALIZADOR -->
+            <div id="tab-pesos" class="tab-content">
+                <div class="slider-group">
+                    <div class="slider-header"><span>Rima Perfeita</span> <span class="slider-val" id="val-rima">100</span></div>
+                    <input type="range" id="peso-rima" min="0" max="200" value="100">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header"><span>Assonância (Vogais)</span> <span class="slider-val" id="val-ass">60</span></div>
+                    <input type="range" id="peso-ass" min="0" max="200" value="60">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header"><span>Eco Consonantal</span> <span class="slider-val" id="val-eco">50</span></div>
+                    <input type="range" id="peso-eco" value="50">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header"><span>Espinha Vocal</span> <span class="slider-val" id="val-esp">40</span></div>
+                    <input type="range" id="peso-esp" value="40">
+                </div>
+            </div>
+
+            <!-- ABA 3: CONSTRUTOR -->
+            <div id="tab-build" class="tab-content">
+                <div class="builder-section">
+                    <span class="builder-label">Número exato de sílabas:</span>
+                    <div class="stepper">
+                        <button class="step-btn" onclick="changeSyllables(-1)">-</button>
+                        <span class="step-val" id="build-sil">Síl.</span>
+                        <button class="step-btn" onclick="changeSyllables(1)">+</button>
+                    </div>
+                </div>
+                <div class="builder-section">
+                    <span class="builder-label">Acentuação:</span>
+                    <div class="radio-group" id="build-stress">
+                        <button class="radio-btn selected" onclick="setStress(null, this)">Qualquer</button>
+                        <button class="radio-btn" onclick="setStress('ox', this)">Oxítona</button>
+                        <button class="radio-btn" onclick="setStress('px', this)">Paroxítona</button>
+                        <button class="radio-btn" onclick="setStress('ppx', this)">Proparoxítona</button>
+                    </div>
+                </div>
+                <div class="builder-section">
+                    <span class="builder-label">Vogal Tônica:</span>
+                    <div class="vowel-grid" id="build-vowels">
+                        <button class="vowel-btn" onclick="toggleVowel('a', this)">A</button>
+                        <button class="vowel-btn" onclick="toggleVowel('e', this)">E</button>
+                        <button class="vowel-btn" onclick="toggleVowel('i', this)">I</button>
+                        <button class="vowel-btn" onclick="toggleVowel('o', this)">O</button>
+                        <button class="vowel-btn" onclick="toggleVowel('u', this)">U</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+/* =========================================================
+   1. AUTO-COLLAPSE (RETRAÇÃO NO SCROLL)
+   ========================================================= */
+const viewport = document.getElementById('viewport');
+const bottomPanel = document.getElementById('bottom-panel');
+let lastScrollY = 0;
+
+viewport.addEventListener('scroll', () => {
+    let currentScrollY = viewport.scrollTop;
+    
+    // Só aciona se tiver rolado mais de 50px (evita bug de toque) e o delta for maior que 10
+    if (currentScrollY > 50 && currentScrollY > lastScrollY + 10) {
+        bottomPanel.classList.add('collapsed'); // Rolou pra baixo: Esconde
+    } else if (currentScrollY < lastScrollY - 10) {
+        bottomPanel.classList.remove('collapsed'); // Rolou pra cima: Mostra
+    }
+    lastScrollY = currentScrollY;
+});
+
+function togglePanelCollapse() {
+    bottomPanel.classList.toggle('collapsed');
+}
+
+/* =========================================================
+   2. MOTOR FONÉTICO
+   ========================================================= */
+const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+
+function tratarHiatosVogais(blocoVoc, pLower) {
+    if (blocoVoc.length <= 1) return[blocoVoc];
+    let resultado = [], atual = blocoVoc[0];
+    for (let i = 1; i < blocoVoc.length; i++) {
+        let char = blocoVoc[i], par = (atual.slice(-1) + char).toLowerCase();
+        let formamDitongo = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe|ia|ie|io|ua|ue|uo)$/.test(par);
+        let vogaisIdenticas = par[0] === par[1];
+        let temHiatoAcent = /[aeiouáéíóúâêôãõü][íú]/.test(par);
+        let ehHiatoFinal = /^(ai|ui|au|oe)$/.test(par) && (pLower.endsWith(par+"r")||pLower.endsWith(par+"z")||pLower.endsWith(par+"l"));
+        let seguidoDeNh = pLower.includes(par+"nh");
+        let formaHiatoDit = false;
+        if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
+            let prox = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
+            if (/^(iu|ia|io|ie|ui)$/.test(char+prox)) formaHiatoDit = true;
+        }
+        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !formaHiatoDit) atual += char;
+        else { resultado.push(atual); atual = char; }
+    }
+    resultado.push(atual); return resultado;
+}
+
+function separarConsoantes(cBlock) {
+    if (cBlock.length <= 1) return ["", cBlock];
+    let tL = cBlock.toLowerCase();
+    if (cBlock.length === 2) {
+        if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL)) return ["", cBlock];
+        return[cBlock.slice(0,1), cBlock.slice(1)];
+    }
+    if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL.slice(-2))) return [cBlock.slice(0,-2), cBlock.slice(-2)];
+    return[cBlock.slice(0,-1), cBlock.slice(-1)];
+}
+
+function silabificar(palavra) {
+    let blocos =[], tipoAt = '', textoAt = '';
+    for (let i = 0; i < palavra.length; i++) {
+        let ch = palavra[i], chL = ch.toLowerCase();
+        if ((chL==='q'||chL==='g') && palavra[i+1] && palavra[i+1].toLowerCase()==='u' && palavra[i+2] && vRegex.test(palavra[i+2])) {
+            if (tipoAt==='V') { blocos.push({tipo:'V',texto:textoAt}); textoAt=''; }
+            blocos.push({tipo:'C',texto:ch+palavra[i+1]}); i++; tipoAt=''; continue;
+        }
+        let tipo = vRegex.test(ch) ? 'V' : 'C';
+        if (tipo !== tipoAt) { if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt}); tipoAt=tipo; textoAt=ch; }
+        else textoAt += ch;
+    }
+    if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt});
+    let bExp =[];
+    for (let b of blocos) {
+        if (b.tipo==='V') tratarHiatosVogais(b.texto, palavra.toLowerCase()).forEach(v=>bExp.push({tipo:'V',texto:v})); else bExp.push(b);
+    }
+    let idxV = bExp.reduce((a,b,i)=>(b.tipo==='V'?[...a,i]:a),[]);
+    if (!idxV.length) return[palavra];
+    let sil = new Array(idxV.length).fill("");
+    for (let i=0; i<idxV[0]; i++) sil[0] += bExp[i].texto;
+    for (let k=0; k<idxV.length-1; k++) {
+        sil[k] += bExp[idxV[k]].texto;
+        let cT=""; for (let j=idxV[k]+1; j<idxV[k+1]; j++) cT+=bExp[j].texto;
+        let [esq,dir] = separarConsoantes(cT); sil[k]+=esq; sil[k+1]+=dir;
+    }
+    let uV = idxV[idxV.length-1];
+    sil[sil.length-1] += bExp[uV].texto;
+    for (let i=uV+1; i<bExp.length; i++) sil[sil.length-1]+=bExp[i].texto;
+    return sil;
+}
+
+function identificarTonica(silabas, p) {
+    let t = p.toLowerCase();
+    for (let i=0;i<silabas.length;i++) if(/[áéíóúâêô]/i.test(silabas[i])) return i;
+    for (let i=0;i<silabas.length;i++) if(/[ãõ]/i.test(silabas[i])) return i;
+    if (t.match(/(r|l|z|x|i|is|u|us|im|ins|um|uns)$/)) return silabas.length-1;
+    if (t.match(/(a|as|e|es|o|os|am|em|ens)$/)) return Math.max(0,silabas.length-2);
+    return Math.max(0,silabas.length-2);
+}
+
+function normV(s) { return s.toLowerCase().replace(/[áàâã]/g,'a').replace(/[éê]/g,'e').replace(/í/g,'i').replace(/[óôõ]/g,'o').replace(/[úü]/g,'u'); }
+
+function perfilFonetico(palavra) {
+    let pL = palavra.toLowerCase().trim();
+    if (!pL || !/[a-záàâãéêíóôõúü]/i.test(pL)) return null;
+    let sil = silabificar(pL);
+    let ti = identificarTonica(sil, pL);
+    
+    let acent = sil.length - 1 - ti;
+    let acentType = acent === 0 ? 'ox' : acent === 1 ? 'px' : acent === 2 ? 'ppx' : 'spx';
+    
+    let pf = sil.slice(ti).join('');
+    let m = pf.match(vRegex);
+    let rima = m ? pf.slice(m.index).toLowerCase() : pf.toLowerCase();
+    
+    let onsetM = sil[ti].match(/^([^aeiouáàâãéêíóôõúü]*)/i);
+    let onset = onsetM ? onsetM[1].toLowerCase() : '';
+    
+    let vogT_match = sil[ti].match(/[aeiouáàâãéêíóôõúü]/i);
+    let vogalT = vogT_match ? normV(vogT_match[0]) : '';
+    let espinha = normV(pL).replace(/[^aeiouãõ]/g,'');
+
+    return { palavra: pL, silabas: sil, numSilabas: sil.length, tonicaIndex: ti, acentuacao: acentType, rimaPerfeita: rima, onset: onset, vogalTonica: vogalT, espinha: espinha };
+}
+
+/* =========================================================
+   3. ESTADOS E CARREGAMENTO
+   ========================================================= */
+let dicionario =[];
+let alvoBase = null;
+let PESOS = { rima: 100, ass: 60, eco: 50, esp: 40 };
+let FILTROS = { numSilabas: null, acentuacao: null, vogalTonica: null, onset: null };
+let buildSilabas = 0; 
+let debounceTimer; 
+
+// Paginação Dinâmica (Infinite Scroll)
+let resultadosFiltrados =[];
+let itemsRenderizados = 0;
+const TAMANHO_CHUNK = 60;
+let intersectionObserver;
+
+async function carregarBancoDeDados() {
+    try {
+        const response = await fetch('palavras.txt');
+        if (!response.ok) throw new Error('HTTP request failed');
+        const text = await response.text();
+        const palavrasRaw = text.split(/\r?\n/).map(p => p.trim()).filter(p => p.length > 1);
+        
+        document.getElementById('status-chip').innerText = "Indexando...";
+        setTimeout(() => {
+            dicionario = palavrasRaw.map(p => perfilFonetico(p)).filter(Boolean);
+            document.getElementById('status-chip').innerText = "BD Pronto";
+            document.getElementById('status-chip').style.background = "#D4EFDF";
+            document.getElementById('inputPalavra').disabled = false;
+            document.getElementById('grid-resultados').innerHTML = `<div class="empty-state">Banco de <b>${dicionario.length.toLocaleString('pt-BR')}</b> palavras carregado.<br>Pesquise ou use o Raio-X.</div>`;
+            setupObserver();
+        }, 10);
+    } catch (e) {
+        document.getElementById('status-chip').innerText = "Erro no palavras.txt";
+        document.getElementById('status-chip').style.background = "#FADBD8";
+        document.getElementById('status-chip').style.color = "#922B21";
+        document.getElementById('grid-resultados').innerHTML = `<div class="empty-state">Não foi possível carregar "palavras.txt". Abra com um Servidor Local (Live Server).</div>`;
+    }
+}
+
+/* =========================================================
+   4. CÁLCULO E INFINITE SCROLL
+   ========================================================= */
+
+function calcularScoreMatematico(item) {
+    let s = 0;
+    if (item.rimaPerfeita === alvoBase.rimaPerfeita) s += PESOS.rima;
+    if (item.vogalTonica === alvoBase.vogalTonica) s += PESOS.ass;
+    if (alvoBase.onset && item.onset === alvoBase.onset) s += PESOS.eco;
+    if (alvoBase.espinha.length > 1 && item.espinha === alvoBase.espinha) s += PESOS.esp;
+    return s;
+}
+
+function passaNosFiltros(item) {
+    if (FILTROS.numSilabas !== null && item.numSilabas !== FILTROS.numSilabas) return false;
+    if (FILTROS.acentuacao !== null && item.acentuacao !== FILTROS.acentuacao) return false;
+    if (FILTROS.vogalTonica !== null && item.vogalTonica !== FILTROS.vogalTonica) return false;
+    if (FILTROS.onset !== null && item.onset !== FILTROS.onset) return false;
+    return true;
+}
+
+function processarNovaBusca() {
+    if (alvoBase) {
+        resultadosFiltrados = dicionario
+            .filter(i => i.palavra !== alvoBase.palavra)
+            .filter(passaNosFiltros)
+            .map(i => ({ ...i, score: calcularScoreMatematico(i) }))
+            .filter(i => i.score > 0)
+            .sort((a,b) => b.score - a.score);
+    } 
+    else if (FILTROS.numSilabas || FILTROS.acentuacao || FILTROS.vogalTonica) {
+        resultadosFiltrados = dicionario.filter(passaNosFiltros).map(i => ({...i, score: 'Filtro'}));
+    } else {
+        resultadosFiltrados =[];
+        document.getElementById("grid-resultados").innerHTML = `<div class="empty-state">Pronto para modular.</div>`;
+        document.getElementById("result-count").innerText = `0 resultados`;
+        return;
+    }
+
+    document.getElementById("result-count").innerText = `${resultadosFiltrados.length.toLocaleString('pt-BR')} resultados`;
+    
+    let grid = document.getElementById("grid-resultados");
+    grid.innerHTML = '';
+    
+    if(resultadosFiltrados.length === 0) {
+        grid.innerHTML = `<div class="empty-state">Nenhuma palavra atende a estes requisitos. Destranque cadeados ou mude os filtros.</div>`;
+        return;
+    }
+
+    // Resetar scroll infinito e carregar primeiro lote
+    itemsRenderizados = 0;
+    carregarProximoLote();
+}
+
+// O Observador silêncioso no fim da tela
+function setupObserver() {
+    let options = { root: document.getElementById('viewport'), rootMargin: '100px', threshold: 0 };
+    intersectionObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) { carregarProximoLote(); }
+    }, options);
+}
+
+// Função que injeta cards no DOM em lotes para não travar o celular
+function carregarProximoLote() {
+    if (itemsRenderizados >= resultadosFiltrados.length) return;
+
+    let grid = document.getElementById("grid-resultados");
+    let oldSentinel = document.getElementById('sentinel');
+    if(oldSentinel) oldSentinel.remove(); // Remove vigia antigo
+
+    let lote = resultadosFiltrados.slice(itemsRenderizados, itemsRenderizados + TAMANHO_CHUNK);
+    let frag = document.createDocumentFragment();
+
+    lote.forEach(item => {
+        let card = document.createElement('div');
+        card.className = 'word-card';
+        card.onclick = () => setAlvoBase(item.palavra);
+        let silTxt = item.silabas.map((s, idx) => idx === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s).join('·');
+        let scoreTxt = typeof item.score === 'number' ? `${item.score} pts` : '';
+        card.innerHTML = `<div>${silTxt}</div><div class="score">${scoreTxt}</div>`;
+        frag.appendChild(card);
+    });
+
+    grid.appendChild(frag);
+    itemsRenderizados += lote.length;
+
+    // Se ainda houver palavras, coloca um novo vigia no fim
+    if (itemsRenderizados < resultadosFiltrados.length) {
+        let s = document.createElement('div');
+        s.id = 'sentinel';
+        grid.appendChild(s);
+        intersectionObserver.observe(s);
+    }
+}
+
+function reprocessarDebounced() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(processarNovaBusca, 150);
+}
+
+/* =========================================================
+   5. CONTROLES DE UI E EVENTOS
+   ========================================================= */
+
+function switchTab(tabId) {
+    bottomPanel.classList.remove('collapsed'); // Garante que abra se clicarem na aba
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    document.getElementById('inputPalavra').blur(); // Fecha o teclado
+}
+
+function updateWeightsFromSliders() {
+    PESOS.rima = parseInt(document.getElementById('peso-rima').value);
+    PESOS.ass  = parseInt(document.getElementById('peso-ass').value);
+    PESOS.eco  = parseInt(document.getElementById('peso-eco').value);
+    PESOS.esp  = parseInt(document.getElementById('peso-esp').value);
+    
+    document.getElementById('val-rima').innerText = PESOS.rima;
+    document.getElementById('val-ass').innerText = PESOS.ass;
+    document.getElementById('val-eco').innerText = PESOS.eco;
+    document.getElementById('val-esp').innerText = PESOS.esp;
+    
+    reprocessarDebounced();
+}
+
+document.querySelectorAll('input[type=range]').forEach(slider => {
+    slider.addEventListener('input', updateWeightsFromSliders);
+});
+
+document.getElementById('inputPalavra').addEventListener('input', (e) => {
+    let val = e.target.value.trim();
+    if(val.length > 1) { let p = perfilFonetico(val); if(p) setAlvoBase(val); }
+});
+document.getElementById('inputPalavra').addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') e.target.blur();
+});
+
+function setAlvoBase(palavra) {
+    alvoBase = perfilFonetico(palavra);
+    if(!alvoBase) return;
+    
+    document.getElementById('inputPalavra').value = palavra;
+    document.getElementById('lego-label').style.display = 'block';
+    FILTROS = { numSilabas: null, acentuacao: null, vogalTonica: null, onset: null };
+    
+    bottomPanel.classList.remove('collapsed'); // Expande painel como feedback
+    if(navigator.vibrate) navigator.vibrate(30);
+
+    renderLegos();
+    processarNovaBusca();
+    document.getElementById('viewport').scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function renderLegos() {
+    let cont = document.getElementById('lego-panel');
+    cont.innerHTML = '';
+    const dicAcent = { 'ox': 'Oxítona', 'px': 'Paroxítona', 'ppx': 'Proparoxítona', 'spx': 'Superproparox.' };
+    
+    let legos =[
+        { id: 'numSilabas', label: `${alvoBase.numSilabas} sílabas`, val: alvoBase.numSilabas },
+        { id: 'acentuacao', label: dicAcent[alvoBase.acentuacao], val: alvoBase.acentuacao },
+        { id: 'vogalTonica', label: `Vogal /${alvoBase.vogalTonica.toUpperCase()}/`, val: alvoBase.vogalTonica }
+    ];
+    if (alvoBase.onset) legos.push({ id: 'onset', label: `Onset /${alvoBase.onset.toUpperCase()}/`, val: alvoBase.onset });
+
+    legos.forEach(l => {
+        let btn = document.createElement('button');
+        let isLocked = FILTROS[l.id] !== null;
+        btn.className = `lego-pill ${isLocked ? 'locked' : ''}`;
+        btn.innerHTML = `${isLocked ? '🔒' : ''} ${l.label}`;
+        btn.onclick = () => {
+            FILTROS[l.id] = FILTROS[l.id] !== null ? null : l.val;
+            if (navigator.vibrate) navigator.vibrate(isLocked ? 20 : 50);
+            renderLegos();
+            processarNovaBusca();
+            document.getElementById('viewport').scrollTo({top: 0, behavior: 'smooth'});
+        };
+        cont.appendChild(btn);
+    });
+}
+
+function checkConstructorMode() {
+    if(alvoBase) {
+        alvoBase = null;
+        document.getElementById('inputPalavra').value = '';
+        document.getElementById('lego-panel').innerHTML = '';
+        document.getElementById('lego-label').style.display = 'none';
+    }
+}
+
+function changeSyllables(delta) {
+    checkConstructorMode();
+    buildSilabas += delta;
+    if(buildSilabas <= 0) buildSilabas = 0;
+    document.getElementById('build-sil').innerText = buildSilabas === 0 ? 'Síl.' : buildSilabas;
+    FILTROS.numSilabas = buildSilabas === 0 ? null : buildSilabas;
+    if (navigator.vibrate) navigator.vibrate(20);
+    reprocessarDebounced();
+}
+
+function setStress(val, btn) {
+    checkConstructorMode();
+    document.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.acentuacao = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    reprocessarDebounced();
+}
+
+function toggleVowel(v, btn) {
+    checkConstructorMode();
+    if (btn.classList.contains('selected')) {
+        btn.classList.remove('selected');
+        FILTROS.vogalTonica = null;
+    } else {
+        document.querySelectorAll('.vowel-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        FILTROS.vogalTonica = v;
+    }
+    if (navigator.vibrate) navigator.vibrate(30);
+    reprocessarDebounced();
+}
+
+window.onload = carregarBancoDeDados;
+</script>
+</body>
+                      </html>
