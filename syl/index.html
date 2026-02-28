@@ -822,12 +822,14 @@ function togglePanelCollapse() {
     bottomPanel.classList.toggle('collapsed');
 }
 
-// Rola para baixo → recolhe painel; rola para cima → expande
+// Rola para baixo → recolhe painel
+// Reabre apenas quando volta ao topo (y < 60px) — nunca por direção de scroll
+// Isso evita a reabertura acidental durante navegação nos resultados
 let _lastScrollY = 0;
 document.getElementById('viewport').addEventListener('scroll', function () {
     let y = this.scrollTop;
-    if      (y > 80 && y > _lastScrollY + 14)  bottomPanel.classList.add('collapsed');
-    else if (y < _lastScrollY - 14)             bottomPanel.classList.remove('collapsed');
+    if (y > 80 && y > _lastScrollY + 20) bottomPanel.classList.add('collapsed');
+    else if (y < 60)                      bottomPanel.classList.remove('collapsed');
     _lastScrollY = y;
 });
 
