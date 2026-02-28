@@ -47,7 +47,7 @@ Algoritmo próprio para Português Brasileiro. Cobre:
 
 ### Campos Fonéticos
 
-Cada palavra indexada recebe 8 campos calculados uma vez na indexação:
+Cada palavra indexada recebe 9 campos calculados uma vez na indexação:
 
 | Campo | Descrição | Exemplo (`abstrato`) |
 |---|---|---|
@@ -60,6 +60,7 @@ Cada palavra indexada recebe 8 campos calculados uma vez na indexação:
 | `familiaCluster` | Tipo estrutural do onset | `"pl"` (plosiva+líquida) |
 | `espinhaVocal` | Sequência de todas as vogais | `"aao"` |
 | `assConsonantal` | Conjunto de consoantes do span | `"bsrt"` |
+| `classe` | Classe morfológica heurística | `"sub"` (substantivo) |
 
 > **Nota sobre vogais nasais:** `ã` e `õ` são preservados como classe distinta em `espinhaVocal`
 > e `vogaisRima` (ex: `limão` → espinha `"iãõ"`). Isto difere de alguns experimentos paralelos
@@ -158,8 +159,8 @@ Arquitetura Bottom Sheet (100dvh) com infinite scroll silencioso e filtros preci
   - **Padrão:** cinza (não aplicado)
   - **Travado:** laranja com 🔒 (toque curto = toggle)
   - **Negado:** vermelho com ≠ (toque longo 500ms = ativa negação)
-- **Blocos Molde:** numSílabas, acentuação, vogalTonica, onsetTonico, **coda**, familiaCluster, rimaPerfeita, vogaisRima, espinhaVocal (9 campos).
-- **Construtor:** acesso a numSílabas (stepper), acentuação (radio), vogalTonica (grid), **onsetTonico** (texto).
+- **Blocos Molde:** numSílabas, acentuação, vogalTonica, onsetTonico, **coda**, familiaCluster, rimaPerfeita, vogaisRima, espinhaVocal, **classe** (10 campos).
+- **Construtor:** acesso a numSílabas (stepper), acentuação (radio), vogalTonica (grid), **onsetTonico** (texto), **classe morfológica** (botões sub/adj/vrb/adv/outro).
 - **Microfone:** Web Speech API progressiva (não quebra sem ela); recognição em pt-BR, pega última palavra da frase.
 - **Vibração:** feedback háptico diferenciado (travar, negar, buscar).
 - **CORS:** fetch('./palavras.txt') requer servidor local.
@@ -243,6 +244,32 @@ O arquivo atual tem ~51.800 linhas. Linhas sem letra são ignoradas automaticame
 - [x] Vibração háptica em ações
 - [x] Event delegation robusto para pills (suporta nomes especiais)
 
+**Dark Mode (v3.1)**
+- [x] `@media (prefers-color-scheme: dark)` automático
+- [x] CSS custom properties: `--bg`, `--text`, `--header-bg`, `--shadow`, `--c-rima`, etc.
+- [x] Cores das faixas adaptadas para fundo escuro
+- [x] Inputs, pills e bottom panel com variáveis de tema
+
+**Histórico (v3.1)**
+- [x] localStorage: últimas 20 palavras buscadas (HIST_MAX)
+- [x] Chips clicáveis abaixo do campo de busca
+- [x] Re-busca imediata ao clicar no chip
+- [x] `renderHistorico()` atualiza dinamicamente
+
+**URL Hash Sharing (v3.1)**
+- [x] Molde: `#molde=fogo&locks=rima,3sil&neg=onset`
+- [x] Construtor: `#construtor&numSilabas=3&acentuacao=px`
+- [x] `_restoreFromHash()` após indexação completa
+- [x] `hashchange` listener para navegação com botões do browser
+- [x] `_hashPaused` flag evita loops circulares durante restauração
+
+**Classe Morfológica (v3.1)**
+- [x] `calcClasse(p)` — heurística por sufixo: sub/adj/vrb/adv/outro
+- [x] `classe` como campo no `perfilFonetico()`
+- [x] Lego pill no Molde (travável/negável)
+- [x] Botões de classe no Construtor (.morfo-btn)
+- [x] Regras: -mente→adv, -ar/-er/-ir→vrb, -oso/-ivo/-vel→adj, -ção/-mento/-dade→sub
+
 ---
 
 ### 📅 Planejado (Fase 6+)
@@ -270,9 +297,10 @@ let PESOS = {
 - [ ] Nova faixa "Quase-rima" com score ~120–140
 - [ ] Abre espaço para sonoridades menos óbvias
 
-**Classe Morfológica**
-- [ ] Heurística por sufixo: -ção (subst), -mente (adv), -oso (adj), -ar (verb)
-- [ ] Filter no Construtor: "substantivos apenas", "adjetivos…"
+**Classe Morfológica** ✅
+- [x] Heurística por sufixo: -ção (subst), -mente (adv), -oso (adj), -ar (verb)
+- [x] Filter no Construtor: "substantivos apenas", "adjetivos…"
+- [x] Lego pill no Molde (travável/negável como os demais blocos)
 
 **Modo Exploração: Faixas Isoladas**
 - [ ] Vista alternativa horizontal: swipe entre faixas
@@ -284,15 +312,17 @@ let PESOS = {
 - [ ] Intersecção de rimas de A ∩ rimas de B
 - [ ] "Quais palavras rimam com X E com Y?"
 
-**Histórico e Favoritos**
-- [ ] localStorage: últimas 20 palavras buscadas
+**Histórico e Favoritos** (parcial ✅)
+- [x] localStorage: últimas 20 palavras buscadas
+- [x] Chips clicáveis para re-busca
 - [ ] Marcar com ⭐ para "lista pessoal"
 - [ ] Exportar favoritos como texto/CSV
 
-**Compartilhar via URL Hash**
-- [ ] `#molde=fogo&locks=rima,3sil&onset=&coda=-o`
-- [ ] Restaura estado completo ao abrir
-- [ ] Permite mandar busca específica para outra pessoa
+**Compartilhar via URL Hash** ✅
+- [x] `#molde=fogo&locks=rima,3sil&neg=onset`
+- [x] Restaura estado completo ao abrir (Molde e Construtor)
+- [x] Permite mandar busca específica para outra pessoa
+- [x] Suporta navegação por botões voltar/avançar do browser
 
 **Análise de Verso**
 - [ ] Campo "colar um verso" → silabifica, marca tônicas
@@ -312,9 +342,10 @@ let PESOS = {
 - [ ] ~300% mais rápido na 2ª visita
 - [ ] Estratégia: serialize() / deserialize() com workers
 
-**Dark Mode**
-- [ ] `prefers-color-scheme: dark` automático
-- [ ] Conforto noturno
+**Dark Mode** ✅
+- [x] `prefers-color-scheme: dark` automático
+- [x] CSS custom properties para tema completo
+- [x] Cores das faixas adaptadas para legibilidade em fundo escuro
 
 ---
 
@@ -324,10 +355,10 @@ let PESOS = {
 |---|------|---------|---------|--------|
 | 1 | Frequência de uso (corpus) | médio | alto | planejado |
 | 2 | Rima imperfeita (Levenshtein) | médio | alto | planejado |
-| 3 | Classe morfológica | médio | médio | planejado |
-| 4 | Historico + Favoritos | baixo | médio | planejado |
-| 5 | URL hash sharing | baixo | alto | planejado |
-| 6 | Dark mode | baixo | médio | planejado |
+| 3 | Classe morfológica | médio | médio | **feito v3.1** |
+| 4 | Historico + Favoritos | baixo | médio | **parcial v3.1** (falta ⭐) |
+| 5 | URL hash sharing | baixo | alto | **feito v3.1** |
+| 6 | Dark mode | baixo | médio | **feito v3.1** |
 | 7 | Analisador de verso | alto | alto | laboratório |
 
 ---
@@ -375,9 +406,10 @@ Event delegation no container pai é mais robusto e elimina o problema completam
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
-| v3 (atual) | 2026-02-28 | Bottom Sheet completo, Lego Locks, negação ≠, onset+coda, infinite scroll, auto-collapse robusto |
+| v3.1 (atual) | 2026-02-28 | Dark mode, histórico, URL hash sharing, classe morfológica |
+| v3 | 2026-02-28 | Bottom Sheet completo, Lego Locks, negação ≠, onset+coda, infinite scroll, auto-collapse robusto |
 | v2 | 2026-02-27 | Flat header, seções colapsáveis, sistema de faixas consolidado |
 | v1 | (anterior) | Faixas toggleáveis, layout original |
 
-**Motor fonético:** estável desde v1.
-**Interface:** v3 — Bottom Sheet Gold Standard (2026-02-28).
+**Motor fonético:** estável desde v1 (9 campos → 10 com `classe` em v3.1).
+**Interface:** v3.1 — Bottom Sheet Gold Standard + dark mode + historico + hash (2026-02-28).
