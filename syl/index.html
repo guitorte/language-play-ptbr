@@ -23,6 +23,7 @@
             --c-eco:      #2980B9;
             --c-ass:      #E67E22;
             --c-prox:     #8E44AD;
+            --c-qrima:    #16A085;
             --c-ritmo:    #7F8C8D;
             --safe-b:     env(safe-area-inset-bottom, 0px);
             --header-bg:  rgba(240,243,244,0.94);
@@ -47,6 +48,7 @@
                 --c-eco:      #3498DB;
                 --c-ass:      #F39C12;
                 --c-prox:     #9B59B6;
+                --c-qrima:    #1ABC9C;
                 --c-ritmo:    #95A5A6;
                 --header-bg:  rgba(24,28,32,0.94);
                 --shadow:     rgba(0,0,0,0.25);
@@ -112,6 +114,7 @@
         .word-card.b-eco   { border-color: var(--c-eco); }
         .word-card.b-ass   { border-color: var(--c-ass); }
         .word-card.b-prox  { border-color: var(--c-prox); }
+        .word-card.b-qrima { border-color: var(--c-qrima); }
         .word-card.b-ritmo { border-color: var(--c-ritmo); }
         .tonica { font-weight: 800; color: var(--accent); }
 
@@ -406,6 +409,16 @@
                 </div>
                 <p class="input-hint">Heurística por sufixo. Aproximada — não substitui um dicionário morfológico.</p>
             </div>
+            <div class="builder-section">
+                <span class="builder-label">Frequência estimada</span>
+                <div class="radio-row" id="freq-row">
+                    <button class="radio-btn freq-btn selected" data-freq=""      onclick="setFreq(null, this)">Qualquer</button>
+                    <button class="radio-btn freq-btn"          data-freq="comum" onclick="setFreq('comum', this)">Comum</button>
+                    <button class="radio-btn freq-btn"          data-freq="media" onclick="setFreq('media', this)">Neutra</button>
+                    <button class="radio-btn freq-btn"          data-freq="rara"  onclick="setFreq('rara', this)">Rara</button>
+                </div>
+                <p class="input-hint">Heurística por comprimento e morfologia — aproximada.</p>
+            </div>
         </div>
 
     </div><!-- /tab-wrapper -->
@@ -538,6 +551,37 @@ function calcCoda(p) {
     return '';
 }
 
+// Frequência estimada por heurística (sem corpus)
+// Três categorias: 'comum' / 'media' / 'rara'
+const FREQ_LABEL = { comum: 'Comum', media: 'Neutra', rara: 'Rara' };
+function calcFreq(p, numSil) {
+    let len = p.length;
+    if (len <= 4) return 'comum';
+    if (numSil <= 2 && len <= 6) return 'comum';
+    if (len >= 12 || numSil >= 6) return 'rara';
+    if (/(?:ismo|fobia|filia|grafia|logia|metria|nomia|scopia|cracia|genia|terapia)$/i.test(p)) return 'rara';
+    if (/^(?:pseudo|proto|infra|ultra|supra|hiper|macro|micro)/.test(p) && len > 9) return 'rara';
+    return 'media';
+}
+
+// Distância de Levenshtein (para rima imperfeita)
+function levenshtein(a, b) {
+    let la = a.length, lb = b.length;
+    if (la === 0) return lb;
+    if (lb === 0) return la;
+    let prev = Array.from({length: lb + 1}, (_, i) => i);
+    for (let i = 1; i <= la; i++) {
+        let curr = [i];
+        for (let j = 1; j <= lb; j++) {
+            curr[j] = a[i-1] === b[j-1]
+                ? prev[j-1]
+                : 1 + Math.min(prev[j-1], prev[j], curr[j-1]);
+        }
+        prev = curr;
+    }
+    return prev[lb];
+}
+
 // Classe morfológica por heurística de sufixo
 // Ordem importa: sufixos mais longos primeiro para evitar falsos positivos.
 function calcClasse(p) {
@@ -565,11 +609,12 @@ function perfilFonetico(palavra) {
     let pL = palavra.toLowerCase().trim();
     if (!pL || !/[a-záàâãéêíóôõúü]/i.test(pL)) return null;
     let sil = silabificar(pL), ti = identificarTonica(sil, pL), onset = calcOnset(sil[ti]);
+    let numSil = sil.length;
     return {
         palavra:        pL,
         silabas:        sil,
         tonicaIndex:    ti,
-        numSilabas:     sil.length,
+        numSilabas:     numSil,
         acentuacao:     calcAcent(sil, ti),
         rimaPerfeita:   extrairRima(sil, ti),
         vogaisRima:     calcVogaisRima(sil, ti),
@@ -580,6 +625,7 @@ function perfilFonetico(palavra) {
         familiaCluster: calcFam(onset),
         coda:           calcCoda(pL),
         classe:         calcClasse(pL),
+        freq:           calcFreq(pL, numSil),
     };
 }
 
@@ -588,7 +634,13 @@ function perfilFonetico(palavra) {
 ═══════════════════════════════════════════════════════════════ */
 function calcScore(item, alvo, setOnset, setAssC, lenAssC) {
     let s = 0;
-    if (item.rimaPerfeita === alvo.rimaPerfeita)                     s += 100;
+    if (item.rimaPerfeita === alvo.rimaPerfeita) {
+        s += 100;
+    } else if (alvo.rimaPerfeita.length >= 2) {
+        let d = levenshtein(item.rimaPerfeita, alvo.rimaPerfeita);
+        if (d === 1) s += 70;
+        else if (d === 2 && alvo.rimaPerfeita.length >= 3) s += 40;
+    }
     if (alvo.vogaisRima && item.vogaisRima === alvo.vogaisRima)      s +=  60;
     if (alvo.onsetTonico) {
         if (item.onsetTonico === alvo.onsetTonico) {
@@ -613,6 +665,7 @@ function calcScore(item, alvo, setOnset, setAssC, lenAssC) {
 
 const BANDAS = [
     { key:160, label:'Rima',        cls:'b-rima',  color:'var(--c-rima)' },
+    { key:130, label:'Quase-rima',  cls:'b-qrima', color:'var(--c-qrima)' },
     { key:100, label:'Eco forte',   cls:'b-eco',   color:'var(--c-eco)' },
     { key:60,  label:'Assonância',  cls:'b-ass',   color:'var(--c-ass)' },
     { key:25,  label:'Proximidade', cls:'b-prox',  color:'var(--c-prox)' },
@@ -620,6 +673,7 @@ const BANDAS = [
 ];
 function getBandaKey(score) {
     if (score >= 160) return 160;
+    if (score >= 130) return 130;
     if (score >= 100) return 100;
     if (score >= 60)  return 60;
     if (score >= 25)  return 25;
@@ -636,14 +690,14 @@ let FILTROS = {
     numSilabas: null, acentuacao: null, vogalTonica: null,
     onsetTonico: null, familiaCluster: null,
     rimaPerfeita: null, vogaisRima: null, espinhaVocal: null,
-    coda: null, classe: null,
+    coda: null, classe: null, freq: null,
 };
 
 let FILTROS_NEG = {
     numSilabas: false, acentuacao: false, vogalTonica: false,
     onsetTonico: false, familiaCluster: false,
     rimaPerfeita: false, vogaisRima: false, espinhaVocal: false,
-    coda: false, classe: false,
+    coda: false, classe: false, freq: false,
 };
 
 let resultadosFiltrados = [];
@@ -806,13 +860,14 @@ const DEF_BLOCOS = [
     { id: 'onsetTonico',    label: v => `onset /${v}/`,                         show: v   => v !== ''          },
     { id: 'coda',           label: v => `coda: -${v}`,                          show: v   => v !== ''          },
     { id: 'classe',         label: v => CLASSE_LABEL[v] || v,                  show: v   => v !== 'outro'     },
+    { id: 'freq',            label: v => FREQ_LABEL[v] || v,                   show: ()  => true              },
     { id: 'familiaCluster', label: v => FAM_LABEL[v] || v,                     show: v   => v!=='si'&&v!=='vz'},
     { id: 'rimaPerfeita',   label: v => `rima: -${v}`,                         show: ()  => true              },
     { id: 'vogaisRima',     label: v => `vogRima: ${v}`,                       show: v   => v.length > 1      },
     { id: 'espinhaVocal',   label: v => `espinha: ${v}`,                       show: v   => v.length > 1      },
 ];
 
-const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda','classe'];
+const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda','classe','freq'];
 
 function setAlvoPalavra(palavra) {
     let perfil = perfilFonetico(palavra);
@@ -932,6 +987,15 @@ function setClasse(val, btn) {
     processarBusca();
 }
 
+function setFreq(val, btn) {
+    _ativarConstrutor();
+    document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.freq = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
 function _syncConstrutorUI() {
     buildSilabas = FILTROS.numSilabas || 0;
     document.getElementById('step-val').textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
@@ -944,6 +1008,9 @@ function _syncConstrutorUI() {
     document.getElementById('onset-input').value = FILTROS.onsetTonico || '';
     document.querySelectorAll('.morfo-btn').forEach(b => {
         b.classList.toggle('selected', (b.dataset.classe || null) === FILTROS.classe);
+    });
+    document.querySelectorAll('.freq-btn').forEach(b => {
+        b.classList.toggle('selected', (b.dataset.freq || null) === FILTROS.freq);
     });
 }
 
