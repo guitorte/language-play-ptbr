@@ -47,7 +47,7 @@ Algoritmo próprio para Português Brasileiro. Cobre:
 
 ### Campos Fonéticos
 
-Cada palavra indexada recebe 8 campos calculados uma vez na indexação:
+Cada palavra indexada recebe 9 campos calculados uma vez na indexação:
 
 | Campo | Descrição | Exemplo (`abstrato`) |
 |---|---|---|
@@ -56,9 +56,11 @@ Cada palavra indexada recebe 8 campos calculados uma vez na indexação:
 | `rimaPerfeita` | Vogal tônica → fim | `"ato"` |
 | `vogaisRima` | Só vogais do span tônico→fim | `"ao"` |
 | `onsetTonico` | Consoante(s) de ataque da tônica | `"tr"` |
+| `coda` | Consoante(s) após última vogal | `""` (aberta) |
 | `familiaCluster` | Tipo estrutural do onset | `"pl"` (plosiva+líquida) |
 | `espinhaVocal` | Sequência de todas as vogais | `"aao"` |
 | `assConsonantal` | Conjunto de consoantes do span | `"bsrt"` |
+| `classe` | Classe morfológica heurística | `"sub"` (substantivo) |
 
 > **Nota sobre vogais nasais:** `ã` e `õ` são preservados como classe distinta em `espinhaVocal`
 > e `vogaisRima` (ex: `limão` → espinha `"iãõ"`). Isto difere de alguns experimentos paralelos
@@ -101,38 +103,67 @@ Os resultados são classificados em 5 faixas com cores distintas:
 
 ---
 
-## Interface — Estado Atual (v2)
+## Interface — Estado Atual (v3 — Gold Standard)
 
-Cinco elementos verticais pós-busca, mobile-aware mas sem Bottom Sheet:
+Arquitetura Bottom Sheet (100dvh) com infinite scroll silencioso e filtros precisos:
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ Explorador de Sonoridades              [✅ 51.234 palavras]   │  ← app-header
-├──────────────────────────────────────────────────────────────┤
-│ [_________________________palavra_______________________ →]   │  ← search-wrap
-│                                                              │    input full-width, botão embutido
-│ abs·TRA·to  [3 síl.] [Parox.] [vogal /a/] [onset: tr] [···] │  ← perfil-linha
-│                                                              │
-│ [● Rima 23] [● Eco 87] [● Ass 156] [○ Prox 412] [○ Ritmo 1K]│  ← banda-row (scrollável)
-│                                                              │
-│ 266 palavras        [⊞][≡]   [2s][3s][4s] | [Parox.][Oxít.] │  ← result-header
-├──────────────────────────────────────────────────────────────┤
-│  [card][card][card][card][card][card][card][card][card][card] │  ← ⊞ grid paginado
-│  ...                                                         │     ou
-│  ▼ Rima (≥160) ─────────────────────────── 23 palavras       │  ← ≡ seções colapsáveis
-│    [card][card][card][card]  [+ 20 mais]                     │
-│  ▼ Eco forte (100-159) ─────────────────── 87 palavras       │
-│    [card][card][card]...                                      │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ ● 266 palavras  ● Rima 23  ● Eco 87  ● Ass 156  ● Prox 412     │  ← sticky header
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ [abs·TRA·to]  [fogo]  [logo]  [pogo]  [bogo]  [jogo]  ...      │
+│ [amor]  [dor]  [cor]  [flor]  [mor]  [sor]  ...                │
+│ ...                                                             │
+│                                                                 │  ← #viewport
+│                                           ↓ infinite scroll       │
+│ ...  [caro]  [para]  [mara]  [tara]                             │
+│                          ◄ sentinel (trigger)                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+  ╭─ #bottom-panel (border-radius 18px 18px 0 0) ────────────────╮
+  │                                                                 │
+  │  ─────  ← handle (drag/click para colapsar)                   │
+  │                                                                 │
+  │  🔍 Molde          🏗 Construtor                               │  ← tabs (sempre visíveis)
+  │ ┌──────────────────────────────────────────────────────────┐  │
+  │ │ [____________ Digite uma palavra ____________] [🎤]      │  │  ← search-wrap
+  │ │                                                          │  │
+  │ │ [🔒 3 síl.] [Parox.] [vogal /a/] [coda: -o] [≠ onset]  │  │  ← lego pills
+  │ │ ┌─────────────────────────────────────────────────────┐ │  │     travado | padrão
+  │ │ │    (long-press nas pills = negação ≠)              │ │  │
+  │ │ └─────────────────────────────────────────────────────┘ │  │     negado | desmontado
+  │ │                                                          │  │
+  │ │ Status: ✅ 51.234 palavras prontas                       │  │
+  │ └──────────────────────────────────────────────────────────┘  │  ← aba-molde
+  │                                                                 │
+  │ OU (se em Construtor):                                         │
+  │ ┌──────────────────────────────────────────────────────────┐  │
+  │ │ Número de sílabas: [−] 3 [+]                           │  │
+  │ │ Acentuação: [Qualquer] [Ox.] [Par.] [Prox.]            │  │
+  │ │ Vogal tônica: [A] [E] [I] [O] [U]                      │  │
+  │ │ Onset tônico: [_____________]  ex: tr, pr, fl…         │  │
+  │ └──────────────────────────────────────────────────────────┘  │  ← aba-construtor
+  │                                                                 │
+  │  (max-height: 0 quando colapsado; auto-collapse ao rolar ↓)   │
+  ╰─────────────────────────────────────────────────────────────╯
 ```
 
-**Detalhes de implementação:**
-- `inputPalavra.blur()` após busca fecha o teclado no mobile
-- Foco condicional no input: só em viewport > 768px (evita abertura involuntária de teclado)
-- Cards com `data-palavra` + event delegation (suporta palavras com apóstrofo)
-- `modoView` persiste entre buscas (usuário não perde o modo ≡ ao buscar nova palavra)
-- Estado de colapso e limite de seções persiste ao mudar facetas/faixas (reset só na nova busca)
-- `color-mix()` evitado: cores de seções hardcoded no array `BANDAS` (rgb inline)
+**Detalhes técnicos v3:**
+
+- **Zona de leitura:** `#viewport` (flex: 1, overflow-y: auto) ocupa todo espaço. Infinite scroll via IntersectionObserver (chunk 60 itens).
+- **Zona do polegar:** `#bottom-panel` (flex-shrink: 0) com Bottom Sheet clássico. Handle clicável + abas sempre visíveis.
+- **Auto-collapse:** colapsa ao rolar ↓ (y > 80px + delta > 20px); reabre ao voltar ao topo (y < 60px). Nunca por direção intermediária de scroll.
+- **Sticky header:** contagem + chips coloridos de faixa (só no modo Molde com score).
+- **Lego pills:** três estados visuais:
+  - **Padrão:** cinza (não aplicado)
+  - **Travado:** laranja com 🔒 (toque curto = toggle)
+  - **Negado:** vermelho com ≠ (toque longo 500ms = ativa negação)
+- **Blocos Molde:** numSílabas, acentuação, vogalTonica, onsetTonico, **coda**, familiaCluster, rimaPerfeita, vogaisRima, espinhaVocal, **classe** (10 campos).
+- **Construtor:** acesso a numSílabas (stepper), acentuação (radio), vogalTonica (grid), **onsetTonico** (texto), **classe morfológica** (botões sub/adj/vrb/adv/outro).
+- **Microfone:** Web Speech API progressiva (não quebra sem ela); recognição em pt-BR, pega última palavra da frase.
+- **Vibração:** feedback háptico diferenciado (travar, negar, buscar).
+- **CORS:** fetch('./palavras.txt') requer servidor local.
 
 ---
 
@@ -156,104 +187,194 @@ O arquivo atual tem ~51.800 linhas. Linhas sem letra são ignoradas automaticame
 
 ## Snapshots de Versões
 
-| Arquivo | Versão | Descrição |
-|---|---|---|
-| `index.html` | v2 (atual) | Flat header + seções colapsáveis |
-| `index-v2-flatheader.html` | v2 backup | Cópia antes da próxima iteração |
-| `index-v1-bandas.html` | v1 backup | Faixas toggleáveis, layout original |
+| Arquivo | Versão | Data | Descrição |
+|---|---|---|---|
+| `index.html` | v3 (atual) | 2026-02-28 | Bottom Sheet + Lego Locks + negação + onset |
+| `index-v2-flatheader.html` | v2 | 2026-02-27 | Flat header + seções colapsáveis (backup) |
+| `index-v1-bandas.html` | v1 | v1 | Faixas toggleáveis, layout original (backup) |
 
 ---
 
 ## Roadmap
 
-O roadmap de convergência com a visão Bottom Sheet do `x3.html`.
+### ✅ Implementado (v3 — Gold Standard)
 
-### Fase 3 — Arquitetura Bottom Sheet (próxima iteração)
+**Arquitetura Bottom Sheet (Fase 3)**
+- [x] `100dvh` body com overflow: hidden
+- [x] `#viewport` (flex: 1, overflow-y: auto) para zona de leitura
+- [x] `#bottom-panel` com border-radius 18px 18px 0 0
+- [x] Handle clicável + abas sempre visíveis
+- [x] Tab-wrapper com max-height animado (cubic-bezier)
+- [x] Auto-collapse ao rolar ↓ (y > 80px + delta > 20px); reabre ao topo (y < 60px)
+- [x] Sticky header com contagem + chips de faixa
+- [x] `interactive-widget=resizes-content` + `safe-area-inset-bottom` (iOS)
+- [x] `overscroll-behavior-y: contain` (evita pull-to-refresh)
 
-Migrar para o paradigma `100dvh` com controles na zona do polegar:
+**Infinite Scroll (Fase 5)**
+- [x] IntersectionObserver no sentinel
+- [x] Chunk de 60 itens, carregamento silencioso
+- [x] rootMargin: 120px (antecipa carregamento)
 
-```
-body height: 100dvh; overflow: hidden
-  ├─ #viewport (flex:1, overflow-y:auto, overscroll-behavior-y:contain)
-  │   └─ cards grid + infinite scroll
-  └─ #bottom-panel (fixed height, border-radius 24px 24px 0 0)
-       ├─ handle (drag-to-resize)
-       ├─ tabs [Molde] [Pesos] [Raio-X]
-       └─ tab-wrapper (max-height animado para auto-collapse no scroll)
-```
+**Molde: Lego Locks (Fase 5)**
+- [x] Extração de blocos fonéticos como pílulas clicáveis
+- [x] Toque curto = travada/destrava (toggle simples)
+- [x] FILTROS[campo] aplicado como eliminação (não por peso)
 
-Manter o motor fonético atual intacto. Só muda a camada de UI.
+**Construtor (Fase 4 — parcial)**
+- [x] Stepper de sílabas
+- [x] Radio de acentuação
+- [x] Grid de vogais tônicas
+- [x] Campo texto para onset tônico (novo!)
 
-**Auto-collapse:** ao rolar para baixo no viewport, o `bottom-panel` retrai via
-`classList.add('collapsed')` com `max-height: 0` animado no `.tab-wrapper`.
+**Novos Blocos Fonéticos**
+- [x] `coda` como campo no perfilFonetico() (consoante final)
+- [x] `coda` aparece como lego pill no Molde
+- [x] `coda` filtrável no Construtor (texto)
 
-**Proteções mobile:**
-- `interactive-widget=resizes-content` no viewport meta
-- `safe-area-inset-bottom` no padding do painel inferior
-- `overscroll-behavior-y: contain` no viewport (evita pull-to-refresh)
-- `inputmode="search"` + `enterkeyhint="search"` no input
+**Negação de Filtros (Fase 5+)**
+- [x] FILTROS_NEG[campo] = true/false para negar
+- [x] Toque longo 500ms (pointer events) = ativa negação
+- [x] Visual: pill.locked (laranja) | pill.negated (vermelho ≠)
+- [x] Cancelamento robusto de timer via pointerup/cancel
+- [x] Vibração: curto [15/45ms] | longo [10,30,70ms]
 
-### Fase 4 — Labs: Pesos e Raio-X
+**Funcionalidades Extras**
+- [x] Web Speech API (microphone 🎤, pt-BR, pega última palavra)
+- [x] Debounce 280ms no input + Enter imediato
+- [x] Vibração háptica em ações
+- [x] Event delegation robusto para pills (suporta nomes especiais)
 
-Dois tabs adicionais integrados ao Bottom Sheet:
+**Dark Mode (v3.1)**
+- [x] `@media (prefers-color-scheme: dark)` automático
+- [x] CSS custom properties: `--bg`, `--text`, `--header-bg`, `--shadow`, `--c-rima`, etc.
+- [x] Cores das faixas adaptadas para fundo escuro
+- [x] Inputs, pills e bottom panel com variáveis de tema
 
-**Pesos (Equalizador):** Sliders para os 9 critérios do score composto.
-Os pesos substituem as constantes hardcoded (+100, +60, +50...) por variáveis ajustáveis.
-Debounce de 150ms para não recalcular 50K palavras a cada pixel do slider.
+**Histórico (v3.1)**
+- [x] localStorage: últimas 20 palavras buscadas (HIST_MAX)
+- [x] Chips clicáveis abaixo do campo de busca
+- [x] Re-busca imediata ao clicar no chip
+- [x] `renderHistorico()` atualiza dinamicamente
+
+**URL Hash Sharing (v3.1)**
+- [x] Molde: `#molde=fogo&locks=rima,3sil&neg=onset`
+- [x] Construtor: `#construtor&numSilabas=3&acentuacao=px`
+- [x] `_restoreFromHash()` após indexação completa
+- [x] `hashchange` listener para navegação com botões do browser
+- [x] `_hashPaused` flag evita loops circulares durante restauração
+
+**Classe Morfológica (v3.1)**
+- [x] `calcClasse(p)` — heurística por sufixo: sub/adj/vrb/adv/outro
+- [x] `classe` como campo no `perfilFonetico()`
+- [x] Lego pill no Molde (travável/negável)
+- [x] Botões de classe no Construtor (.morfo-btn)
+- [x] Regras: -mente→adv, -ar/-er/-ir→vrb, -oso/-ivo/-vel→adj, -ção/-mento/-dade→sub
+
+---
+
+### 📅 Planejado (Fase 6+)
+
+**Pesos e Equalizador (Fase 4 — completo)**
+- [ ] 3º tab "Pesos" integrado ao Bottom Sheet
+- [ ] Sliders para os 9 critérios (rima, assonância, eco exato, etc.)
+- [ ] Debounce 150ms para não re-score a cada pixel
+- [ ] Salvar pesos no localStorage
 
 ```javascript
-// Estrutura de pesos:
 let PESOS = {
-  rima: 100, assonancia: 60, ecoExato: 50, ecoCompartilhado: 25,
-  familiaCluster: 20, assConsonantal: 30, espinha: 40, vogalTonica: 15, ritmo: 10
+  rimaPerfeita: 100, vogaisRima: 60, ecoExato: 50, ecoCompartilhado: 25,
+  familiaCluster: 20, assConsonantal: 30, espinhaVocal: 40, vogalTonica: 15, ritmo: 10
 };
 ```
 
-**Raio-X (Construtor):** Busca sem palavra-base. O usuário define critérios diretamente:
-- Steppers para número de sílabas (`+` / `-`, 44px mínimo)
-- Radio buttons para tipo de acentuação
-- Grid de botões de vogal tônica (A/E/I/O/U)
-- Resultado filtra o dicionário inteiro pelos critérios definidos
+**Frequência de Uso (prioridade alta)**
+- [ ] Anotar dicionário com classe 1–5 derivada de corpus
+- [ ] Filter no Construtor: "comum / raro"
+- [ ] Muda caráter das sugestões (erudita vs popular)
 
-Quando o Raio-X está ativo, `alvoAtual = null` e `calcScore` é substituído por `passaNosFiltros`.
+**Rima Imperfeita (near-rhyme)**
+- [ ] Levenshtein/edição na string de rima
+- [ ] Nova faixa "Quase-rima" com score ~120–140
+- [ ] Abre espaço para sonoridades menos óbvias
 
-### Fase 5 — Infinite Scroll com IntersectionObserver
+**Classe Morfológica** ✅
+- [x] Heurística por sufixo: -ção (subst), -mente (adv), -oso (adj), -ar (verb)
+- [x] Filter no Construtor: "substantivos apenas", "adjetivos…"
+- [x] Lego pill no Molde (travável/negável como os demais blocos)
 
-Substituir a paginação/load-more atual por injeção silenciosa no fim do scroll:
+**Modo Exploração: Faixas Isoladas**
+- [ ] Vista alternativa horizontal: swipe entre faixas
+- [ ] Vê só "Rima" → swipe → vê só "Eco forte"
+- [ ] Útil para listas longas de uma faixa específica
 
-```javascript
-// Sentinel no fim do grid
-const observer = new IntersectionObserver(entries => {
-  if (entries[0].isIntersecting) injetarProximoLote();
-}, { root: document.getElementById('viewport'), rootMargin: '120px' });
-```
+**Comparar Dois Moldes**
+- [ ] 2º campo input: palavra B
+- [ ] Intersecção de rimas de A ∩ rimas de B
+- [ ] "Quais palavras rimam com X E com Y?"
 
-Vantagem: o usuário nunca clica em "carregar mais" — a lista simplesmente continua.
-Memória controlada: só os cards visíveis estão no DOM (virtual scroll é desnecessário para 50K).
+**Histórico e Favoritos** (parcial ✅)
+- [x] localStorage: últimas 20 palavras buscadas
+- [x] Chips clicáveis para re-busca
+- [ ] Marcar com ⭐ para "lista pessoal"
+- [ ] Exportar favoritos como texto/CSV
 
-### Fase 5 — Molde: Lego Locks
+**Compartilhar via URL Hash** ✅
+- [x] `#molde=fogo&locks=rima,3sil&neg=onset`
+- [x] Restaura estado completo ao abrir (Molde e Construtor)
+- [x] Permite mandar busca específica para outra pessoa
+- [x] Suporta navegação por botões voltar/avançar do browser
 
-Na aba Molde, ao buscar uma palavra, as características extraídas viram pílulas clicáveis.
-Clicar em uma pílula "trava" aquele critério como filtro absoluto (não por peso, por eliminação).
+**Análise de Verso**
+- [ ] Campo "colar um verso" → silabifica, marca tônicas
+- [ ] Identifica esquema rítmico (decassílabo, redondilha…)
+- [ ] Feedback imediato ao escrever poesia
 
-```
-abs·TRA·to
-  [🔒 3 sílabas]  [Parox.]  [vogal /a/]  [onset: tr]
-```
+**Verificador de Métrica**
+- [ ] Digitar estrofe inteira → checa esquema (ABAB, ABBA…)
+- [ ] Aponta divergências linha a linha
 
-Lego travado → aplica `FILTROS[campo] = valor` antes do cálculo de score.
-Lego destravado → `FILTROS[campo] = null`.
+**Sugestor de Continuação**
+- [ ] Verso incompleto + esquema desejado
+- [ ] Sugere palavras que rimam + cabem no ritmo + classe morfológica correta
 
-### Fase 6 — IndexedDB e Funcionalidades Extras
+**IndexedDB Cache**
+- [ ] Salva dicionário indexado após 1ª carga
+- [ ] ~300% mais rápido na 2ª visita
+- [ ] Estratégia: serialize() / deserialize() com workers
+
+**Dark Mode** ✅
+- [x] `prefers-color-scheme: dark` automático
+- [x] CSS custom properties para tema completo
+- [x] Cores das faixas adaptadas para legibilidade em fundo escuro
+
+---
+
+### 🎯 Prioridades Imediatas
+
+| # | Item | Esforço | Impacto | Status |
+|---|------|---------|---------|--------|
+| 1 | Frequência de uso (corpus) | médio | alto | planejado |
+| 2 | Rima imperfeita (Levenshtein) | médio | alto | planejado |
+| 3 | Classe morfológica | médio | médio | **feito v3.1** |
+| 4 | Historico + Favoritos | baixo | médio | **parcial v3.1** (falta ⭐) |
+| 5 | URL hash sharing | baixo | alto | **feito v3.1** |
+| 6 | Dark mode | baixo | médio | **feito v3.1** |
+| 7 | Analisador de verso | alto | alto | laboratório |
+
+---
+
+### 📚 Referências Técnicas Anteriores
+
+**Pesos (Fase 4 — Labs)**
+
+Sliders para os 9 critérios do score composto.
+Os pesos substituem as constantes hardcoded (+100, +60, +50...) por variáveis ajustáveis.
+Debounce de 150ms para não recalcular 50K palavras a cada pixel do slider.
+
+### 🧪 Funcionalidades Extras — Backlog (Fase 6+)
 
 | Feature | Descrição | Impacto |
 |---|---|---|
-| **IndexedDB cache** | Salva o dicionário indexado no browser após 1ª carga | ~300% mais rápido na 2ª visita |
-| **Web Speech API** | Botão 🎤 no input, `recognition.lang = 'pt-BR'`, pega última palavra da frase | Já protótipado no v5.html |
-| **Vibration API** | `navigator.vibrate(30)` ao travar lego, `vibrate(50)` ao buscar | Feedback háptico no Android |
-| **Exportar lista** | Copiar resultados filtrados como texto/CSV | Para uso em letras e poemas |
-| **Dark mode** | `prefers-color-scheme: dark` automático | Conforto noturno |
-
 ---
 
 ## Notas Técnicas e Decisões de Design
@@ -279,4 +400,16 @@ Event delegation no container pai é mais robusto e elimina o problema completam
 
 ---
 
-*Motor fonético estável desde v1. Interface: v2 (2026-02-27).*
+---
+
+## Changelog
+
+| Versão | Data | Mudanças |
+|--------|------|----------|
+| v3.1 (atual) | 2026-02-28 | Dark mode, histórico, URL hash sharing, classe morfológica |
+| v3 | 2026-02-28 | Bottom Sheet completo, Lego Locks, negação ≠, onset+coda, infinite scroll, auto-collapse robusto |
+| v2 | 2026-02-27 | Flat header, seções colapsáveis, sistema de faixas consolidado |
+| v1 | (anterior) | Faixas toggleáveis, layout original |
+
+**Motor fonético:** estável desde v1 (9 campos → 10 com `classe` em v3.1).
+**Interface:** v3.1 — Bottom Sheet Gold Standard + dark mode + historico + hash (2026-02-28).

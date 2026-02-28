@@ -35,7 +35,7 @@ This system is designed around these strengths rather than requiring black-box M
 
 ## Quick Start
 
-### Demo
+### Demo (Python)
 
 ```bash
 python3 demo_recato.py
@@ -45,6 +45,26 @@ This analyzes the word "recato" against 10 candidates, showing:
 - Phonetic decomposition
 - Multi-criteria reasoning
 - Scored ranking with explanations
+
+### Web Explorer (Vanilla JS)
+
+**Interactive phonetic explorer for Brazilian Portuguese rhyme exploration.**
+
+```bash
+cd syl/
+python -m http.server 8000
+# Open: http://localhost:8000/index.html
+```
+
+**Features:**
+- 🔍 **Molde**: Search a base word, auto-extract phonetic profile, lock/unlock filters, negate criteria
+- 🏗️ **Construtor**: Build searches directly by syllable count, accentuation, tonic vowel, onset
+- ✨ **Lego Locks**: Three states — unlocked (gray) | locked (orange 🔒) | negated (red ≠)
+- 📜 **Infinite Scroll**: Silent loading with IntersectionObserver (60-item chunks)
+- 🎤 **Voice Input**: Web Speech API in pt-BR
+- 📊 **Score Bands**: Color-coded faixas (Rima, Eco, Assonância, Proximidade, Ritmo)
+
+[Detailed web tool documentation](syl/README-explorer.md)
 
 ### Example Output
 
@@ -250,7 +270,14 @@ RANKING:
 ## Project Structure
 
 ```
-language-play-ptbr/
+ptbrwp/
+├── syl/
+│   ├── index.html                  # Web explorer (v3 Bottom Sheet)
+│   ├── palavras.txt                # Dictionary (~51.8K words)
+│   ├── README-explorer.md          # Web tool documentation
+│   └── [backups/]
+│       ├── index-v2-flatheader.html
+│       └── index-v1-bandas.html
 ├── src/
 │   ├── analyzers/
 │   │   └── phonetic_analyzer.py    # Rule-based decomposition
@@ -260,8 +287,9 @@ language-play-ptbr/
 │   │   └── syllabifier.py          # PT-BR syllabification
 │   └── prompts/
 │       └── claude_reasoning.xml    # Reasoning system prompt
-├── demo_recato.py                  # Working demonstration
-└── README.md                       # This file
+├── demo_recato.py                  # Python demonstration
+├── README.md                       # This file
+└── README_COLAB.md                 # Google Colab guide
 ```
 
 ## Limitations & Future Work

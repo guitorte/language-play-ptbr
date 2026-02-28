@@ -25,6 +25,32 @@
             --c-prox:     #8E44AD;
             --c-ritmo:    #7F8C8D;
             --safe-b:     env(safe-area-inset-bottom, 0px);
+            --header-bg:  rgba(240,243,244,0.94);
+            --shadow:     rgba(0,0,0,0.08);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary:    #E8ECEF;
+                --accent:     #E74C3C;
+                --bg:         #181C20;
+                --surface:    #23282E;
+                --border:     #3A4048;
+                --text:       #D5DBE0;
+                --muted:      #8A949E;
+                --lock-bg:    #3D2E1A;
+                --lock-color: #F0A860;
+                --lock-border:#C87820;
+                --neg-bg:     #3D1A1A;
+                --neg-color:  #F08080;
+                --c-rima:     #2ECC71;
+                --c-eco:      #3498DB;
+                --c-ass:      #F39C12;
+                --c-prox:     #9B59B6;
+                --c-ritmo:    #95A5A6;
+                --header-bg:  rgba(24,28,32,0.94);
+                --shadow:     rgba(0,0,0,0.25);
+            }
         }
 
         *, *::before, *::after {
@@ -48,7 +74,7 @@
 
         .results-header {
             position: sticky; top: 0; z-index: 10;
-            background: rgba(240,243,244,0.94);
+            background: var(--header-bg);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             padding: 9px 14px;
             display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
@@ -64,7 +90,7 @@
         .loader {
             display: block; width: 26px; height: 26px; margin: 0 auto 12px;
             border-radius: 50%;
-            border: 3px solid rgba(0,0,0,0.08); border-top-color: var(--accent);
+            border: 3px solid var(--border); border-top-color: var(--accent);
             animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -98,7 +124,7 @@
             flex-shrink: 0;
             background: var(--surface);
             border-radius: 18px 18px 0 0;
-            box-shadow: 0 -3px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 -3px 20px var(--shadow);
             z-index: 100;
             display: flex; flex-direction: column;
             padding-bottom: var(--safe-b);
@@ -147,14 +173,15 @@
         .tab-content.active { display: block; }
 
         /* ── ABA MOLDE ── */
-        .search-wrap { position: relative; margin-bottom: 12px; }
+        .search-wrap { position: relative; margin-bottom: 4px; }
         .search-wrap input {
             width: 100%; padding: 13px 46px 13px 14px;
             font-size: 16px; font-weight: 600;
             background: var(--bg); border: 2px solid var(--border);
             border-radius: 12px; outline: none; transition: border 0.2s;
+            color: var(--text);
         }
-        .search-wrap input:focus    { border-color: var(--accent); background: white; }
+        .search-wrap input:focus    { border-color: var(--accent); background: var(--surface); }
         .search-wrap input:disabled { opacity: 0.45; }
 
         #btn-mic {
@@ -167,6 +194,25 @@
         #btn-mic.listening { animation: pulse 1s ease infinite; }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
+        /* Histórico */
+        .historico-row {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            margin-bottom: 10px; min-height: 0;
+        }
+        .hist-chip {
+            background: var(--bg); border: 1px solid var(--border);
+            padding: 4px 10px; border-radius: 14px;
+            font-size: 12px; font-weight: 600; color: var(--muted);
+            cursor: pointer; user-select: none;
+            transition: transform 0.1s;
+        }
+        .hist-chip:active { transform: scale(0.92); }
+        .hist-clear {
+            background: none; border: none;
+            font-size: 11px; color: var(--muted); cursor: pointer;
+            padding: 4px 6px; opacity: 0.6;
+        }
+
         /* Lego pills — três estados: padrão | travado | negado */
         .lego-panel { display: flex; flex-wrap: wrap; gap: 7px; min-height: 32px; }
         .lego-hint  { font-size: 13px; color: var(--muted); align-self: center; }
@@ -178,19 +224,15 @@
             cursor: pointer; user-select: none;
             display: flex; align-items: center; gap: 4px;
             transition: transform 0.1s;
-            /* Bloqueia o menu de contexto nativo no mobile */
             -webkit-user-select: none;
             touch-action: none;
         }
         .lego-pill:active { transform: scale(0.91); }
-
-        /* Travado: toque curto */
         .lego-pill.locked {
             background: var(--lock-bg);
             border-color: var(--lock-border);
             color: var(--lock-color);
         }
-        /* Negado: toque longo (≠ — exclui este valor) */
         .lego-pill.negated {
             background: var(--neg-bg);
             border-color: var(--accent);
@@ -242,16 +284,27 @@
             color: white; box-shadow: 0 3px 10px rgba(231,76,60,0.35);
         }
 
-        /* Campo texto (onset/coda no Construtor) */
         .text-input {
             width: 100%; padding: 10px 14px;
             font-size: 15px; font-weight: 600;
             background: var(--bg); border: 2px solid var(--border);
             border-radius: 10px; outline: none; transition: border 0.2s;
-            -webkit-appearance: none;
+            -webkit-appearance: none; color: var(--text);
         }
-        .text-input:focus { border-color: var(--accent); background: white; }
+        .text-input:focus { border-color: var(--accent); background: var(--surface); }
         .input-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+        /* Classe morfológica no Construtor */
+        .morfo-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .morfo-btn {
+            padding: 7px 11px; border-radius: 10px;
+            border: 2px solid var(--border); background: var(--bg);
+            font-size: 12px; font-weight: 600; color: var(--muted);
+            cursor: pointer; white-space: nowrap;
+            transition: transform 0.1s;
+        }
+        .morfo-btn:active   { transform: scale(0.91); }
+        .morfo-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
     </style>
 </head>
 <body>
@@ -298,7 +351,7 @@
                        spellcheck="false" disabled>
                 <button id="btn-mic" title="Busca por voz">🎤</button>
             </div>
-            <!-- Pills geradas dinamicamente — toque curto = travar, toque longo = negar -->
+            <div class="historico-row" id="historico-row"></div>
             <div class="lego-panel" id="lego-panel">
                 <span class="lego-hint">Digite uma palavra para extrair blocos fonéticos.</span>
             </div>
@@ -341,6 +394,17 @@
                        inputmode="text" autocorrect="off" autocapitalize="none"
                        spellcheck="false">
                 <p class="input-hint">Consoante(s) que abrem a sílaba tônica. Deixe vazio para qualquer.</p>
+            </div>
+            <div class="builder-section">
+                <span class="builder-label">Classe gramatical</span>
+                <div class="morfo-row">
+                    <button class="morfo-btn" data-classe=""    onclick="setClasse(null, this)">Qualquer</button>
+                    <button class="morfo-btn" data-classe="sub" onclick="setClasse('sub', this)">Subst.</button>
+                    <button class="morfo-btn" data-classe="adj" onclick="setClasse('adj', this)">Adj.</button>
+                    <button class="morfo-btn" data-classe="vrb" onclick="setClasse('vrb', this)">Verbo</button>
+                    <button class="morfo-btn" data-classe="adv" onclick="setClasse('adv', this)">Advérbio</button>
+                </div>
+                <p class="input-hint">Heurística por sufixo. Aproximada — não substitui um dicionário morfológico.</p>
             </div>
         </div>
 
@@ -452,6 +516,7 @@ const FAM_LABEL   = {
     pl:'plosiva+líquida', fl:'fricativa+líquida', af:'africada',
     lp:'lateral palatal', np:'nasal palatal', si:'simples', vz:'—', cx:'complexo'
 };
+const CLASSE_LABEL = { sub:'Subst.', adj:'Adj.', vrb:'Verbo', adv:'Adv.', outro:'Outro' };
 
 function calcOnset(sil)        { let m=sil.match(/^([^aeiouáàâãéêíóôõúü]*)/i); return m?m[1].toLowerCase():''; }
 function calcVogalT(sil)       { let m=sil.match(/[aeiouáàâãéêíóôõúü]/i); return m?normV(m[0]):''; }
@@ -465,13 +530,35 @@ function calcFam(o)  { return !o?'vz':o.length===1?'si':(CLUSTER_FAM[o]||'cx'); 
 function calcAcent(sil,ti) { let d=sil.length-1-ti; return d===0?'ox':d===1?'px':d===2?'ppx':'spx'; }
 function extrairRima(sil,ti)   { let pf=sil.slice(ti).join(''),m=pf.match(vRegex); return m?pf.slice(m.index).toLowerCase():pf.toLowerCase(); }
 
-// Coda = consoante(s) após a última vogal da palavra  ("amor"→"r", "flores"→"s", "belo"→"")
 function calcCoda(p) {
     let pL = p.toLowerCase();
     for (let i = pL.length - 1; i >= 0; i--) {
         if (vRegex.test(pL[i])) return pL.slice(i + 1);
     }
     return '';
+}
+
+// Classe morfológica por heurística de sufixo
+// Ordem importa: sufixos mais longos primeiro para evitar falsos positivos.
+function calcClasse(p) {
+    let pL = p.toLowerCase();
+    // Advérbios
+    if (pL.endsWith('mente'))                                       return 'adv';
+    // Verbos — infinitivos e formas comuns
+    if (/(?:ar|er|ir|or)$/.test(pL) && pL.length > 3)              return 'vrb';
+    if (/(?:ando|endo|indo|ondo)$/.test(pL))                       return 'vrb';
+    if (/(?:aram|eram|iram|aram)$/.test(pL))                       return 'vrb';
+    if (/(?:aria|eria|iria)$/.test(pL))                            return 'vrb';
+    if (/(?:asse|esse|isse)$/.test(pL))                            return 'vrb';
+    if (/(?:ava|ia)$/.test(pL) && pL.length > 4)                  return 'vrb';
+    // Adjetivos
+    if (/(?:oso|osa|ivo|iva|vel|ável|ível)$/.test(pL))            return 'adj';
+    if (/(?:nte|ário|ária|ório|ória)$/.test(pL))                  return 'adj';
+    if (/(?:ado|ada|ido|ida)$/.test(pL) && pL.length > 4)         return 'adj';
+    // Substantivos
+    if (/(?:ção|são|dão|mento|ncia|ência|ância|dade|tude|ismo|ista)$/.test(pL)) return 'sub';
+    if (/(?:eiro|eira|agem|ura|eza|ança)$/.test(pL))              return 'sub';
+    return 'outro';
 }
 
 function perfilFonetico(palavra) {
@@ -492,6 +579,7 @@ function perfilFonetico(palavra) {
         assConsonantal: calcAssC(sil, ti),
         familiaCluster: calcFam(onset),
         coda:           calcCoda(pL),
+        classe:         calcClasse(pL),
     };
 }
 
@@ -524,11 +612,11 @@ function calcScore(item, alvo, setOnset, setAssC, lenAssC) {
 }
 
 const BANDAS = [
-    { key:160, label:'Rima',        cls:'b-rima',  color:'#27AE60' },
-    { key:100, label:'Eco forte',   cls:'b-eco',   color:'#2980B9' },
-    { key:60,  label:'Assonância',  cls:'b-ass',   color:'#E67E22' },
-    { key:25,  label:'Proximidade', cls:'b-prox',  color:'#8E44AD' },
-    { key:10,  label:'Ritmo',       cls:'b-ritmo', color:'#7F8C8D' },
+    { key:160, label:'Rima',        cls:'b-rima',  color:'var(--c-rima)' },
+    { key:100, label:'Eco forte',   cls:'b-eco',   color:'var(--c-eco)' },
+    { key:60,  label:'Assonância',  cls:'b-ass',   color:'var(--c-ass)' },
+    { key:25,  label:'Proximidade', cls:'b-prox',  color:'var(--c-prox)' },
+    { key:10,  label:'Ritmo',       cls:'b-ritmo', color:'var(--c-ritmo)' },
 ];
 function getBandaKey(score) {
     if (score >= 160) return 160;
@@ -544,31 +632,18 @@ function getBandaKey(score) {
 let dicionario          = [];
 let alvoAtual           = null;
 
-// Filtros absolutos: null = inativo, valor = match exato obrigatório
 let FILTROS = {
-    numSilabas:     null,
-    acentuacao:     null,
-    vogalTonica:    null,
-    onsetTonico:    null,
-    familiaCluster: null,
-    rimaPerfeita:   null,
-    vogaisRima:     null,
-    espinhaVocal:   null,
-    coda:           null,
+    numSilabas: null, acentuacao: null, vogalTonica: null,
+    onsetTonico: null, familiaCluster: null,
+    rimaPerfeita: null, vogaisRima: null, espinhaVocal: null,
+    coda: null, classe: null,
 };
 
-// Negação de filtros: true = excluir itens que TENHAM esse valor (≠)
-// Só os blocos do Molde suportam negação via toque longo.
 let FILTROS_NEG = {
-    numSilabas:     false,
-    acentuacao:     false,
-    vogalTonica:    false,
-    onsetTonico:    false,
-    familiaCluster: false,
-    rimaPerfeita:   false,
-    vogaisRima:     false,
-    espinhaVocal:   false,
-    coda:           false,
+    numSilabas: false, acentuacao: false, vogalTonica: false,
+    onsetTonico: false, familiaCluster: false,
+    rimaPerfeita: false, vogaisRima: false, espinhaVocal: false,
+    coda: false, classe: false,
 };
 
 let resultadosFiltrados = [];
@@ -595,9 +670,12 @@ async function indexarDicionario() {
             dicionario = lista.map(p => perfilFonetico(p)).filter(Boolean);
             st.textContent = `✅ ${dicionario.length.toLocaleString('pt-BR')} palavras prontas`;
             inp.disabled = false;
+            renderHistorico();
             document.getElementById('empty-state').innerHTML =
                 `Banco com <b>${dicionario.length.toLocaleString('pt-BR')}</b> palavras carregado.<br>
                  Digite no <b>Molde</b> ou explore pelo <b>Construtor</b>.`;
+            // Restaurar estado da URL hash (se existir)
+            _restoreFromHash();
         }, 30);
     } catch(e) {
         st.textContent = '⚠️ Erro ao carregar palavras.txt';
@@ -615,6 +693,7 @@ function processarBusca() {
     if (!temCriterio) {
         resultadosFiltrados = [];
         renderResultados();
+        _updateHash();
         return;
     }
 
@@ -626,7 +705,6 @@ function processarBusca() {
         for (let [k, v] of Object.entries(FILTROS)) {
             if (v === null) continue;
             let match = item[k] === v;
-            // Filtro negado (≠): exclui quem corresponde ao valor
             if (FILTROS_NEG[k]) { if (match)  return false; }
             else                 { if (!match) return false; }
         }
@@ -648,6 +726,7 @@ function processarBusca() {
     }
 
     renderResultados();
+    _updateHash();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -726,22 +805,22 @@ const DEF_BLOCOS = [
     { id: 'vogalTonica',    label: v => `vogal /${v.toUpperCase()}/`,           show: ()  => true              },
     { id: 'onsetTonico',    label: v => `onset /${v}/`,                         show: v   => v !== ''          },
     { id: 'coda',           label: v => `coda: -${v}`,                          show: v   => v !== ''          },
+    { id: 'classe',         label: v => CLASSE_LABEL[v] || v,                  show: v   => v !== 'outro'     },
     { id: 'familiaCluster', label: v => FAM_LABEL[v] || v,                     show: v   => v!=='si'&&v!=='vz'},
     { id: 'rimaPerfeita',   label: v => `rima: -${v}`,                         show: ()  => true              },
     { id: 'vogaisRima',     label: v => `vogRima: ${v}`,                       show: v   => v.length > 1      },
     { id: 'espinhaVocal',   label: v => `espinha: ${v}`,                       show: v   => v.length > 1      },
 ];
 
-// Campos Molde-específicos: apagados ao trocar de palavra ou ao ativar Construtor
-const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda'];
+const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda','classe'];
 
 function setAlvoPalavra(palavra) {
     let perfil = perfilFonetico(palavra);
     if (!perfil) return;
     alvoAtual = perfil;
-    // Reset Molde-específicos (tanto filtro quanto negação)
     CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
     document.getElementById('input-palavra').value = palavra;
+    _addToHistorico(palavra);
     renderLegoPanel();
     processarBusca();
     document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
@@ -768,7 +847,6 @@ function renderLegoPanel() {
     }).join('');
 }
 
-// Toque curto: trava ↔ destrava (reseta negação)
 function toggleLego(id) {
     if (!alvoAtual) return;
     let wasLocked = FILTROS[id] !== null;
@@ -780,15 +858,12 @@ function toggleLego(id) {
     document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Toque longo: ativa negação (≠) ↔ remove tudo
 function negarLego(id) {
     if (!alvoAtual) return;
     if (FILTROS_NEG[id]) {
-        // Já negado → unlock completo
         FILTROS[id]     = null;
         FILTROS_NEG[id] = false;
     } else {
-        // Lock + negar
         FILTROS[id]     = alvoAtual[id];
         FILTROS_NEG[id] = true;
     }
@@ -799,10 +874,8 @@ function negarLego(id) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   9. CONSTRUTOR — busca estrutural direta
+   9. CONSTRUTOR
 ═══════════════════════════════════════════════════════════════ */
-
-// Usar um controle do Construtor enquanto em Molde → limpa o modo Molde
 function _ativarConstrutor() {
     if (!alvoAtual) return;
     alvoAtual = null;
@@ -850,7 +923,15 @@ function _onOnsetInput(e) {
     }, 300);
 }
 
-// Sincroniza os controles visuais do Construtor com o FILTROS atual
+function setClasse(val, btn) {
+    _ativarConstrutor();
+    document.querySelectorAll('.morfo-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.classe = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
 function _syncConstrutorUI() {
     buildSilabas = FILTROS.numSilabas || 0;
     document.getElementById('step-val').textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
@@ -861,6 +942,9 @@ function _syncConstrutorUI() {
         b.classList.toggle('selected', b.dataset.vogal === FILTROS.vogalTonica);
     });
     document.getElementById('onset-input').value = FILTROS.onsetTonico || '';
+    document.querySelectorAll('.morfo-btn').forEach(b => {
+        b.classList.toggle('selected', (b.dataset.classe || null) === FILTROS.classe);
+    });
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -880,7 +964,6 @@ function switchTab(nome) {
 
 function togglePanelCollapse() { bottomPanel.classList.toggle('collapsed'); }
 
-// Colapsa ao rolar ↓; reabre apenas ao voltar ao topo
 let _lastScrollY = 0;
 document.getElementById('viewport').addEventListener('scroll', function () {
     let y = this.scrollTop;
@@ -890,10 +973,126 @@ document.getElementById('viewport').addEventListener('scroll', function () {
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   11. EVENTOS
+   11. HISTÓRICO — localStorage (últimas 20 palavras)
+═══════════════════════════════════════════════════════════════ */
+const HIST_KEY = 'explorador_historico';
+const HIST_MAX = 20;
+
+function _getHistorico() {
+    try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; }
+    catch { return []; }
+}
+function _saveHistorico(arr) {
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(arr)); } catch {}
+}
+function _addToHistorico(palavra) {
+    let p = palavra.toLowerCase().trim();
+    let hist = _getHistorico().filter(h => h !== p);
+    hist.unshift(p);
+    if (hist.length > HIST_MAX) hist.length = HIST_MAX;
+    _saveHistorico(hist);
+    renderHistorico();
+}
+function renderHistorico() {
+    let row = document.getElementById('historico-row');
+    let hist = _getHistorico();
+    if (!hist.length) { row.innerHTML = ''; return; }
+    row.innerHTML = hist.map(h =>
+        `<span class="hist-chip" data-hist="${h}">${h}</span>`
+    ).join('') + `<button class="hist-clear" onclick="clearHistorico()">limpar</button>`;
+}
+function clearHistorico() {
+    _saveHistorico([]);
+    renderHistorico();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   12. URL HASH — compartilhar estado via link
+   Formato: #molde=fogo&locks=numSilabas,rimaPerfeita&neg=acentuacao
+   ou:      #construtor&numSilabas=3&acentuacao=px&vogalTonica=a
+═══════════════════════════════════════════════════════════════ */
+let _hashPaused = false;
+
+function _updateHash() {
+    if (_hashPaused) return;
+    let parts = [];
+    if (alvoAtual) {
+        parts.push('molde=' + encodeURIComponent(alvoAtual.palavra));
+        let locks = [], negs = [];
+        for (let k of Object.keys(FILTROS)) {
+            if (FILTROS[k] !== null) {
+                if (FILTROS_NEG[k]) negs.push(k);
+                else                locks.push(k);
+            }
+        }
+        if (locks.length) parts.push('locks=' + locks.join(','));
+        if (negs.length)  parts.push('neg=' + negs.join(','));
+    } else {
+        let hasFilter = Object.values(FILTROS).some(v => v !== null);
+        if (!hasFilter) { history.replaceState(null, '', location.pathname); return; }
+        parts.push('construtor');
+        for (let [k, v] of Object.entries(FILTROS)) {
+            if (v !== null) parts.push(k + '=' + encodeURIComponent(v));
+        }
+    }
+    history.replaceState(null, '', '#' + parts.join('&'));
+}
+
+function _restoreFromHash() {
+    let hash = location.hash.slice(1);
+    if (!hash) return;
+    _hashPaused = true;
+    try {
+        let params = {};
+        hash.split('&').forEach(p => {
+            let [k, v] = p.split('=');
+            params[k] = v ? decodeURIComponent(v) : '';
+        });
+
+        if ('molde' in params && params.molde) {
+            let palavra = params.molde;
+            let perfil = perfilFonetico(palavra);
+            if (!perfil) return;
+            alvoAtual = perfil;
+            CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+            document.getElementById('input-palavra').value = palavra;
+            // Aplicar locks
+            if (params.locks) {
+                params.locks.split(',').forEach(k => {
+                    if (k in FILTROS && alvoAtual[k] !== undefined) FILTROS[k] = alvoAtual[k];
+                });
+            }
+            // Aplicar negações
+            if (params.neg) {
+                params.neg.split(',').forEach(k => {
+                    if (k in FILTROS && alvoAtual[k] !== undefined) {
+                        FILTROS[k] = alvoAtual[k];
+                        FILTROS_NEG[k] = true;
+                    }
+                });
+            }
+            renderLegoPanel();
+            processarBusca();
+        } else if ('construtor' in params) {
+            alvoAtual = null;
+            for (let [k, v] of Object.entries(params)) {
+                if (k === 'construtor') continue;
+                if (k in FILTROS) {
+                    FILTROS[k] = (k === 'numSilabas') ? parseInt(v, 10) : v;
+                }
+            }
+            switchTab('construtor');
+            processarBusca();
+        }
+    } finally {
+        _hashPaused = false;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   13. EVENTOS
 ═══════════════════════════════════════════════════════════════ */
 
-// ── Card clicado → nova busca no Molde
 document.getElementById('grid').addEventListener('click', e => {
     let card = e.target.closest('.word-card');
     if (!card || !card.dataset.palavra) return;
@@ -901,7 +1100,6 @@ document.getElementById('grid').addEventListener('click', e => {
     setAlvoPalavra(card.dataset.palavra);
 });
 
-// ── Input do Molde
 let _debounce;
 document.getElementById('input-palavra').addEventListener('input', e => {
     let val = e.target.value.trim();
@@ -917,18 +1115,21 @@ document.getElementById('input-palavra').addEventListener('keypress', e => {
     e.target.blur();
 });
 
-// ── Onset input no Construtor
 document.getElementById('onset-input').addEventListener('input', _onOnsetInput);
 document.getElementById('onset-input').addEventListener('keypress', e => {
     if (e.key === 'Enter') e.target.blur();
 });
 
-// ── Long press nos lego pills via delegação de eventos
-// Usa pointer events para funcionar em touch e mouse.
-// _legoLongFired: se o long press disparou, o click subsequente é ignorado.
+// Histórico: click em chip → buscar palavra
+document.getElementById('historico-row').addEventListener('click', e => {
+    let chip = e.target.closest('[data-hist]');
+    if (!chip) return;
+    setAlvoPalavra(chip.dataset.hist);
+});
+
+// Long press nos lego pills
 let _legoTimer      = null;
 let _legoLongFired  = false;
-
 const legoPanel = document.getElementById('lego-panel');
 
 legoPanel.addEventListener('pointerdown', e => {
@@ -940,22 +1141,22 @@ legoPanel.addEventListener('pointerdown', e => {
         negarLego(pill.dataset.lego);
     }, 500);
 });
-
 legoPanel.addEventListener('pointerup',     () => clearTimeout(_legoTimer));
 legoPanel.addEventListener('pointercancel', () => clearTimeout(_legoTimer));
-
-// O click dispara após pointerup — ignoramos se o long press já tratou
 legoPanel.addEventListener('click', e => {
     if (_legoLongFired) { _legoLongFired = false; return; }
     let pill = e.target.closest('[data-lego]');
     if (pill) toggleLego(pill.dataset.lego);
 });
-
-// Bloqueia menu de contexto nativo (necessário em alguns Android)
 legoPanel.addEventListener('contextmenu', e => e.preventDefault());
 
+// Navegar no hash (botão voltar/avançar)
+window.addEventListener('hashchange', () => {
+    if (dicionario.length > 0) _restoreFromHash();
+});
+
 /* ═══════════════════════════════════════════════════════════════
-   12. VOZ — Web Speech API
+   14. VOZ — Web Speech API
 ═══════════════════════════════════════════════════════════════ */
 (function setupVoice() {
     let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -977,7 +1178,7 @@ legoPanel.addEventListener('contextmenu', e => e.preventDefault());
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   13. INIT
+   15. INIT
 ═══════════════════════════════════════════════════════════════ */
 window.onload = indexarDicionario;
 </script>
