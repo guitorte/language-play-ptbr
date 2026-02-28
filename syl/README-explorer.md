@@ -47,7 +47,7 @@ Algoritmo próprio para Português Brasileiro. Cobre:
 
 ### Campos Fonéticos
 
-Cada palavra indexada recebe 9 campos calculados uma vez na indexação:
+Cada palavra indexada recebe 11 campos calculados uma vez na indexação:
 
 | Campo | Descrição | Exemplo (`abstrato`) |
 |---|---|---|
@@ -61,6 +61,7 @@ Cada palavra indexada recebe 9 campos calculados uma vez na indexação:
 | `espinhaVocal` | Sequência de todas as vogais | `"aao"` |
 | `assConsonantal` | Conjunto de consoantes do span | `"bsrt"` |
 | `classe` | Classe morfológica heurística | `"sub"` (substantivo) |
+| `freq` | Frequência estimada (heurística) | `"media"` |
 
 > **Nota sobre vogais nasais:** `ã` e `õ` são preservados como classe distinta em `espinhaVocal`
 > e `vogaisRima` (ex: `limão` → espinha `"iãõ"`). Isto difere de alguns experimentos paralelos
@@ -76,6 +77,8 @@ Score calculado por comparação de dois perfis fonéticos. Máximo teórico: **
 Critério                   Pontos   Condição
 ─────────────────────────────────────────────────────────────
 Rima perfeita              +100     rimaPerfeita idêntica
+  └ Quase-rima (dist=1)    + 70     Levenshtein(rima, alvo) = 1
+  └ Quase-rima (dist=2)    + 40     Levenshtein(rima, alvo) = 2 (rima ≥ 3 chars)
 Assonância                 + 60     vogaisRima idênticas
 Eco consonantal exato      + 50     onsetTonico idêntico
 Consoante compartilhada    + 25     onset tem ≥1 letra em comum
@@ -85,6 +88,12 @@ Espinha vocal              + 40     espinhaVocal completa idêntica
 Vogal tônica               + 15     vogalTonica idêntica
 Padrão rítmico             + 10     mesmo nº sílabas + mesmo tipo de acento
 ```
+
+> **Rima imperfeita (near-rhyme):** quando `rimaPerfeita` não bate exatamente,
+> calcula-se a distância de Levenshtein entre as duas strings de rima. Dist=1
+> (ex: "ato" vs "ado") dá +70 pts, dist=2 (ex: "ato" vs "aco") dá +40 pts.
+> Combinado com assonância (+60), uma quase-rima pode atingir 130 pts — a nova
+> faixa "Quase-rima".
 
 Os critérios são **independentes e cumulativos**: uma palavra pode pontuar em vários ao mesmo tempo.
 O algoritmo é otimizado para 50K+ palavras: os Sets do alvo são pré-computados fora do loop.
@@ -96,7 +105,8 @@ Os resultados são classificados em 5 faixas com cores distintas:
 | Faixa | Score | Significado |
 |---|---|---|
 | Rima | ≥ 160 | Rima perfeita clássica |
-| Eco forte | 100–159 | Múltiplos critérios sobrepostos |
+| Quase-rima | 130–159 | Rima imperfeita (Levenshtein dist 1-2) + outros critérios |
+| Eco forte | 100–129 | Múltiplos critérios sobrepostos |
 | Assonância | 60–99 | Ressonância vocálica sem rima exata |
 | Proximidade | 25–59 | Conexão consonantal / espinha (zona soramimi) |
 | Ritmo | 10–24 | Só estrutura silábica e acentual em comum |
@@ -159,8 +169,8 @@ Arquitetura Bottom Sheet (100dvh) com infinite scroll silencioso e filtros preci
   - **Padrão:** cinza (não aplicado)
   - **Travado:** laranja com 🔒 (toque curto = toggle)
   - **Negado:** vermelho com ≠ (toque longo 500ms = ativa negação)
-- **Blocos Molde:** numSílabas, acentuação, vogalTonica, onsetTonico, **coda**, familiaCluster, rimaPerfeita, vogaisRima, espinhaVocal, **classe** (10 campos).
-- **Construtor:** acesso a numSílabas (stepper), acentuação (radio), vogalTonica (grid), **onsetTonico** (texto), **classe morfológica** (botões sub/adj/vrb/adv/outro).
+- **Blocos Molde:** numSílabas, acentuação, vogalTonica, onsetTonico, **coda**, familiaCluster, rimaPerfeita, vogaisRima, espinhaVocal, **classe**, **freq** (11 campos).
+- **Construtor:** acesso a numSílabas (stepper), acentuação (radio), vogalTonica (grid), **onsetTonico** (texto), **classe morfológica** (botões sub/adj/vrb/adv/outro), **frequência** (radio: Qualquer/Comum/Neutra/Rara).
 - **Microfone:** Web Speech API progressiva (não quebra sem ela); recognição em pt-BR, pega última palavra da frase.
 - **Vibração:** feedback háptico diferenciado (travar, negar, buscar).
 - **CORS:** fetch('./palavras.txt') requer servidor local.
@@ -270,6 +280,21 @@ O arquivo atual tem ~51.800 linhas. Linhas sem letra são ignoradas automaticame
 - [x] Botões de classe no Construtor (.morfo-btn)
 - [x] Regras: -mente→adv, -ar/-er/-ir→vrb, -oso/-ivo/-vel→adj, -ção/-mento/-dade→sub
 
+**Rima Imperfeita — Near-Rhyme (v3.2)**
+- [x] `levenshtein(a, b)` — distância de edição otimizada (2 rows)
+- [x] Integrado em `calcScore()`: dist=1 → +70 pts, dist=2 → +40 pts
+- [x] Guarda: rima ≥ 2 chars para dist=1, ≥ 3 chars para dist=2
+- [x] Nova faixa "Quase-rima" (130–159 pts), cor teal `--c-qrima`
+- [x] `getBandaKey()` atualizado com 6 faixas
+
+**Frequência Estimada (v3.2)**
+- [x] `calcFreq(p, numSil)` — heurística por comprimento, sílabas e sufixos
+- [x] 3 categorias: `'comum'` / `'media'` / `'rara'`
+- [x] `freq` como campo no `perfilFonetico()`
+- [x] Lego pill no Molde (travável/negável)
+- [x] Seção "Frequência estimada" no Construtor (radio buttons)
+- [x] Integrado em FILTROS, FILTROS_NEG, CAMPOS_MOLDE
+
 ---
 
 ### 📅 Planejado (Fase 6+)
@@ -287,15 +312,15 @@ let PESOS = {
 };
 ```
 
-**Frequência de Uso (prioridade alta)**
-- [ ] Anotar dicionário com classe 1–5 derivada de corpus
-- [ ] Filter no Construtor: "comum / raro"
-- [ ] Muda caráter das sugestões (erudita vs popular)
+**Frequência de Uso** ✅ (heurística)
+- [x] Heurística por comprimento + sílabas + sufixos (3 categorias)
+- [x] Filter no Construtor: "Comum / Neutra / Rara"
+- [ ] Anotar dicionário com corpus real (upgrade futuro)
 
-**Rima Imperfeita (near-rhyme)**
-- [ ] Levenshtein/edição na string de rima
-- [ ] Nova faixa "Quase-rima" com score ~120–140
-- [ ] Abre espaço para sonoridades menos óbvias
+**Rima Imperfeita (near-rhyme)** ✅
+- [x] Levenshtein na string de rima
+- [x] Nova faixa "Quase-rima" (130–159 pts, cor teal)
+- [x] dist=1 → +70 pts, dist=2 → +40 pts
 
 **Classe Morfológica** ✅
 - [x] Heurística por sufixo: -ção (subst), -mente (adv), -oso (adj), -ar (verb)
@@ -353,8 +378,8 @@ let PESOS = {
 
 | # | Item | Esforço | Impacto | Status |
 |---|------|---------|---------|--------|
-| 1 | Frequência de uso (corpus) | médio | alto | planejado |
-| 2 | Rima imperfeita (Levenshtein) | médio | alto | planejado |
+| 1 | Frequência de uso (heurística) | médio | alto | **feito v3.2** |
+| 2 | Rima imperfeita (Levenshtein) | médio | alto | **feito v3.2** |
 | 3 | Classe morfológica | médio | médio | **feito v3.1** |
 | 4 | Historico + Favoritos | baixo | médio | **parcial v3.1** (falta ⭐) |
 | 5 | URL hash sharing | baixo | alto | **feito v3.1** |
@@ -406,10 +431,12 @@ Event delegation no container pai é mais robusto e elimina o problema completam
 
 | Versão | Data | Mudanças |
 |--------|------|----------|
-| v3.1 (atual) | 2026-02-28 | Dark mode, histórico, URL hash sharing, classe morfológica |
+| v3.2 (atual) | 2026-02-28 | Rima imperfeita (Levenshtein), frequência estimada, faixa Quase-rima |
+| v3.1 | 2026-02-28 | Dark mode, histórico, URL hash sharing, classe morfológica |
 | v3 | 2026-02-28 | Bottom Sheet completo, Lego Locks, negação ≠, onset+coda, infinite scroll, auto-collapse robusto |
 | v2 | 2026-02-27 | Flat header, seções colapsáveis, sistema de faixas consolidado |
 | v1 | (anterior) | Faixas toggleáveis, layout original |
 
-**Motor fonético:** estável desde v1 (9 campos → 10 com `classe` em v3.1).
-**Interface:** v3.1 — Bottom Sheet Gold Standard + dark mode + historico + hash (2026-02-28).
+**Motor fonético:** estável desde v1 (9 → 10 `classe` v3.1 → 11 `freq` v3.2).
+**Scoring:** 9 critérios + near-rhyme (Levenshtein), 6 faixas com "Quase-rima" (v3.2).
+**Interface:** v3.2 — Bottom Sheet + dark mode + historico + hash + freq + near-rhyme (2026-02-28).
