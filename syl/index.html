@@ -17,6 +17,8 @@
             --lock-bg:    #FFF4E6;
             --lock-color: #A04000;
             --lock-border:#E67E22;
+            --neg-bg:     #fdecea;
+            --neg-color:  #922b21;
             --c-rima:     #27AE60;
             --c-eco:      #2980B9;
             --c-ass:      #E67E22;
@@ -38,16 +40,12 @@
             height: 100dvh; overflow: hidden;
         }
 
-        /* ────────────────────────────────────────────────────────
-           ZONA DE LEITURA  (topo — espaço livre para os resultados)
-           overscroll-behavior: evita pull-to-refresh acidental
-        ──────────────────────────────────────────────────────── */
+        /* ── ZONA DE LEITURA ── */
         #viewport {
             flex: 1; overflow-y: auto; overflow-x: hidden;
             overscroll-behavior-y: contain;
         }
 
-        /* Header sticky: contagem + chips de faixa */
         .results-header {
             position: sticky; top: 0; z-index: 10;
             background: rgba(240,243,244,0.94);
@@ -59,7 +57,6 @@
         .count-label { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; margin-right: 2px; }
         .band-chip   { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; color: white; }
 
-        /* Estado vazio / carregando */
         .empty-state {
             padding: 52px 24px; text-align: center;
             color: var(--muted); font-size: 15px; line-height: 1.7;
@@ -72,7 +69,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Grade de resultados */
         .results-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
@@ -86,7 +82,6 @@
             transition: transform 0.1s;
         }
         .word-card:active { transform: scale(0.91); }
-        /* Cores de faixa — apenas a borda muda */
         .word-card.b-rima  { border-color: var(--c-rima); }
         .word-card.b-eco   { border-color: var(--c-eco); }
         .word-card.b-ass   { border-color: var(--c-ass); }
@@ -98,10 +93,7 @@
             .results-grid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
         }
 
-        /* ────────────────────────────────────────────────────────
-           ZONA DO POLEGAR  (painel inferior — Bottom Sheet)
-           Os controles nunca saem do alcance do polegar.
-        ──────────────────────────────────────────────────────── */
+        /* ── ZONA DO POLEGAR — Bottom Sheet ── */
         #bottom-panel {
             flex-shrink: 0;
             background: var(--surface);
@@ -112,7 +104,6 @@
             padding-bottom: var(--safe-b);
         }
 
-        /* Handle: arraste ou toque para colapsar/expandir */
         .handle-zone {
             padding: 10px 0 0; cursor: pointer;
             display: flex; justify-content: center;
@@ -125,7 +116,6 @@
         }
         .handle-zone:active .handle { background: var(--muted); }
 
-        /* Abas — sempre visíveis, mesmo no estado colapsado */
         .tabs {
             display: flex; padding: 0 16px;
             border-bottom: 1px solid var(--border);
@@ -142,7 +132,6 @@
             height: 3px; background: var(--accent); border-radius: 3px 3px 0 0;
         }
 
-        /* Wrapper animado — colapsa via max-height */
         .tab-wrapper {
             max-height: 46vh;
             transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
@@ -165,20 +154,20 @@
             background: var(--bg); border: 2px solid var(--border);
             border-radius: 12px; outline: none; transition: border 0.2s;
         }
-        .search-wrap input:focus  { border-color: var(--accent); background: white; }
+        .search-wrap input:focus    { border-color: var(--accent); background: white; }
         .search-wrap input:disabled { opacity: 0.45; }
 
         #btn-mic {
             position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
             background: none; border: none; font-size: 19px; cursor: pointer;
             padding: 5px; border-radius: 8px; line-height: 1;
-            display: none;           /* aparece só se SpeechRecognition disponível */
+            display: none;
         }
         #btn-mic.visible   { display: flex; align-items: center; }
         #btn-mic.listening { animation: pulse 1s ease infinite; }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-        /* Lego pills */
+        /* Lego pills — três estados: padrão | travado | negado */
         .lego-panel { display: flex; flex-wrap: wrap; gap: 7px; min-height: 32px; }
         .lego-hint  { font-size: 13px; color: var(--muted); align-self: center; }
 
@@ -188,13 +177,24 @@
             font-size: 13px; font-weight: 600; color: var(--muted);
             cursor: pointer; user-select: none;
             display: flex; align-items: center; gap: 4px;
-            transition: transform 0.1s, border-color 0.1s;
+            transition: transform 0.1s;
+            /* Bloqueia o menu de contexto nativo no mobile */
+            -webkit-user-select: none;
+            touch-action: none;
         }
         .lego-pill:active { transform: scale(0.91); }
+
+        /* Travado: toque curto */
         .lego-pill.locked {
             background: var(--lock-bg);
             border-color: var(--lock-border);
             color: var(--lock-color);
+        }
+        /* Negado: toque longo (≠ — exclui este valor) */
+        .lego-pill.negated {
+            background: var(--neg-bg);
+            border-color: var(--accent);
+            color: var(--neg-color);
         }
 
         #status-text { font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
@@ -206,7 +206,6 @@
             text-transform: uppercase; color: var(--muted); margin-bottom: 9px;
         }
 
-        /* Stepper de sílabas */
         .stepper { display: flex; align-items: center; gap: 10px; }
         .step-btn {
             width: 44px; height: 44px; border-radius: 12px;
@@ -218,7 +217,6 @@
         .step-btn:active { transform: scale(0.88); background: var(--border); }
         .step-val { font-size: 18px; font-weight: 800; min-width: 88px; text-align: center; }
 
-        /* Radio de acentuação */
         .radio-row { display: flex; gap: 6px; flex-wrap: wrap; }
         .radio-btn {
             padding: 8px 12px; border-radius: 10px;
@@ -227,10 +225,9 @@
             cursor: pointer; white-space: nowrap;
             transition: transform 0.1s;
         }
-        .radio-btn:active  { transform: scale(0.91); }
+        .radio-btn:active   { transform: scale(0.91); }
         .radio-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
 
-        /* Grid de vogais */
         .vowel-row { display: flex; gap: 8px; }
         .vowel-btn {
             width: 48px; height: 48px; border-radius: 50%;
@@ -244,13 +241,24 @@
             background: var(--accent); border-color: var(--accent);
             color: white; box-shadow: 0 3px 10px rgba(231,76,60,0.35);
         }
+
+        /* Campo texto (onset/coda no Construtor) */
+        .text-input {
+            width: 100%; padding: 10px 14px;
+            font-size: 15px; font-weight: 600;
+            background: var(--bg); border: 2px solid var(--border);
+            border-radius: 10px; outline: none; transition: border 0.2s;
+            -webkit-appearance: none;
+        }
+        .text-input:focus { border-color: var(--accent); background: white; }
+        .input-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════
      ZONA DE LEITURA
-══════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════ -->
 <div id="viewport">
     <div class="results-header" id="results-header" style="display:none">
         <span class="count-label" id="count-label"></span>
@@ -265,9 +273,9 @@
     <div id="sentinel"></div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════
      ZONA DO POLEGAR — Bottom Sheet
-══════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════ -->
 <div id="bottom-panel">
     <div class="handle-zone" onclick="togglePanelCollapse()">
         <div class="handle"></div>
@@ -280,11 +288,7 @@
 
     <div class="tab-wrapper">
 
-        <!-- ABA: MOLDE
-             Busca a partir de uma palavra-base. As características extraídas
-             viram blocos (lego pills) que se travam/destravem individualmente.
-             Bloco travado = filtro absoluto sobre os resultados.
-        -->
+        <!-- ABA: MOLDE -->
         <div id="tab-molde" class="tab-content active">
             <div class="search-wrap">
                 <input type="search" id="input-palavra"
@@ -294,16 +298,14 @@
                        spellcheck="false" disabled>
                 <button id="btn-mic" title="Busca por voz">🎤</button>
             </div>
+            <!-- Pills geradas dinamicamente — toque curto = travar, toque longo = negar -->
             <div class="lego-panel" id="lego-panel">
                 <span class="lego-hint">Digite uma palavra para extrair blocos fonéticos.</span>
             </div>
             <div id="status-text"></div>
         </div>
 
-        <!-- ABA: CONSTRUTOR
-             Monta uma busca sem palavra-base, direto pelos critérios estruturais.
-             Cada controle ativo vira um filtro absoluto no dicionário inteiro.
-        -->
+        <!-- ABA: CONSTRUTOR -->
         <div id="tab-construtor" class="tab-content">
             <div class="builder-section">
                 <span class="builder-label">Número de sílabas</span>
@@ -332,6 +334,14 @@
                     <button class="vowel-btn" data-vogal="u" onclick="setVogal('u', this)">U</button>
                 </div>
             </div>
+            <div class="builder-section">
+                <span class="builder-label">Onset tônico</span>
+                <input type="text" id="onset-input" class="text-input"
+                       placeholder="ex: tr, pr, fl, s, r…"
+                       inputmode="text" autocorrect="off" autocapitalize="none"
+                       spellcheck="false">
+                <p class="input-hint">Consoante(s) que abrem a sílaba tônica. Deixe vazio para qualquer.</p>
+            </div>
         </div>
 
     </div><!-- /tab-wrapper -->
@@ -340,7 +350,7 @@
 <script>
 'use strict';
 /* ═══════════════════════════════════════════════════════════════
-   1. MOTOR FONÉTICO — silabificação (inalterado desde v1)
+   1. MOTOR FONÉTICO
 ═══════════════════════════════════════════════════════════════ */
 const vRegex = /[aeiouáàâãéêíóôõúü]/i;
 
@@ -427,7 +437,6 @@ function identificarTonica(silabas, p) {
    2. CAMPOS FONÉTICOS
 ═══════════════════════════════════════════════════════════════ */
 function normV(s) {
-    // ã e õ são preservados — classe nasal é foneticamente distinta
     return s.toLowerCase()
         .replace(/[áàâ]/g,'a').replace(/[éê]/g,'e').replace(/í/g,'i')
         .replace(/[óô]/g,'o').replace(/[úü]/g,'u');
@@ -456,6 +465,15 @@ function calcFam(o)  { return !o?'vz':o.length===1?'si':(CLUSTER_FAM[o]||'cx'); 
 function calcAcent(sil,ti) { let d=sil.length-1-ti; return d===0?'ox':d===1?'px':d===2?'ppx':'spx'; }
 function extrairRima(sil,ti)   { let pf=sil.slice(ti).join(''),m=pf.match(vRegex); return m?pf.slice(m.index).toLowerCase():pf.toLowerCase(); }
 
+// Coda = consoante(s) após a última vogal da palavra  ("amor"→"r", "flores"→"s", "belo"→"")
+function calcCoda(p) {
+    let pL = p.toLowerCase();
+    for (let i = pL.length - 1; i >= 0; i--) {
+        if (vRegex.test(pL[i])) return pL.slice(i + 1);
+    }
+    return '';
+}
+
 function perfilFonetico(palavra) {
     let pL = palavra.toLowerCase().trim();
     if (!pL || !/[a-záàâãéêíóôõúü]/i.test(pL)) return null;
@@ -473,11 +491,12 @@ function perfilFonetico(palavra) {
         espinhaVocal:   calcEspinha(pL),
         assConsonantal: calcAssC(sil, ti),
         familiaCluster: calcFam(onset),
+        coda:           calcCoda(pL),
     };
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   3. SCORE COMPOSTO + FAIXAS
+   3. SCORE + FAIXAS
 ═══════════════════════════════════════════════════════════════ */
 function calcScore(item, alvo, setOnset, setAssC, lenAssC) {
     let s = 0;
@@ -523,10 +542,9 @@ function getBandaKey(score) {
    4. ESTADO
 ═══════════════════════════════════════════════════════════════ */
 let dicionario          = [];
-let alvoAtual           = null;   // perfilFonetico() ou null (modo Construtor)
+let alvoAtual           = null;
 
-// Filtros absolutos — null = inativo
-// Quando ativo, o item passa APENAS se item[campo] === valor.
+// Filtros absolutos: null = inativo, valor = match exato obrigatório
 let FILTROS = {
     numSilabas:     null,
     acentuacao:     null,
@@ -536,13 +554,28 @@ let FILTROS = {
     rimaPerfeita:   null,
     vogaisRima:     null,
     espinhaVocal:   null,
+    coda:           null,
+};
+
+// Negação de filtros: true = excluir itens que TENHAM esse valor (≠)
+// Só os blocos do Molde suportam negação via toque longo.
+let FILTROS_NEG = {
+    numSilabas:     false,
+    acentuacao:     false,
+    vogalTonica:    false,
+    onsetTonico:    false,
+    familiaCluster: false,
+    rimaPerfeita:   false,
+    vogaisRima:     false,
+    espinhaVocal:   false,
+    coda:           false,
 };
 
 let resultadosFiltrados = [];
 let itemsRenderizados   = 0;
 const CHUNK             = 60;
-let iObserver           = null;   // IntersectionObserver
-let buildSilabas        = 0;      // estado do stepper do Construtor
+let iObserver           = null;
+let buildSilabas        = 0;
 
 /* ═══════════════════════════════════════════════════════════════
    5. INDEXAÇÃO
@@ -578,7 +611,6 @@ async function indexarDicionario() {
    6. PROCESSAMENTO CENTRAL
 ═══════════════════════════════════════════════════════════════ */
 function processarBusca() {
-    // Exige ao menos um critério para não retornar todo o dicionário
     let temCriterio = alvoAtual !== null || Object.values(FILTROS).some(v => v !== null);
     if (!temCriterio) {
         resultadosFiltrados = [];
@@ -586,20 +618,22 @@ function processarBusca() {
         return;
     }
 
-    // Aplica filtros absolutos (todos os campos de FILTROS que estão ativos)
     let base = alvoAtual
         ? dicionario.filter(i => i.palavra !== alvoAtual.palavra)
         : dicionario;
 
     let filtrados = base.filter(item => {
         for (let [k, v] of Object.entries(FILTROS)) {
-            if (v !== null && item[k] !== v) return false;
+            if (v === null) continue;
+            let match = item[k] === v;
+            // Filtro negado (≠): exclui quem corresponde ao valor
+            if (FILTROS_NEG[k]) { if (match)  return false; }
+            else                 { if (!match) return false; }
         }
         return true;
     });
 
     if (alvoAtual) {
-        // Com palavra-base: pontua, descarta score=0, ordena por score DESC
         let setOnset = new Set(alvoAtual.onsetTonico);
         let setAssC  = new Set(alvoAtual.assConsonantal);
         let lenAssC  = alvoAtual.assConsonantal.length;
@@ -608,7 +642,6 @@ function processarBusca() {
             .filter(i => i.score > 0)
             .sort((a, b) => b.score - a.score);
     } else {
-        // Sem palavra-base: filtra o dicionário estruturalmente, ordena A–Z
         resultadosFiltrados = filtrados
             .map(i => ({ ...i, score: 0 }))
             .sort((a, b) => a.palavra.localeCompare(b.palavra, 'pt-BR'));
@@ -618,7 +651,7 @@ function processarBusca() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   7. RENDERIZAÇÃO — header + infinite scroll (IntersectionObserver)
+   7. RENDERIZAÇÃO
 ═══════════════════════════════════════════════════════════════ */
 function renderResultados() {
     let grid = document.getElementById('grid');
@@ -627,8 +660,6 @@ function renderResultados() {
     if (iObserver) iObserver.disconnect();
 
     let n = resultadosFiltrados.length;
-
-    // Header (contagem + chips de faixa)
     let header = document.getElementById('results-header');
     if (n === 0) {
         header.style.display = 'none';
@@ -639,7 +670,6 @@ function renderResultados() {
     document.getElementById('count-label').textContent =
         `${n.toLocaleString('pt-BR')} palavra${n !== 1 ? 's' : ''}`;
 
-    // Chips de faixa só aparecem no modo Molde (quando há score)
     let chipsEl = document.getElementById('bands-chips');
     if (alvoAtual) {
         let counts = {};
@@ -653,7 +683,6 @@ function renderResultados() {
         chipsEl.innerHTML = '';
     }
 
-    // Primeiro chunk imediato; o observer carrega o resto
     renderChunk();
     setupObserver();
 }
@@ -679,7 +708,6 @@ function renderChunk() {
             card.className = 'word-card';
         }
         card.dataset.palavra = item.palavra;
-        // Sílabas com tônica destacada — sem número de score visível
         card.innerHTML = item.silabas
             .map((s, i) => i === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s)
             .join('·');
@@ -690,30 +718,29 @@ function renderChunk() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   8. MOLDE — palavra-base → lego pills (blocos fonéticos)
+   8. MOLDE — palavra-base + lego locks
 ═══════════════════════════════════════════════════════════════ */
-
-// Definição dos blocos extraíveis de um perfil fonético.
-// Cada bloco pode ser travado como filtro absoluto.
 const DEF_BLOCOS = [
-    { id: 'numSilabas',     label: v => `${v} síl.`,                           show: ()  => true             },
-    { id: 'acentuacao',     label: v => ACENT_LABEL[v] || v,                   show: ()  => true             },
-    { id: 'vogalTonica',    label: v => `vogal /${v.toUpperCase()}/`,           show: ()  => true             },
-    { id: 'onsetTonico',    label: v => `onset /${v}/`,                         show: v   => v !== ''         },
+    { id: 'numSilabas',     label: v => `${v} síl.`,                           show: ()  => true              },
+    { id: 'acentuacao',     label: v => ACENT_LABEL[v] || v,                   show: ()  => true              },
+    { id: 'vogalTonica',    label: v => `vogal /${v.toUpperCase()}/`,           show: ()  => true              },
+    { id: 'onsetTonico',    label: v => `onset /${v}/`,                         show: v   => v !== ''          },
+    { id: 'coda',           label: v => `coda: -${v}`,                          show: v   => v !== ''          },
     { id: 'familiaCluster', label: v => FAM_LABEL[v] || v,                     show: v   => v!=='si'&&v!=='vz'},
-    { id: 'rimaPerfeita',   label: v => `rima: -${v}`,                         show: ()  => true             },
-    { id: 'vogaisRima',     label: v => `vogRima: ${v}`,                       show: v   => v.length > 1     },
-    { id: 'espinhaVocal',   label: v => `espinha: ${v}`,                       show: v   => v.length > 1     },
+    { id: 'rimaPerfeita',   label: v => `rima: -${v}`,                         show: ()  => true              },
+    { id: 'vogaisRima',     label: v => `vogRima: ${v}`,                       show: v   => v.length > 1      },
+    { id: 'espinhaVocal',   label: v => `espinha: ${v}`,                       show: v   => v.length > 1      },
 ];
+
+// Campos Molde-específicos: apagados ao trocar de palavra ou ao ativar Construtor
+const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda'];
 
 function setAlvoPalavra(palavra) {
     let perfil = perfilFonetico(palavra);
     if (!perfil) return;
     alvoAtual = perfil;
-
-    // Limpa filtros Molde-específicos para evitar conflito com a nova palavra
-    ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster'].forEach(k => FILTROS[k] = null);
-
+    // Reset Molde-específicos (tanto filtro quanto negação)
+    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
     document.getElementById('input-palavra').value = palavra;
     renderLegoPanel();
     processarBusca();
@@ -729,35 +756,57 @@ function renderLegoPanel() {
         return;
     }
     panel.innerHTML = DEF_BLOCOS.map(def => {
-        let val = alvoAtual[def.id];
+        let val     = alvoAtual[def.id];
         if (!def.show(val)) return '';
-        let locked = FILTROS[def.id] !== null;
-        return `<button class="lego-pill${locked ? ' locked' : ''}" onclick="toggleLego('${def.id}')">
-                    ${locked ? '🔒 ' : ''}${def.label(val)}
+        let locked  = FILTROS[def.id] !== null;
+        let negated = locked && FILTROS_NEG[def.id];
+        let cls     = negated ? 'negated' : locked ? 'locked' : '';
+        let prefix  = negated ? '≠ ' : locked ? '🔒 ' : '';
+        return `<button class="lego-pill${cls ? ' '+cls : ''}" data-lego="${def.id}">
+                    ${prefix}${def.label(val)}
                 </button>`;
     }).join('');
 }
 
+// Toque curto: trava ↔ destrava (reseta negação)
 function toggleLego(id) {
     if (!alvoAtual) return;
     let wasLocked = FILTROS[id] !== null;
-    FILTROS[id] = wasLocked ? null : alvoAtual[id];
+    FILTROS[id]     = wasLocked ? null : alvoAtual[id];
+    FILTROS_NEG[id] = false;
     if (navigator.vibrate) navigator.vibrate(wasLocked ? 15 : 45);
     renderLegoPanel();
     processarBusca();
     document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Toque longo: ativa negação (≠) ↔ remove tudo
+function negarLego(id) {
+    if (!alvoAtual) return;
+    if (FILTROS_NEG[id]) {
+        // Já negado → unlock completo
+        FILTROS[id]     = null;
+        FILTROS_NEG[id] = false;
+    } else {
+        // Lock + negar
+        FILTROS[id]     = alvoAtual[id];
+        FILTROS_NEG[id] = true;
+    }
+    if (navigator.vibrate) navigator.vibrate([10, 30, 70]);
+    renderLegoPanel();
+    processarBusca();
+    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 /* ═══════════════════════════════════════════════════════════════
-   9. CONSTRUTOR — busca estrutural sem palavra-base
+   9. CONSTRUTOR — busca estrutural direta
 ═══════════════════════════════════════════════════════════════ */
 
-// Usar qualquer controle do Construtor limpa a palavra-base (modos mutuamente exclusivos).
+// Usar um controle do Construtor enquanto em Molde → limpa o modo Molde
 function _ativarConstrutor() {
-    if (!alvoAtual) return;          // já no modo Construtor
+    if (!alvoAtual) return;
     alvoAtual = null;
-    // Preserva filtros estruturais compatíveis; limpa os Molde-específicos
-    ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster'].forEach(k => FILTROS[k] = null);
+    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
     document.getElementById('input-palavra').value = '';
     renderLegoPanel();
 }
@@ -790,8 +839,18 @@ function setVogal(v, btn) {
     processarBusca();
 }
 
-// Sincroniza os controles do Construtor com o estado atual de FILTROS
-// (chamado ao entrar na aba Construtor)
+let _onsetDebounce;
+function _onOnsetInput(e) {
+    clearTimeout(_onsetDebounce);
+    _onsetDebounce = setTimeout(() => {
+        _ativarConstrutor();
+        let val = e.target.value.trim().toLowerCase();
+        FILTROS.onsetTonico = val || null;
+        processarBusca();
+    }, 300);
+}
+
+// Sincroniza os controles visuais do Construtor com o FILTROS atual
 function _syncConstrutorUI() {
     buildSilabas = FILTROS.numSilabas || 0;
     document.getElementById('step-val').textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
@@ -801,10 +860,11 @@ function _syncConstrutorUI() {
     document.querySelectorAll('.vowel-btn').forEach(b => {
         b.classList.toggle('selected', b.dataset.vogal === FILTROS.vogalTonica);
     });
+    document.getElementById('onset-input').value = FILTROS.onsetTonico || '';
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   10. PAINEL — abas + colapso automático no scroll
+   10. PAINEL — abas + colapso no scroll
 ═══════════════════════════════════════════════════════════════ */
 const bottomPanel = document.getElementById('bottom-panel');
 
@@ -815,19 +875,17 @@ function switchTab(nome) {
     document.getElementById('tab-btn-' + nome).classList.add('active');
     document.getElementById('tab-' + nome).classList.add('active');
     if (nome === 'construtor') _syncConstrutorUI();
-    if (nome === 'molde') document.getElementById('input-palavra').focus();
+    if (nome === 'molde')      document.getElementById('input-palavra').focus();
 }
 
-function togglePanelCollapse() {
-    bottomPanel.classList.toggle('collapsed');
-}
+function togglePanelCollapse() { bottomPanel.classList.toggle('collapsed'); }
 
-// Rola para baixo → recolhe painel; rola para cima → expande
+// Colapsa ao rolar ↓; reabre apenas ao voltar ao topo
 let _lastScrollY = 0;
 document.getElementById('viewport').addEventListener('scroll', function () {
     let y = this.scrollTop;
-    if      (y > 80 && y > _lastScrollY + 14)  bottomPanel.classList.add('collapsed');
-    else if (y < _lastScrollY - 14)             bottomPanel.classList.remove('collapsed');
+    if (y > 80 && y > _lastScrollY + 20) bottomPanel.classList.add('collapsed');
+    else if (y < 60)                      bottomPanel.classList.remove('collapsed');
     _lastScrollY = y;
 });
 
@@ -835,7 +893,7 @@ document.getElementById('viewport').addEventListener('scroll', function () {
    11. EVENTOS
 ═══════════════════════════════════════════════════════════════ */
 
-// Card clicado → nova busca no Molde
+// ── Card clicado → nova busca no Molde
 document.getElementById('grid').addEventListener('click', e => {
     let card = e.target.closest('.word-card');
     if (!card || !card.dataset.palavra) return;
@@ -843,43 +901,78 @@ document.getElementById('grid').addEventListener('click', e => {
     setAlvoPalavra(card.dataset.palavra);
 });
 
-// Input do Molde: debounce 280ms enquanto digita; imediato no Enter
+// ── Input do Molde
 let _debounce;
 document.getElementById('input-palavra').addEventListener('input', e => {
     let val = e.target.value.trim();
     clearTimeout(_debounce);
     if (val.length < 2) return;
-    _debounce = setTimeout(() => { let p = perfilFonetico(val); if (p) setAlvoPalavra(val); }, 280);
+    _debounce = setTimeout(() => { if (perfilFonetico(val)) setAlvoPalavra(val); }, 280);
 });
 document.getElementById('input-palavra').addEventListener('keypress', e => {
     if (e.key !== 'Enter') return;
     clearTimeout(_debounce);
     let val = e.target.value.trim();
     if (val.length >= 2) setAlvoPalavra(val);
-    e.target.blur();   // fecha o teclado no mobile
+    e.target.blur();
 });
 
+// ── Onset input no Construtor
+document.getElementById('onset-input').addEventListener('input', _onOnsetInput);
+document.getElementById('onset-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') e.target.blur();
+});
+
+// ── Long press nos lego pills via delegação de eventos
+// Usa pointer events para funcionar em touch e mouse.
+// _legoLongFired: se o long press disparou, o click subsequente é ignorado.
+let _legoTimer      = null;
+let _legoLongFired  = false;
+
+const legoPanel = document.getElementById('lego-panel');
+
+legoPanel.addEventListener('pointerdown', e => {
+    let pill = e.target.closest('[data-lego]');
+    if (!pill) return;
+    _legoLongFired = false;
+    _legoTimer = setTimeout(() => {
+        _legoLongFired = true;
+        negarLego(pill.dataset.lego);
+    }, 500);
+});
+
+legoPanel.addEventListener('pointerup',     () => clearTimeout(_legoTimer));
+legoPanel.addEventListener('pointercancel', () => clearTimeout(_legoTimer));
+
+// O click dispara após pointerup — ignoramos se o long press já tratou
+legoPanel.addEventListener('click', e => {
+    if (_legoLongFired) { _legoLongFired = false; return; }
+    let pill = e.target.closest('[data-lego]');
+    if (pill) toggleLego(pill.dataset.lego);
+});
+
+// Bloqueia menu de contexto nativo (necessário em alguns Android)
+legoPanel.addEventListener('contextmenu', e => e.preventDefault());
+
 /* ═══════════════════════════════════════════════════════════════
-   12. VOZ — Web Speech API (progressiva: não quebra se ausente)
+   12. VOZ — Web Speech API
 ═══════════════════════════════════════════════════════════════ */
 (function setupVoice() {
     let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     let mic   = document.getElementById('btn-mic');
     let recog = new SR();
-    recog.lang = 'pt-BR';
-    recog.maxAlternatives = 1;
+    recog.lang = 'pt-BR'; recog.maxAlternatives = 1;
     mic.classList.add('visible');
     mic.onclick = () => {
         try { recog.start(); mic.classList.add('listening'); } catch(e) {}
     };
     recog.onresult = e => {
-        let texto  = e.results[0][0].transcript.trim();
-        let ultima = texto.split(/\s+/).pop();   // pega a última palavra da frase
+        let ultima = e.results[0][0].transcript.trim().split(/\s+/).pop();
         switchTab('molde');
         setAlvoPalavra(ultima);
     };
-    recog.onend  = () => mic.classList.remove('listening');
+    recog.onend   = () => mic.classList.remove('listening');
     recog.onerror = () => mic.classList.remove('listening');
 })();
 
