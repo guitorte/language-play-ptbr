@@ -83,7 +83,17 @@
             border-bottom: 1px solid var(--border);
         }
         .count-label { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; margin-right: 2px; }
-        .band-chip   { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; color: white; }
+        .band-chip {
+            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; color: white;
+            cursor: pointer; user-select: none; transition: opacity 0.18s, transform 0.1s;
+        }
+        .band-chip:active { transform: scale(0.91); }
+        .band-chip.dimmed { opacity: 0.28; }
+        #clear-banda {
+            font-size: 11px; color: var(--muted); background: none; border: none;
+            cursor: pointer; padding: 2px 4px; opacity: 0.7; flex-shrink: 0;
+        }
+        #clear-banda:hover { opacity: 1; }
 
         .empty-state {
             padding: 52px 24px; text-align: center;
@@ -319,6 +329,7 @@
     <div class="results-header" id="results-header" style="display:none">
         <span class="count-label" id="count-label"></span>
         <div id="bands-chips"></div>
+        <button id="clear-banda" style="display:none" onclick="clearFiltroBanda()">✕ faixas</button>
     </div>
     <div class="results-grid" id="grid">
         <div class="empty-state" id="empty-state">
@@ -701,6 +712,8 @@ let FILTROS_NEG = {
 };
 
 let resultadosFiltrados = [];
+let resultadosVisiveis  = [];
+let FILTRO_BANDAS       = new Set();   // vazio = mostrar todas
 let itemsRenderizados   = 0;
 const CHUNK             = 60;
 let iObserver           = null;
@@ -784,6 +797,78 @@ function processarBusca() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   6b. FILTRO POR FAIXA
+═══════════════════════════════════════════════════════════════ */
+function _calcVisiveis() {
+    resultadosVisiveis = FILTRO_BANDAS.size === 0
+        ? resultadosFiltrados
+        : resultadosFiltrados.filter(i => FILTRO_BANDAS.has(getBandaKey(i.score)));
+}
+
+function _renderBandaChips() {
+    let counts = {};
+    BANDAS.forEach(b => counts[b.key] = 0);
+    resultadosFiltrados.forEach(r => counts[getBandaKey(r.score)]++);
+    let chipsEl = document.getElementById('bands-chips');
+    chipsEl.innerHTML = BANDAS
+        .filter(b => counts[b.key] > 0)
+        .map(b => {
+            let ativo = FILTRO_BANDAS.size === 0 || FILTRO_BANDAS.has(b.key);
+            return `<span class="band-chip${ativo ? '' : ' dimmed'}"
+                         style="background:${b.color}"
+                         onclick="toggleBanda(${b.key})"
+                         title="${ativo ? 'Clique para ocultar esta faixa' : 'Clique para mostrar esta faixa'}"
+                    >${b.label} ${counts[b.key]}</span>`;
+        })
+        .join('');
+    document.getElementById('clear-banda').style.display =
+        FILTRO_BANDAS.size > 0 ? 'inline' : 'none';
+}
+
+function toggleBanda(key) {
+    if (FILTRO_BANDAS.has(key)) {
+        FILTRO_BANDAS.delete(key);
+    } else {
+        FILTRO_BANDAS.add(key);
+    }
+    _calcVisiveis();
+    _atualizarGridFaixa();
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+function clearFiltroBanda() {
+    FILTRO_BANDAS.clear();
+    _calcVisiveis();
+    _atualizarGridFaixa();
+    if (navigator.vibrate) navigator.vibrate(20);
+}
+
+function _atualizarGridFaixa() {
+    let grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    itemsRenderizados = 0;
+    if (iObserver) iObserver.disconnect();
+
+    let nTotal = resultadosFiltrados.length;
+    let nVis   = resultadosVisiveis.length;
+    document.getElementById('count-label').textContent =
+        FILTRO_BANDAS.size > 0
+            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`
+            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`;
+
+    _renderBandaChips();
+
+    if (nVis === 0) {
+        grid.innerHTML = `<div class="empty-state">Nenhuma faixa selecionada tem resultados.<br>
+            Clique em <b>✕ faixas</b> para ver tudo.</div>`;
+        return;
+    }
+    renderChunk();
+    setupObserver();
+    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════════════════════════════════════════════════════
    7. RENDERIZAÇÃO
 ═══════════════════════════════════════════════════════════════ */
 function renderResultados() {
@@ -792,28 +877,36 @@ function renderResultados() {
     itemsRenderizados = 0;
     if (iObserver) iObserver.disconnect();
 
-    let n = resultadosFiltrados.length;
     let header = document.getElementById('results-header');
-    if (n === 0) {
+    if (resultadosFiltrados.length === 0) {
         header.style.display = 'none';
+        document.getElementById('bands-chips').innerHTML = '';
+        document.getElementById('clear-banda').style.display = 'none';
         grid.innerHTML = `<div class="empty-state">Nenhuma palavra atende a estes critérios.<br>Destrave alguns blocos ou ajuste os filtros.</div>`;
         return;
     }
-    header.style.display = 'flex';
-    document.getElementById('count-label').textContent =
-        `${n.toLocaleString('pt-BR')} palavra${n !== 1 ? 's' : ''}`;
 
-    let chipsEl = document.getElementById('bands-chips');
+    _calcVisiveis();
+    header.style.display = 'flex';
+
+    let nTotal = resultadosFiltrados.length;
+    let nVis   = resultadosVisiveis.length;
+    document.getElementById('count-label').textContent =
+        FILTRO_BANDAS.size > 0
+            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`
+            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`;
+
     if (alvoAtual) {
-        let counts = {};
-        BANDAS.forEach(b => counts[b.key] = 0);
-        resultadosFiltrados.forEach(r => counts[getBandaKey(r.score)]++);
-        chipsEl.innerHTML = BANDAS
-            .filter(b => counts[b.key] > 0)
-            .map(b => `<span class="band-chip" style="background:${b.color}">${b.label} ${counts[b.key]}</span>`)
-            .join('');
+        _renderBandaChips();
     } else {
-        chipsEl.innerHTML = '';
+        document.getElementById('bands-chips').innerHTML = '';
+        document.getElementById('clear-banda').style.display = 'none';
+    }
+
+    if (nVis === 0) {
+        grid.innerHTML = `<div class="empty-state">Nenhuma faixa selecionada tem resultados.<br>
+            Clique em <b>✕ faixas</b> para ver tudo.</div>`;
+        return;
     }
 
     renderChunk();
@@ -829,8 +922,8 @@ function setupObserver() {
 }
 
 function renderChunk() {
-    if (itemsRenderizados >= resultadosFiltrados.length) return;
-    let chunk = resultadosFiltrados.slice(itemsRenderizados, itemsRenderizados + CHUNK);
+    if (itemsRenderizados >= resultadosVisiveis.length) return;
+    let chunk = resultadosVisiveis.slice(itemsRenderizados, itemsRenderizados + CHUNK);
     let frag  = document.createDocumentFragment();
     chunk.forEach(item => {
         let card = document.createElement('div');
@@ -874,6 +967,7 @@ function setAlvoPalavra(palavra) {
     if (!perfil) return;
     alvoAtual = perfil;
     CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+    FILTRO_BANDAS.clear();
     document.getElementById('input-palavra').value = palavra;
     _addToHistorico(palavra);
     renderLegoPanel();
@@ -950,7 +1044,7 @@ function stepSilabas(delta) {
 
 function setAcento(val, btn) {
     _ativarConstrutor();
-    document.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('[data-acento]').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     FILTROS.acentuacao = val;
     if (navigator.vibrate) navigator.vibrate(20);
@@ -999,7 +1093,7 @@ function setFreq(val, btn) {
 function _syncConstrutorUI() {
     buildSilabas = FILTROS.numSilabas || 0;
     document.getElementById('step-val').textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
-    document.querySelectorAll('.radio-btn').forEach(b => {
+    document.querySelectorAll('[data-acento]').forEach(b => {
         b.classList.toggle('selected', (b.dataset.acento || null) === FILTROS.acentuacao);
     });
     document.querySelectorAll('.vowel-btn').forEach(b => {
