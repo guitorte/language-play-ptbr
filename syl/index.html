@@ -173,10 +173,10 @@
 
         .tab-wrapper {
             max-height: 46vh;
-            transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: max-height 0.32s cubic-bezier(0.25, 1, 0.5, 1);
             overflow: hidden;
         }
-        #bottom-panel.collapsed .tab-wrapper { max-height: 0; }
+        #bottom-panel.collapsed .tab-wrapper { max-height: 0; transition: max-height 0.15s cubic-bezier(0.4, 0, 1, 1); }
 
         .tab-content {
             display: none; padding: 14px 16px 10px;
@@ -209,9 +209,10 @@
 
         /* Histórico */
         .historico-row {
-            display: flex; gap: 6px; flex-wrap: wrap;
-            margin-bottom: 10px; min-height: 0;
+            display: none; gap: 6px; flex-wrap: wrap;
+            margin-bottom: 8px; min-height: 0;
         }
+        .historico-row.visible { display: flex; }
         .hist-chip {
             background: var(--bg); border: 1px solid var(--border);
             padding: 4px 10px; border-radius: 14px;
@@ -825,6 +826,8 @@ async function indexarDicionario() {
                  Digite no <b>Molde</b> ou explore pelo <b>Construtor</b>.`;
             // Restaurar estado da URL hash (se existir)
             _restoreFromHash();
+            // Empurra estado inicial para que o botão Voltar feche o painel
+            history.pushState(null, '', location.href);
         }, 30);
     } catch(e) {
         st.textContent = '⚠️ Erro ao carregar palavras.txt';
@@ -1062,7 +1065,7 @@ const DEF_BLOCOS = [
 
 const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda','classe','freq'];
 
-function setAlvoPalavra(palavra) {
+function setAlvoPalavra(palavra, addToHistory = false) {
     clearTimeout(_onsetDebounce);
     let perfil = perfilFonetico(palavra);
     if (!perfil) return;
@@ -1071,13 +1074,14 @@ function setAlvoPalavra(palavra) {
     CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
     FILTRO_BANDAS.clear();
     document.getElementById('input-palavra').value = palavra;
+    document.getElementById('historico-row').classList.remove('visible');
     // Mostrar zona de interseção; resetar estado B
     document.getElementById('intersect-zone').style.display = 'block';
     document.getElementById('intersect-input-wrap').style.display = 'none';
     document.getElementById('intersect-btn').classList.remove('active');
     document.getElementById('intersect-clear').style.display = 'none';
     document.getElementById('input-palavra-b').value = '';
-    _addToHistorico(palavra);
+    if (addToHistory) _addToHistorico(palavra);
     renderLegoPanel();
     processarBusca();
     document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1291,10 +1295,24 @@ function togglePanelCollapse() { bottomPanel.classList.toggle('collapsed'); }
 let _lastScrollY = 0;
 document.getElementById('viewport').addEventListener('scroll', function () {
     let y = this.scrollTop;
-    if (y > 80 && y > _lastScrollY + 20) bottomPanel.classList.add('collapsed');
-    else if (y < 60)                      bottomPanel.classList.remove('collapsed');
+    if (y > 40 && y > _lastScrollY + 8)  bottomPanel.classList.add('collapsed');
+    else if (y < 40)                      bottomPanel.classList.remove('collapsed');
     _lastScrollY = y;
 });
+
+// Deslize horizontal no painel → trocar de aba
+let _swipeX = 0, _swipeY = 0;
+bottomPanel.addEventListener('touchstart', e => {
+    _swipeX = e.touches[0].clientX;
+    _swipeY = e.touches[0].clientY;
+}, { passive: true });
+bottomPanel.addEventListener('touchend', e => {
+    let dx = e.changedTouches[0].clientX - _swipeX;
+    let dy = e.changedTouches[0].clientY - _swipeY;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        switchTab(dx < 0 ? 'construtor' : 'molde');
+    }
+}, { passive: true });
 
 /* ═══════════════════════════════════════════════════════════════
    11. HISTÓRICO — localStorage (últimas 20 palavras)
@@ -1433,12 +1451,14 @@ document.getElementById('grid').addEventListener('click', e => {
     let card = e.target.closest('.word-card');
     if (!card || !card.dataset.palavra) return;
     switchTab('molde');
-    setAlvoPalavra(card.dataset.palavra);
+    setAlvoPalavra(card.dataset.palavra, true);
 });
 
 let _debounce;
 document.getElementById('input-palavra').addEventListener('input', e => {
     let val = e.target.value.trim();
+    let histRow = document.getElementById('historico-row');
+    histRow.classList.toggle('visible', val.length < 2);
     clearTimeout(_debounce);
     if (val.length < 2) return;
     _debounce = setTimeout(() => { if (perfilFonetico(val)) setAlvoPalavra(val); }, 280);
@@ -1447,8 +1467,15 @@ document.getElementById('input-palavra').addEventListener('keypress', e => {
     if (e.key !== 'Enter') return;
     clearTimeout(_debounce);
     let val = e.target.value.trim();
-    if (val.length >= 2) setAlvoPalavra(val);
+    if (val.length >= 2) setAlvoPalavra(val, true);
     e.target.blur();
+});
+document.getElementById('input-palavra').addEventListener('focus', function() {
+    requestAnimationFrame(() => this.select());
+    if (this.value.trim().length < 2) document.getElementById('historico-row').classList.add('visible');
+});
+document.getElementById('input-palavra').addEventListener('blur', () => {
+    setTimeout(() => document.getElementById('historico-row').classList.remove('visible'), 200);
 });
 
 document.getElementById('onset-input').addEventListener('input', _onOnsetInput);
@@ -1478,7 +1505,8 @@ document.getElementById('input-palavra-b').addEventListener('keypress', e => {
 document.getElementById('historico-row').addEventListener('click', e => {
     let chip = e.target.closest('[data-hist]');
     if (!chip) return;
-    setAlvoPalavra(chip.dataset.hist);
+    setAlvoPalavra(chip.dataset.hist, true);
+    document.getElementById('historico-row').classList.remove('visible');
 });
 
 // Long press nos lego pills
@@ -1504,9 +1532,17 @@ legoPanel.addEventListener('click', e => {
 });
 legoPanel.addEventListener('contextmenu', e => e.preventDefault());
 
-// Navegar no hash (botão voltar/avançar)
+// Navegar no hash (botão avançar do browser)
 window.addEventListener('hashchange', () => {
     if (dicionario.length > 0) _restoreFromHash();
+});
+
+// Botão Voltar do Android → fechar painel em vez de sair da página
+window.addEventListener('popstate', () => {
+    if (!bottomPanel.classList.contains('collapsed')) {
+        bottomPanel.classList.add('collapsed');
+        history.pushState(null, '', location.href);
+    }
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1525,7 +1561,7 @@ window.addEventListener('hashchange', () => {
     recog.onresult = e => {
         let ultima = e.results[0][0].transcript.trim().split(/\s+/).pop();
         switchTab('molde');
-        setAlvoPalavra(ultima);
+        setAlvoPalavra(ultima, true);
     };
     recog.onend   = () => mic.classList.remove('listening');
     recog.onerror = () => mic.classList.remove('listening');
