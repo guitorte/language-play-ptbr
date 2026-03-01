@@ -593,26 +593,62 @@ function levenshtein(a, b) {
     return prev[lb];
 }
 
-// Classe morfológica por heurística de sufixo
-// Ordem importa: sufixos mais longos primeiro para evitar falsos positivos.
+// Classe morfológica por heurística de sufixo — v2
+// Estratégia: classificar só com alta confiança; ambíguos → 'outro'.
+// Ordem: adv > sub (nominais exclusivos) > adj > vrb (flexionados > infinitivos) > ambíguos.
 function calcClasse(p) {
-    let pL = p.toLowerCase();
-    // Advérbios
-    if (pL.endsWith('mente'))                                       return 'adv';
-    // Verbos — infinitivos e formas comuns
-    if (/(?:ar|er|ir|or)$/.test(pL) && pL.length > 3)              return 'vrb';
-    if (/(?:ando|endo|indo|ondo)$/.test(pL))                       return 'vrb';
-    if (/(?:aram|eram|iram|aram)$/.test(pL))                       return 'vrb';
-    if (/(?:aria|eria|iria)$/.test(pL))                            return 'vrb';
-    if (/(?:asse|esse|isse)$/.test(pL))                            return 'vrb';
-    if (/(?:ava|ia)$/.test(pL) && pL.length > 4)                  return 'vrb';
-    // Adjetivos
-    if (/(?:oso|osa|ivo|iva|vel|ável|ível)$/.test(pL))            return 'adj';
-    if (/(?:nte|ário|ária|ório|ória)$/.test(pL))                  return 'adj';
-    if (/(?:ado|ada|ido|ida)$/.test(pL) && pL.length > 4)         return 'adj';
-    // Substantivos
-    if (/(?:ção|são|dão|mento|ncia|ência|ância|dade|tude|ismo|ista)$/.test(pL)) return 'sub';
-    if (/(?:eiro|eira|agem|ura|eza|ança)$/.test(pL))              return 'sub';
+    const pL = p.toLowerCase();
+    const len = pL.length;
+
+    // ── Advérbio ────────────────────────────────────────────────────
+    if (pL.endsWith('mente')) return 'adv';
+
+    // ── Substantivo — sufixos exclusivamente nominais ───────────────
+    if (/(?:ção|são|xão)$/.test(pL))                           return 'sub';
+    if (/(?:dade|tude)$/.test(pL))                             return 'sub';
+    if (/(?:ismo|ista)$/.test(pL))                             return 'sub';
+    if (/(?:eiro|eira)$/.test(pL))                             return 'sub';
+    if (/(?:agem|igem)$/.test(pL))                             return 'sub';
+    if (/mento$/.test(pL))                                     return 'sub';
+    if (/(?:ência|ância|encia|ancia)$/.test(pL))               return 'sub';
+    if (/(?:ança|ença)$/.test(pL))                             return 'sub';
+    if (/eza$/.test(pL))                                       return 'sub';
+    if (/ura$/.test(pL) && len > 4)                            return 'sub';
+    // sufixos eruditos em -ia: inequivocamente nominais
+    if (/(?:logia|grafia|nomia|metria|fobia|filia|cracia|terapia|scopia|algia|mania|latria|genia)$/.test(pL)) return 'sub';
+
+    // ── Adjetivo — sufixos predominantemente adjetivais ────────────
+    if (/(?:oso|osa|ivo|iva)$/.test(pL))                       return 'adj';
+    if (/(?:ável|ível)$/.test(pL))                             return 'adj';
+    if (/vel$/.test(pL) && len > 5)                            return 'adj';
+    if (/nte$/.test(pL) && len > 5)                            return 'adj';
+    if (/(?:ório|ória)$/.test(pL))                             return 'adj';
+    // adjetivos relacionais: solar/lunar (5 chars) vs singular/popular/nacional (6+)
+    if (/(?:olar|unar)$/.test(pL) && len > 4)                             return 'adj';
+    if (/(?:ular|onal|inal|eral|ival|ural)$/.test(pL) && len > 5)         return 'adj';
+
+    // ── Verbo — flexões sem ambiguidade ─────────────────────────────
+    if (/(?:ando|endo|indo)$/.test(pL))                        return 'vrb'; // gerúndio
+    if (/(?:asse|esse|isse)$/.test(pL))                        return 'vrb'; // subj. imperf.
+    if (/(?:aria|eria|iria)$/.test(pL))                        return 'vrb'; // condicional
+    if (/(?:aram|eram|iram)$/.test(pL))                        return 'vrb'; // pret. perf. pl.
+    if (/ava$/.test(pL) && len > 4)                            return 'vrb'; // pret. imperf. -ar
+    if (/rria$/.test(pL))                                      return 'vrb'; // pret. imperf. -er/-ir (corria)
+
+    // ── Verbo — infinitivos ─────────────────────────────────────────
+    if (/ir$/.test(pL) && len > 3)                             return 'vrb'; // partir, fugir
+    if (/er$/.test(pL) && len > 3)                             return 'vrb'; // comer, beber
+    // -ar: ambíguo; adj relacionais (-ular/-onal/etc.) já tratados acima
+    if (/ar$/.test(pL) && len > 3)                             return 'vrb'; // amar, cantar
+
+    // ── Sufixos ambíguos → 'outro' ──────────────────────────────────
+    // -ado/-ada/-ido/-ida: machado(sub), mercado(sub), cansado(adj), falado(adj/vrb-part)
+    if (/(?:ado|ada|ido|ida)$/.test(pL) && len > 4)            return 'outro';
+    // -ia: fazia(vrb), energia(sub), alegria(sub) — indistinguível sem léxico
+    if (/ia$/.test(pL) && len > 4)                             return 'outro';
+    // -ário/-ária: secretário(sub), voluntário(adj)
+    if (/(?:ário|ária)$/.test(pL))                             return 'outro';
+
     return 'outro';
 }
 
