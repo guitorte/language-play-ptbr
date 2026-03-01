@@ -1063,6 +1063,7 @@ const DEF_BLOCOS = [
 const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda','classe','freq'];
 
 function setAlvoPalavra(palavra) {
+    clearTimeout(_onsetDebounce);
     let perfil = perfilFonetico(palavra);
     if (!perfil) return;
     alvoAtual = perfil;
@@ -1136,6 +1137,7 @@ function _ativarConstrutor() {
     if (!alvoAtual) return;
     alvoAtual = null;
     alvoB     = null;
+    FILTRO_BANDAS.clear();
     CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
     document.getElementById('input-palavra').value = '';
     document.getElementById('intersect-zone').style.display = 'none';
@@ -1213,6 +1215,7 @@ function setFamilia(val, btn) {
 }
 
 function mostrarInputB() {
+    if (!alvoAtual) return;
     let wrap = document.getElementById('intersect-input-wrap');
     let btn  = document.getElementById('intersect-btn');
     if (wrap.style.display === 'none') {
@@ -1225,6 +1228,7 @@ function mostrarInputB() {
 }
 
 function setAlvoB(palavra) {
+    if (!alvoAtual) return;
     let perfil = perfilFonetico(palavra);
     if (!perfil) return;
     alvoB = perfil;
@@ -1338,6 +1342,7 @@ function _updateHash() {
     let parts = [];
     if (alvoAtual) {
         parts.push('molde=' + encodeURIComponent(alvoAtual.palavra));
+        if (alvoB) parts.push('alvoB=' + encodeURIComponent(alvoB.palavra));
         let locks = [], negs = [];
         for (let k of Object.keys(FILTROS)) {
             if (FILTROS[k] !== null) {
@@ -1390,6 +1395,17 @@ function _restoreFromHash() {
                         FILTROS_NEG[k] = true;
                     }
                 });
+            }
+            if (params.alvoB) {
+                let perfilB = perfilFonetico(params.alvoB);
+                if (perfilB) {
+                    alvoB = perfilB;
+                    document.getElementById('intersect-zone').style.display = 'block';
+                    document.getElementById('intersect-input-wrap').style.display = 'block';
+                    document.getElementById('intersect-btn').classList.add('active');
+                    document.getElementById('input-palavra-b').value = params.alvoB;
+                    document.getElementById('intersect-clear').style.display = 'inline';
+                }
             }
             renderLegoPanel();
             processarBusca();
