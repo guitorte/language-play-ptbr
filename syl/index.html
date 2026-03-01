@@ -318,6 +318,22 @@
         }
         .morfo-btn:active   { transform: scale(0.91); }
         .morfo-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
+
+        /* ── INTERSEÇÃO A∩B ── */
+        .intersect-toggle { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+        .intersect-btn {
+            font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 10px;
+            border: 2px solid var(--border); background: var(--bg);
+            color: var(--muted); cursor: pointer; user-select: none;
+            transition: transform 0.1s, background 0.15s;
+        }
+        .intersect-btn:active { transform: scale(0.91); }
+        .intersect-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .intersect-clear {
+            font-size: 11px; color: var(--muted); background: none; border: none;
+            cursor: pointer; padding: 3px 6px; opacity: 0.7;
+        }
+        .intersect-clear:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -368,6 +384,20 @@
             <div class="historico-row" id="historico-row"></div>
             <div class="lego-panel" id="lego-panel">
                 <span class="lego-hint">Digite uma palavra para extrair blocos fonéticos.</span>
+            </div>
+            <!-- INTERSEÇÃO A∩B -->
+            <div id="intersect-zone" style="display:none">
+                <div class="intersect-toggle">
+                    <button class="intersect-btn" id="intersect-btn" onclick="mostrarInputB()">∩ também rima com…</button>
+                    <button class="intersect-clear" id="intersect-clear" style="display:none" onclick="clearAlvoB()">✕ limpar B</button>
+                </div>
+                <div class="search-wrap" id="intersect-input-wrap" style="display:none; margin-top:6px">
+                    <input type="search" id="input-palavra-b"
+                           placeholder="Segunda palavra-base…"
+                           inputmode="search" enterkeyhint="search"
+                           autocorrect="off" autocapitalize="none"
+                           spellcheck="false">
+                </div>
             </div>
             <div id="status-text"></div>
         </div>
@@ -429,6 +459,21 @@
                     <button class="radio-btn freq-btn"          data-freq="rara"  onclick="setFreq('rara', this)">Rara</button>
                 </div>
                 <p class="input-hint">Heurística por comprimento e morfologia — aproximada.</p>
+            </div>
+            <div class="builder-section">
+                <span class="builder-label">Família de cluster (onset tônico)</span>
+                <div class="morfo-row" id="fam-row">
+                    <button class="morfo-btn fam-btn selected" data-fam=""   onclick="setFamilia(null, this)">Qualquer</button>
+                    <button class="morfo-btn fam-btn" data-fam="vz"  onclick="setFamilia('vz',  this)">— sem onset</button>
+                    <button class="morfo-btn fam-btn" data-fam="si"  onclick="setFamilia('si',  this)">simples (s, r…)</button>
+                    <button class="morfo-btn fam-btn" data-fam="pl"  onclick="setFamilia('pl',  this)">plos.+líq. (br, tr…)</button>
+                    <button class="morfo-btn fam-btn" data-fam="fl"  onclick="setFamilia('fl',  this)">fric.+líq. (fr, fl…)</button>
+                    <button class="morfo-btn fam-btn" data-fam="af"  onclick="setFamilia('af',  this)">ch</button>
+                    <button class="morfo-btn fam-btn" data-fam="lp"  onclick="setFamilia('lp',  this)">lh</button>
+                    <button class="morfo-btn fam-btn" data-fam="np"  onclick="setFamilia('np',  this)">nh</button>
+                    <button class="morfo-btn fam-btn" data-fam="cx"  onclick="setFamilia('cx',  this)">complexo</button>
+                </div>
+                <p class="input-hint">Agrupa clusters consonantais com comportamento fonético similar.</p>
             </div>
         </div>
 
@@ -732,6 +777,7 @@ function getBandaKey(score) {
 ═══════════════════════════════════════════════════════════════ */
 let dicionario          = [];
 let alvoAtual           = null;
+let alvoB               = null;
 
 let FILTROS = {
     numSilabas: null, acentuacao: null, vogalTonica: null,
@@ -803,6 +849,7 @@ function processarBusca() {
     let base = alvoAtual
         ? dicionario.filter(i => i.palavra !== alvoAtual.palavra)
         : dicionario;
+    if (alvoB) base = base.filter(i => i.palavra !== alvoB.palavra);
 
     let filtrados = base.filter(item => {
         for (let [k, v] of Object.entries(FILTROS)) {
@@ -815,13 +862,28 @@ function processarBusca() {
     });
 
     if (alvoAtual) {
-        let setOnset = new Set(alvoAtual.onsetTonico);
-        let setAssC  = new Set(alvoAtual.assConsonantal);
-        let lenAssC  = alvoAtual.assConsonantal.length;
-        resultadosFiltrados = filtrados
-            .map(i => ({ ...i, score: calcScore(i, alvoAtual, setOnset, setAssC, lenAssC) }))
-            .filter(i => i.score > 0)
-            .sort((a, b) => b.score - a.score);
+        let setOnsetA = new Set(alvoAtual.onsetTonico);
+        let setAsscA  = new Set(alvoAtual.assConsonantal);
+        let lenAsscA  = alvoAtual.assConsonantal.length;
+
+        if (alvoB) {
+            let setOnsetB = new Set(alvoB.onsetTonico);
+            let setAsscB  = new Set(alvoB.assConsonantal);
+            let lenAsscB  = alvoB.assConsonantal.length;
+            resultadosFiltrados = filtrados
+                .map(i => {
+                    let sA = calcScore(i, alvoAtual, setOnsetA, setAsscA, lenAsscA);
+                    let sB = calcScore(i, alvoB,     setOnsetB, setAsscB, lenAsscB);
+                    return { ...i, score: Math.min(sA, sB) };
+                })
+                .filter(i => i.score > 0)
+                .sort((a, b) => b.score - a.score);
+        } else {
+            resultadosFiltrados = filtrados
+                .map(i => ({ ...i, score: calcScore(i, alvoAtual, setOnsetA, setAsscA, lenAsscA) }))
+                .filter(i => i.score > 0)
+                .sort((a, b) => b.score - a.score);
+        }
     } else {
         resultadosFiltrados = filtrados
             .map(i => ({ ...i, score: 0 }))
@@ -887,10 +949,11 @@ function _atualizarGridFaixa() {
 
     let nTotal = resultadosFiltrados.length;
     let nVis   = resultadosVisiveis.length;
+    let sufixo = alvoB ? ' (A∩B)' : '';
     document.getElementById('count-label').textContent =
         FILTRO_BANDAS.size > 0
-            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`
-            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`;
+            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`
+            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`;
 
     _renderBandaChips();
 
@@ -927,10 +990,11 @@ function renderResultados() {
 
     let nTotal = resultadosFiltrados.length;
     let nVis   = resultadosVisiveis.length;
+    let sufixo = alvoB ? ' (A∩B)' : '';
     document.getElementById('count-label').textContent =
         FILTRO_BANDAS.size > 0
-            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`
-            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}`;
+            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`
+            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`;
 
     if (alvoAtual) {
         _renderBandaChips();
@@ -1002,9 +1066,16 @@ function setAlvoPalavra(palavra) {
     let perfil = perfilFonetico(palavra);
     if (!perfil) return;
     alvoAtual = perfil;
+    alvoB     = null;
     CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
     FILTRO_BANDAS.clear();
     document.getElementById('input-palavra').value = palavra;
+    // Mostrar zona de interseção; resetar estado B
+    document.getElementById('intersect-zone').style.display = 'block';
+    document.getElementById('intersect-input-wrap').style.display = 'none';
+    document.getElementById('intersect-btn').classList.remove('active');
+    document.getElementById('intersect-clear').style.display = 'none';
+    document.getElementById('input-palavra-b').value = '';
     _addToHistorico(palavra);
     renderLegoPanel();
     processarBusca();
@@ -1064,8 +1135,14 @@ function negarLego(id) {
 function _ativarConstrutor() {
     if (!alvoAtual) return;
     alvoAtual = null;
+    alvoB     = null;
     CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
     document.getElementById('input-palavra').value = '';
+    document.getElementById('intersect-zone').style.display = 'none';
+    document.getElementById('intersect-input-wrap').style.display = 'none';
+    document.getElementById('intersect-btn').classList.remove('active');
+    document.getElementById('intersect-clear').style.display = 'none';
+    document.getElementById('input-palavra-b').value = '';
     renderLegoPanel();
 }
 
@@ -1126,6 +1203,49 @@ function setFreq(val, btn) {
     processarBusca();
 }
 
+function setFamilia(val, btn) {
+    _ativarConstrutor();
+    document.querySelectorAll('.fam-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.familiaCluster = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
+function mostrarInputB() {
+    let wrap = document.getElementById('intersect-input-wrap');
+    let btn  = document.getElementById('intersect-btn');
+    if (wrap.style.display === 'none') {
+        wrap.style.display = 'block';
+        btn.classList.add('active');
+        document.getElementById('input-palavra-b').focus();
+    } else {
+        clearAlvoB();
+    }
+}
+
+function setAlvoB(palavra) {
+    let perfil = perfilFonetico(palavra);
+    if (!perfil) return;
+    alvoB = perfil;
+    document.getElementById('input-palavra-b').value = palavra;
+    document.getElementById('intersect-clear').style.display = 'inline';
+    FILTRO_BANDAS.clear();
+    processarBusca();
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function clearAlvoB() {
+    alvoB = null;
+    document.getElementById('intersect-input-wrap').style.display = 'none';
+    document.getElementById('intersect-btn').classList.remove('active');
+    document.getElementById('input-palavra-b').value = '';
+    document.getElementById('intersect-clear').style.display = 'none';
+    FILTRO_BANDAS.clear();
+    processarBusca();
+    if (navigator.vibrate) navigator.vibrate(20);
+}
+
 function _syncConstrutorUI() {
     buildSilabas = FILTROS.numSilabas || 0;
     document.getElementById('step-val').textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
@@ -1141,6 +1261,9 @@ function _syncConstrutorUI() {
     });
     document.querySelectorAll('.freq-btn').forEach(b => {
         b.classList.toggle('selected', (b.dataset.freq || null) === FILTROS.freq);
+    });
+    document.querySelectorAll('.fam-btn').forEach(b => {
+        b.classList.toggle('selected', (b.dataset.fam || null) === FILTROS.familiaCluster);
     });
 }
 
@@ -1315,6 +1438,24 @@ document.getElementById('input-palavra').addEventListener('keypress', e => {
 document.getElementById('onset-input').addEventListener('input', _onOnsetInput);
 document.getElementById('onset-input').addEventListener('keypress', e => {
     if (e.key === 'Enter') e.target.blur();
+});
+
+let _debounceB;
+document.getElementById('input-palavra-b').addEventListener('input', e => {
+    let val = e.target.value.trim();
+    clearTimeout(_debounceB);
+    if (val.length < 2) {
+        if (alvoB) { alvoB = null; document.getElementById('intersect-clear').style.display = 'none'; processarBusca(); }
+        return;
+    }
+    _debounceB = setTimeout(() => { if (perfilFonetico(val)) setAlvoB(val); }, 280);
+});
+document.getElementById('input-palavra-b').addEventListener('keypress', e => {
+    if (e.key !== 'Enter') return;
+    clearTimeout(_debounceB);
+    let val = e.target.value.trim();
+    if (val.length >= 2) setAlvoB(val);
+    e.target.blur();
 });
 
 // Histórico: click em chip → buscar palavra
