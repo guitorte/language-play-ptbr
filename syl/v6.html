@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
+          user-scalable=no, interactive-widget=resizes-content">
+    <title>Explorador de Fonemas e Sílabas</title>
+    <style>
+        :root {
+            --primary:    #1A252C;
+            --accent:     #E74C3C;
+            --bg:         #F0F3F4;
+            --surface:    #FFFFFF;
+            --border:     #DFE6EC;
+            --text:       #2C3E50;
+            --muted:      #7F8C8D;
+            --lock-bg:    #FFF4E6;
+            --lock-color: #A04000;
+            --lock-border:#E67E22;
+            --neg-bg:     #fdecea;
+            --neg-color:  #922b21;
+            --c-rima:     #27AE60;
+            --c-eco:      #2980B9;
+            --c-ass:      #E67E22;
+            --c-prox:     #8E44AD;
+            --c-qrima:    #16A085;
+            --c-ritmo:    #7F8C8D;
+            --safe-b:     env(safe-area-inset-bottom, 0px);
+            --header-bg:  rgba(240,243,244,0.94);
+            --shadow:     rgba(0,0,0,0.08);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary:    #E8ECEF;
+                --accent:     #E74C3C;
+                --bg:         #181C20;
+                --surface:    #23282E;
+                --border:     #3A4048;
+                --text:       #D5DBE0;
+                --muted:      #8A949E;
+                --lock-bg:    #3D2E1A;
+                --lock-color: #F0A860;
+                --lock-border:#C87820;
+                --neg-bg:     #3D1A1A;
+                --neg-color:  #F08080;
+                --c-rima:     #2ECC71;
+                --c-eco:      #3498DB;
+                --c-ass:      #F39C12;
+                --c-prox:     #9B59B6;
+                --c-qrima:    #1ABC9C;
+                --c-ritmo:    #95A5A6;
+                --header-bg:  rgba(24,28,32,0.94);
+                --shadow:     rgba(0,0,0,0.25);
+            }
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column;
+            height: 100dvh; overflow: hidden;
+        }
+
+        /* ── ZONA DE LEITURA ── */
+        #viewport {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            overscroll-behavior-y: contain;
+        }
+
+        .results-header {
+            position: sticky; top: 0; z-index: 10;
+            background: var(--header-bg);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            padding: 9px 14px;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+            border-bottom: 1px solid var(--border);
+        }
+        .count-label { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; margin-right: 2px; }
+        .band-chip {
+            font-size: 13px; font-weight: 700; padding: 6px 10px; border-radius: 20px; color: white;
+            cursor: pointer; user-select: none; transition: opacity 0.18s, transform 0.1s;
+        }
+        .band-chip:active { transform: scale(0.91); }
+        .band-chip.dimmed { opacity: 0.28; }
+        #clear-banda {
+            font-size: 13px; color: var(--muted); background: none; border: none;
+            cursor: pointer; padding: 10px; margin: -5px; opacity: 0.7; flex-shrink: 0;
+        }
+        #clear-banda:hover { opacity: 1; }
+
+        .empty-state {
+            padding: 52px 24px; text-align: center;
+            color: var(--muted); font-size: 15px; line-height: 1.7;
+        }
+        .loader {
+            display: block; width: 26px; height: 26px; margin: 0 auto 12px;
+            border-radius: 50%;
+            border: 3px solid var(--border); border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+            gap: 9px; padding: 12px 12px 16px;
+        }
+        .word-card {
+            background: var(--surface); border: 2px solid var(--border);
+            border-radius: 12px; padding: 13px 6px 9px;
+            text-align: center; font-size: 15px; font-weight: 500;
+            cursor: pointer; user-select: none;
+            transition: transform 0.1s;
+        }
+        .word-card:active { transform: scale(0.91); }
+        .word-card.b-rima  { border-color: var(--c-rima); }
+        .word-card.b-eco   { border-color: var(--c-eco); }
+        .word-card.b-ass   { border-color: var(--c-ass); }
+        .word-card.b-prox  { border-color: var(--c-prox); }
+        .word-card.b-qrima { border-color: var(--c-qrima); }
+        .word-card.b-ritmo { border-color: var(--c-ritmo); }
+        .tonica { font-weight: 800; color: var(--accent); }
+
+        @media (min-width: 540px) {
+            .results-grid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+        }
+
+        /* ── ZONA DO POLEGAR — Bottom Sheet ── */
+        #bottom-panel {
+            flex-shrink: 0;
+            background: var(--surface);
+            border-radius: 18px 18px 0 0;
+            box-shadow: 0 -3px 20px var(--shadow);
+            z-index: 100;
+            display: flex; flex-direction: column;
+            padding-bottom: var(--safe-b);
+            /* Animação via GPU */
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            transform: translateY(0);
+        }
+
+        #bottom-panel.collapsed {
+            /* Esconde as abas mas deixa o Handle e os botões de tab visíveis (~54px) */
+            transform: translateY(calc(100% - 54px));
+        }
+
+        .handle-zone {
+            padding: 14px 0 10px; cursor: pointer;
+            display: flex; justify-content: center;
+            user-select: none;
+            touch-action: none; /* Previne scroll da tela ao arrastar a handle */
+        }
+        .handle {
+            width: 48px; height: 5px;
+            background: var(--border); border-radius: 3px;
+            transition: background 0.2s;
+        }
+        .handle-zone:active .handle { background: var(--muted); }
+
+        .tabs {
+            display: flex; padding: 0 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab-btn {
+            flex: 1; background: none; border: none;
+            padding: 14px 0; font-size: 15px; font-weight: 700;
+            color: var(--muted); cursor: pointer;
+            position: relative; transition: color 0.15s;
+        }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 20%; width: 60%;
+            height: 3px; background: var(--accent); border-radius: 3px 3px 0 0;
+        }
+
+        .tab-wrapper {
+            height: 48vh; /* Altura fixa para manter performance da transição */
+            overflow: hidden;
+        }
+
+        .tab-content {
+            display: none; padding: 14px 16px 10px;
+            overflow-y: auto; height: 100%;
+            overscroll-behavior-y: contain;
+        }
+        .tab-content.active { display: block; }
+
+        /* ── ABA MOLDE ── */
+        .search-wrap { position: relative; margin-bottom: 4px; }
+        .search-wrap input {
+            width: 100%; padding: 15px 46px 15px 16px;
+            font-size: 16px; font-weight: 600;
+            background: var(--bg); border: 2px solid var(--border);
+            border-radius: 12px; outline: none; transition: border 0.2s;
+            color: var(--text);
+        }
+        .search-wrap input:focus    { border-color: var(--accent); background: var(--surface); }
+        .search-wrap input:disabled { opacity: 0.45; }
+
+        #btn-mic {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; font-size: 20px; cursor: pointer;
+            padding: 10px; border-radius: 8px; line-height: 1;
+            display: none;
+        }
+        #btn-mic.visible   { display: flex; align-items: center; }
+        #btn-mic.listening { animation: pulse 1s ease infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        /* Histórico */
+        .historico-row {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 12px; min-height: 0;
+            align-items: center;
+        }
+        .hist-chip {
+            background: var(--bg); border: 1px solid var(--border);
+            padding: 8px 12px; border-radius: 14px;
+            font-size: 13px; font-weight: 600; color: var(--muted);
+            cursor: pointer; user-select: none;
+            transition: transform 0.1s;
+        }
+        .hist-chip:active { transform: scale(0.92); }
+        .hist-clear {
+            background: none; border: none;
+            font-size: 13px; color: var(--muted); cursor: pointer;
+            padding: 10px; margin-left: -4px; opacity: 0.6;
+        }
+
+        /* Lego pills */
+        .lego-panel { display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px; }
+        .lego-hint  { font-size: 14px; color: var(--muted); align-self: center; }
+
+        .lego-pill {
+            background: var(--bg); border: 2px solid var(--border);
+            padding: 10px 14px; border-radius: 20px;
+            font-size: 14px; font-weight: 600; color: var(--muted);
+            cursor: pointer; user-select: none;
+            display: flex; align-items: center; gap: 4px;
+            transition: transform 0.1s, background 0.2s;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        .lego-pill:active { transform: scale(0.91); }
+        .lego-pill.locked {
+            background: var(--lock-bg);
+            border-color: var(--lock-border);
+            color: var(--lock-color);
+        }
+        .lego-pill.negated {
+            background: var(--neg-bg);
+            border-color: var(--accent);
+            color: var(--neg-color);
+        }
+
+        #status-text { font-size: 12px; color: var(--muted); margin-top: 12px; text-align: center; }
+
+        /* ── ABA CONSTRUTOR ── */
+        .builder-section { margin-bottom: 22px; }
+        .builder-label {
+            display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+        }
+
+        .stepper { display: flex; align-items: center; gap: 10px; }
+        .step-btn {
+            width: 48px; height: 48px; border-radius: 12px;
+            border: 2px solid var(--border); background: var(--bg);
+            font-size: 24px; font-weight: 700; color: var(--primary);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s, background 0.1s;
+        }
+        .step-btn:active { transform: scale(0.88); background: var(--border); }
+        .step-val { font-size: 18px; font-weight: 800; min-width: 88px; text-align: center; }
+
+        .radio-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .radio-btn {
+            padding: 10px 14px; border-radius: 10px;
+            border: 2px solid var(--border); background: var(--bg);
+            font-size: 14px; font-weight: 600; color: var(--muted);
+            cursor: pointer; white-space: nowrap;
+            transition: transform 0.1s;
+        }
+        .radio-btn:active   { transform: scale(0.91); }
+        .radio-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
+
+        .vowel-row { display: flex; gap: 10px; }
+        .vowel-btn {
+            width: 52px; height: 52px; border-radius: 50%;
+            border: 2px solid var(--border); background: var(--bg);
+            font-size: 20px; font-weight: 800; color: var(--muted);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
+        }
+        .vowel-btn:active   { transform: scale(0.88); }
+        .vowel-btn.selected {
+            background: var(--accent); border-color: var(--accent);
+            color: white; box-shadow: 0 3px 10px rgba(231,76,60,0.35);
+        }
+
+        .text-input {
+            width: 100%; padding: 12px 16px;
+            font-size: 16px; font-weight: 600;
+            background: var(--bg); border: 2px solid var(--border);
+            border-radius: 10px; outline: none; transition: border 0.2s;
+            -webkit-appearance: none; color: var(--text);
+        }
+        .text-input:focus { border-color: var(--accent); background: var(--surface); }
+        .input-hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+        .morfo-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .morfo-btn {
+            padding: 10px 14px; border-radius: 10px;
+            border: 2px solid var(--border); background: var(--bg);
+            font-size: 13px; font-weight: 600; color: var(--muted);
+            cursor: pointer; white-space: nowrap;
+            transition: transform 0.1s;
+        }
+        .morfo-btn:active   { transform: scale(0.91); }
+        .morfo-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
+
+        /* ── INTERSEÇÃO A∩B ── */
+        .intersect-toggle { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .intersect-btn {
+            font-size: 14px; font-weight: 700; padding: 10px 16px; border-radius: 10px;
+            border: 2px solid var(--border); background: var(--bg);
+            color: var(--muted); cursor: pointer; user-select: none;
+            transition: transform 0.1s, background 0.15s;
+        }
+        .intersect-btn:active { transform: scale(0.91); }
+        .intersect-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .intersect-clear {
+            font-size: 13px; color: var(--muted); background: none; border: none;
+            cursor: pointer; padding: 10px; margin: -5px; opacity: 0.7;
+        }
+        .intersect-clear:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     ZONA DE LEITURA
+══════════════════════════════════════════ -->
+<div id="viewport">
+    <div class="results-header" id="results-header" style="display:none">
+        <span class="count-label" id="count-label"></span>
+        <div id="bands-chips"></div>
+        <button id="clear-banda" style="display:none" onclick="clearFiltroBanda()">✕ faixas</button>
+    </div>
+    <div class="results-grid" id="grid">
+        <div class="empty-state" id="empty-state">
+            <span class="loader"></span>
+            Carregando banco de palavras…
+        </div>
+    </div>
+    <div id="sentinel"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ZONA DO POLEGAR — Bottom Sheet
+══════════════════════════════════════════ -->
+<div id="bottom-panel">
+    <div class="handle-zone" id="drag-handle" onclick="togglePanelCollapse()">
+        <div class="handle"></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tab-btn-molde"      onclick="switchTab('molde')">🔍 Molde</button>
+        <button class="tab-btn"        id="tab-btn-construtor" onclick="switchTab('construtor')">🏗 Construtor</button>
+    </div>
+
+    <div class="tab-wrapper">
+        <!-- ABA: MOLDE -->
+        <div id="tab-molde" class="tab-content active">
+            <div class="search-wrap">
+                <input type="search" id="input-palavra"
+                       placeholder="Digite uma palavra-base…"
+                       inputmode="search" enterkeyhint="search"
+                       autocorrect="off" autocapitalize="none"
+                       spellcheck="false" disabled>
+                <button id="btn-mic" title="Busca por voz">🎤</button>
+            </div>
+            <div class="historico-row" id="historico-row"></div>
+            <div class="lego-panel" id="lego-panel">
+                <span class="lego-hint">Digite uma palavra para extrair blocos fonéticos.</span>
+            </div>
+            <!-- INTERSEÇÃO A∩B -->
+            <div id="intersect-zone" style="display:none">
+                <div class="intersect-toggle">
+                    <button class="intersect-btn" id="intersect-btn" onclick="mostrarInputB()">∩ também rima com…</button>
+                    <button class="intersect-clear" id="intersect-clear" style="display:none" onclick="clearAlvoB()">✕ limpar B</button>
+                </div>
+                <div class="search-wrap" id="intersect-input-wrap" style="display:none; margin-top:8px">
+                    <input type="search" id="input-palavra-b"
+                           placeholder="Segunda palavra-base…"
+                           inputmode="search" enterkeyhint="search"
+                           autocorrect="off" autocapitalize="none"
+                           spellcheck="false">
+                </div>
+            </div>
+            <div id="status-text"></div>
+        </div>
+
+        <!-- ABA: CONSTRUTOR -->
+        <div id="tab-construtor" class="tab-content">
+            <div class="builder-section">
+                <span class="builder-label">Número de sílabas</span>
+                <div class="stepper">
+                    <button class="step-btn" onclick="stepSilabas(-1)">−</button>
+                    <span class="step-val" id="step-val">Qualquer</span>
+                    <button class="step-btn" onclick="stepSilabas(+1)">+</button>
+                </div>
+            </div>
+            <div class="builder-section">
+                <span class="builder-label">Acentuação</span>
+                <div class="radio-row">
+                    <button class="radio-btn selected" data-acento=""    onclick="setAcento(null, this)">Qualquer</button>
+                    <button class="radio-btn"          data-acento="ox"  onclick="setAcento('ox',  this)">Oxítona</button>
+                    <button class="radio-btn"          data-acento="px"  onclick="setAcento('px',  this)">Paroxítona</button>
+                    <button class="radio-btn"          data-acento="ppx" onclick="setAcento('ppx', this)">Proparox.</button>
+                </div>
+            </div>
+            <div class="builder-section">
+                <span class="builder-label">Vogal tônica</span>
+                <div class="vowel-row">
+                    <button class="vowel-btn" data-vogal="a" onclick="setVogal('a', this)">A</button>
+                    <button class="vowel-btn" data-vogal="e" onclick="setVogal('e', this)">E</button>
+                    <button class="vowel-btn" data-vogal="i" onclick="setVogal('i', this)">I</button>
+                    <button class="vowel-btn" data-vogal="o" onclick="setVogal('o', this)">O</button>
+                    <button class="vowel-btn" data-vogal="u" onclick="setVogal('u', this)">U</button>
+                </div>
+            </div>
+            <div class="builder-section">
+                <span class="builder-label">Família de cluster (onset tônico)</span>
+                <div class="morfo-row" id="fam-row">
+                    <button class="morfo-btn fam-btn selected" data-fam=""   onclick="setFamilia(null, this)">Qualquer</button>
+                    <button class="morfo-btn fam-btn" data-fam="vz"  onclick="setFamilia('vz',  this)">— (sem onset)</button>
+                    <button class="morfo-btn fam-btn" data-fam="si"  onclick="setFamilia('si',  this)">Simples (s, r…)</button>
+                    <button class="morfo-btn fam-btn" data-fam="pl"  onclick="setFamilia('pl',  this)">Plos.+Líq. (br, tr…)</button>
+                    <button class="morfo-btn fam-btn" data-fam="fl"  onclick="setFamilia('fl',  this)">Fric.+Líq. (fr, fl…)</button>
+                    <button class="morfo-btn fam-btn" data-fam="af"  onclick="setFamilia('af',  this)">CH</button>
+                    <button class="morfo-btn fam-btn" data-fam="lp"  onclick="setFamilia('lp',  this)">LH</button>
+                    <button class="morfo-btn fam-btn" data-fam="np"  onclick="setFamilia('np',  this)">NH</button>
+                    <button class="morfo-btn fam-btn" data-fam="cx"  onclick="setFamilia('cx',  this)">Complexo</button>
+                </div>
+                <p class="input-hint">Agrupa clusters consonantais com comportamento fonético similar. Substitui a necessidade de digitar consoantes manualmente.</p>
+            </div>
+            <div class="builder-section">
+                <span class="builder-label">Classe gramatical</span>
+                <div class="morfo-row">
+                    <button class="morfo-btn" data-classe=""    onclick="setClasse(null, this)">Qualquer</button>
+                    <button class="morfo-btn" data-classe="sub" onclick="setClasse('sub', this)">Subst.</button>
+                    <button class="morfo-btn" data-classe="adj" onclick="setClasse('adj', this)">Adj.</button>
+                    <button class="morfo-btn" data-classe="vrb" onclick="setClasse('vrb', this)">Verbo</button>
+                    <button class="morfo-btn" data-classe="adv" onclick="setClasse('adv', this)">Advérbio</button>
+                </div>
+                <p class="input-hint">Heurística por sufixo. Aproximada — não substitui um dicionário morfológico.</p>
+            </div>
+            <div class="builder-section">
+                <span class="builder-label">Frequência estimada</span>
+                <div class="radio-row" id="freq-row">
+                    <button class="radio-btn freq-btn selected" data-freq=""      onclick="setFreq(null, this)">Qualquer</button>
+                    <button class="radio-btn freq-btn"          data-freq="comum" onclick="setFreq('comum', this)">Comum</button>
+                    <button class="radio-btn freq-btn"          data-freq="media" onclick="setFreq('media', this)">Neutra</button>
+                    <button class="radio-btn freq-btn"          data-freq="rara"  onclick="setFreq('rara', this)">Rara</button>
+                </div>
+                <p class="input-hint">Heurística por comprimento e morfologia — aproximada.</p>
+            </div>
+        </div>
+    </div><!-- /tab-wrapper -->
+</div><!-- /bottom-panel -->
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════════════════════════
+   1. MOTOR FONÉTICO
+═══════════════════════════════════════════════════════════════ */
+const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+
+function tratarHiatosVogais(blocoVoc, pLower) {
+    if (blocoVoc.length <= 1) return[blocoVoc];
+    let resultado = [], atual = blocoVoc[0];
+    for (let i = 1; i < blocoVoc.length; i++) {
+        let char = blocoVoc[i], par = (atual.slice(-1) + char).toLowerCase();
+        let formamDitongo   = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe|ia|ie|io|ua|ue|uo)$/.test(par);
+        let vogaisIdenticas = par[0] === par[1];
+        let temHiatoAcent   = /[aeiouáéíóúâêôãõü][íú]/.test(par);
+        let ehHiatoFinal    = /^(ai|ui|au|oe)$/.test(par) &&
+                              (pLower.endsWith(par+"r")||pLower.endsWith(par+"z")||pLower.endsWith(par+"l"));
+        let seguidoDeNh     = pLower.includes(par+"nh");
+        let formaHiatoDit   = false;
+        if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
+            let prox = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
+            if (/^(iu|ia|io|ie|ui)$/.test(char+prox)) formaHiatoDit = true;
+        }
+        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !formaHiatoDit)
+            atual += char;
+        else { resultado.push(atual); atual = char; }
+    }
+    resultado.push(atual);
+    return resultado;
+}
+
+function separarConsoantes(cBlock) {
+    if (cBlock.length <= 1) return ["", cBlock];
+    let tL = cBlock.toLowerCase();
+    if (cBlock.length === 2) {
+        if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL)) return ["", cBlock];
+        return[cBlock.slice(0,1), cBlock.slice(1)];
+    }
+    if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL.slice(-2)))
+        return[cBlock.slice(0,-2), cBlock.slice(-2)];
+    return[cBlock.slice(0,-1), cBlock.slice(-1)];
+}
+
+function silabificar(palavra) {
+    let blocos =[], tipoAt = '', textoAt = '';
+    for (let i = 0; i < palavra.length; i++) {
+        let ch = palavra[i], chL = ch.toLowerCase();
+        if ((chL==='q'||chL==='g') && palavra[i+1] && palavra[i+1].toLowerCase()==='u'
+            && palavra[i+2] && vRegex.test(palavra[i+2])) {
+            if (tipoAt==='V') { blocos.push({tipo:'V',texto:textoAt}); textoAt=''; }
+            blocos.push({tipo:'C',texto:ch+palavra[i+1]}); i++; tipoAt=''; continue;
+        }
+        let tipo = vRegex.test(ch) ? 'V' : 'C';
+        if (tipo !== tipoAt) { if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt}); tipoAt=tipo; textoAt=ch; }
+        else textoAt += ch;
+    }
+    if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt});
+    let bExp =[];
+    for (let b of blocos) {
+        if (b.tipo==='V') tratarHiatosVogais(b.texto, palavra.toLowerCase()).forEach(v=>bExp.push({tipo:'V',texto:v}));
+        else bExp.push(b);
+    }
+    let idxV = bExp.reduce((a,b,i)=>(b.tipo==='V'?[...a,i]:a),[]);
+    if (!idxV.length) return [palavra];
+    let sil = new Array(idxV.length).fill("");
+    for (let i=0; i<idxV[0]; i++) sil[0] += bExp[i].texto;
+    for (let k=0; k<idxV.length-1; k++) {
+        sil[k] += bExp[idxV[k]].texto;
+        let cT=""; for (let j=idxV[k]+1; j<idxV[k+1]; j++) cT+=bExp[j].texto;
+        let [esq,dir] = separarConsoantes(cT); sil[k]+=esq; sil[k+1]+=dir;
+    }
+    let uV = idxV[idxV.length-1];
+    sil[sil.length-1] += bExp[uV].texto;
+    for (let i=uV+1; i<bExp.length; i++) sil[sil.length-1]+=bExp[i].texto;
+    return sil;
+}
+
+function identificarTonica(silabas, p) {
+    let t = p.toLowerCase();
+    for (let i=0;i<silabas.length;i++) if(/[áéíóúâêô]/i.test(silabas[i])) return i;
+    for (let i=0;i<silabas.length;i++) if(/[ãõ]/i.test(silabas[i])) return i;
+    if (t.match(/(r|l|z|x|i|is|u|us|im|ins|um|uns)$/)) return silabas.length-1;
+    if (t.match(/(a|as|e|es|o|os|am|em|ens)$/))        return Math.max(0,silabas.length-2);
+    return Math.max(0,silabas.length-2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. CAMPOS FONÉTICOS
+═══════════════════════════════════════════════════════════════ */
+function normV(s) {
+    return s.toLowerCase()
+        .replace(/[áàâ]/g,'a').replace(/[éê]/g,'e').replace(/í/g,'i')
+        .replace(/[óô]/g,'o').replace(/[úü]/g,'u');
+}
+
+const CLUSTER_FAM = {
+    br:'pl',cr:'pl',dr:'pl',fr:'fl',gr:'pl',pr:'pl',tr:'pl',vr:'fl',
+    bl:'pl',cl:'pl',fl:'fl',gl:'pl',pl:'pl',tl:'pl',
+    ch:'af',lh:'lp',nh:'np'
+};
+const ACENT_LABEL = { ox:'Oxítona', px:'Paroxítona', ppx:'Proparoxítona', spx:'Superproparox.' };
+const FAM_LABEL   = {
+    pl:'plosiva+líquida', fl:'fricativa+líquida', af:'africada',
+    lp:'lateral palatal', np:'nasal palatal', si:'simples', vz:'—', cx:'complexo'
+};
+const CLASSE_LABEL = { sub:'Subst.', adj:'Adj.', vrb:'Verbo', adv:'Adv.', outro:'Outro' };
+
+function calcOnset(sil)        { let m=sil.match(/^([^aeiouáàâãéêíóôõúü]*)/i); return m?m[1].toLowerCase():''; }
+function calcVogalT(sil)       { let m=sil.match(/[aeiouáàâãéêíóôõúü]/i); return m?normV(m[0]):''; }
+function calcVogaisRima(sil,ti){ return normV(sil.slice(ti).join('')).replace(/[^aeiouãõ]/g,''); }
+function calcEspinha(p)        { return normV(p).replace(/[^aeiouãõ]/g,''); }
+function calcAssC(sil,ti) {
+    let span = sil.slice(ti).join('').toLowerCase().replace(/[aeiouáàâãéêíóôõúü]/g,'');
+    return [...new Set(span)].sort().join('');
+}
+function calcFam(o)  { return !o?'vz':o.length===1?'si':(CLUSTER_FAM[o]||'cx'); }
+function calcAcent(sil,ti) { let d=sil.length-1-ti; return d===0?'ox':d===1?'px':d===2?'ppx':'spx'; }
+function extrairRima(sil,ti)   { let pf=sil.slice(ti).join(''),m=pf.match(vRegex); return m?pf.slice(m.index).toLowerCase():pf.toLowerCase(); }
+
+function calcCoda(p) {
+    let pL = p.toLowerCase();
+    for (let i = pL.length - 1; i >= 0; i--) {
+        if (vRegex.test(pL[i])) return pL.slice(i + 1);
+    }
+    return '';
+}
+
+const FREQ_LABEL = { comum: 'Comum', media: 'Neutra', rara: 'Rara' };
+function calcFreq(p, numSil) {
+    let len = p.length;
+    if (len <= 4) return 'comum';
+    if (numSil <= 2 && len <= 6) return 'comum';
+    if (len >= 12 || numSil >= 6) return 'rara';
+    if (/(?:ismo|fobia|filia|grafia|logia|metria|nomia|scopia|cracia|genia|terapia)$/i.test(p)) return 'rara';
+    if (/^(?:pseudo|proto|infra|ultra|supra|hiper|macro|micro)/.test(p) && len > 9) return 'rara';
+    return 'media';
+}
+
+function levenshtein(a, b) {
+    let la = a.length, lb = b.length;
+    if (la === 0) return lb;
+    if (lb === 0) return la;
+    let prev = Array.from({length: lb + 1}, (_, i) => i);
+    for (let i = 1; i <= la; i++) {
+        let curr = [i];
+        for (let j = 1; j <= lb; j++) {
+            curr[j] = a[i-1] === b[j-1]
+                ? prev[j-1]
+                : 1 + Math.min(prev[j-1], prev[j], curr[j-1]);
+        }
+        prev = curr;
+    }
+    return prev[lb];
+}
+
+function calcClasse(p) {
+    const pL = p.toLowerCase(), len = pL.length;
+    if (pL.endsWith('mente')) return 'adv';
+    if (/(?:ção|são|xão|dade|tude|ismo|ista|eiro|eira|agem|igem|mento|ência|ância|encia|ancia|ança|ença|eza)$/.test(pL)) return 'sub';
+    if (/ura$/.test(pL) && len > 4) return 'sub';
+    if (/(?:logia|grafia|nomia|metria|fobia|filia|cracia|terapia|scopia|algia|mania|latria|genia)$/.test(pL)) return 'sub';
+    if (/(?:oso|osa|ivo|iva|ável|ível)$/.test(pL)) return 'adj';
+    if (/(?:vel|nte)$/.test(pL) && len > 5) return 'adj';
+    if (/(?:ório|ória)$/.test(pL)) return 'adj';
+    if (/(?:olar|unar)$/.test(pL) && len > 4) return 'adj';
+    if (/(?:ular|onal|inal|eral|ival|ural)$/.test(pL) && len > 5) return 'adj';
+    if (/(?:ando|endo|indo|asse|esse|isse|aria|eria|iria|aram|eram|iram)$/.test(pL)) return 'vrb';
+    if (/ava$/.test(pL) && len > 4) return 'vrb';
+    if (/rria$/.test(pL)) return 'vrb';
+    if (/(?:ir|er|ar)$/.test(pL) && len > 3) return 'vrb';
+    return 'outro';
+}
+
+function perfilFonetico(palavra) {
+    let pL = palavra.toLowerCase().trim();
+    if (!pL || !/[a-záàâãéêíóôõúü]/i.test(pL)) return null;
+    let sil = silabificar(pL), ti = identificarTonica(sil, pL), onset = calcOnset(sil[ti]);
+    let numSil = sil.length;
+    return {
+        palavra:        pL,
+        silabas:        sil,
+        tonicaIndex:    ti,
+        numSilabas:     numSil,
+        acentuacao:     calcAcent(sil, ti),
+        rimaPerfeita:   extrairRima(sil, ti),
+        vogaisRima:     calcVogaisRima(sil, ti),
+        onsetTonico:    onset,
+        vogalTonica:    calcVogalT(sil[ti]),
+        espinhaVocal:   calcEspinha(pL),
+        assConsonantal: calcAssC(sil, ti),
+        familiaCluster: calcFam(onset),
+        coda:           calcCoda(pL),
+        classe:         calcClasse(pL),
+        freq:           calcFreq(pL, numSil),
+    };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   3. SCORE + FAIXAS
+═══════════════════════════════════════════════════════════════ */
+function calcScore(item, alvo, setOnset, setAssC, lenAssC) {
+    let s = 0;
+    if (item.rimaPerfeita === alvo.rimaPerfeita) {
+        s += 100;
+    } else if (alvo.rimaPerfeita.length >= 2) {
+        let d = levenshtein(item.rimaPerfeita, alvo.rimaPerfeita);
+        if (d === 1) s += 70;
+        else if (d === 2 && alvo.rimaPerfeita.length >= 3) s += 40;
+    }
+    if (alvo.vogaisRima && item.vogaisRima === alvo.vogaisRima)      s +=  60;
+    if (alvo.onsetTonico) {
+        if (item.onsetTonico === alvo.onsetTonico) {
+            s += 50;
+        } else if (item.onsetTonico) {
+            for (let c of item.onsetTonico) if (setOnset.has(c)) { s += 25; break; }
+        }
+    }
+    if (alvo.familiaCluster !== 'vz' && alvo.familiaCluster !== 'si'
+        && item.familiaCluster === alvo.familiaCluster)              s += 20;
+    if (lenAssC > 0 && item.assConsonantal) {
+        let inter = 0;
+        for (let c of item.assConsonantal) if (setAssC.has(c)) inter++;
+        let union = lenAssC + item.assConsonantal.length - inter;
+        if (union > 0 && inter / union >= 0.5)                      s += 30;
+    }
+    if (alvo.espinhaVocal.length > 1 && item.espinhaVocal === alvo.espinhaVocal) s += 40;
+    if (alvo.vogalTonica && item.vogalTonica === alvo.vogalTonica)   s +=  15;
+    if (item.numSilabas === alvo.numSilabas && item.acentuacao === alvo.acentuacao) s += 10;
+    return s;
+}
+
+const BANDAS =[
+    { key:160, label:'Rima',        cls:'b-rima',  color:'var(--c-rima)' },
+    { key:130, label:'Quase-rima',  cls:'b-qrima', color:'var(--c-qrima)' },
+    { key:100, label:'Eco forte',   cls:'b-eco',   color:'var(--c-eco)' },
+    { key:60,  label:'Assonância',  cls:'b-ass',   color:'var(--c-ass)' },
+    { key:25,  label:'Proximidade', cls:'b-prox',  color:'var(--c-prox)' },
+    { key:10,  label:'Ritmo',       cls:'b-ritmo', color:'var(--c-ritmo)' },
+];
+function getBandaKey(score) {
+    if (score >= 160) return 160;
+    if (score >= 130) return 130;
+    if (score >= 100) return 100;
+    if (score >= 60)  return 60;
+    if (score >= 25)  return 25;
+    return 10;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   4. ESTADO
+═══════════════════════════════════════════════════════════════ */
+let dicionario          =[];
+let alvoAtual           = null;
+let alvoB               = null;
+
+let FILTROS = {
+    numSilabas: null, acentuacao: null, vogalTonica: null,
+    onsetTonico: null, familiaCluster: null,
+    rimaPerfeita: null, vogaisRima: null, espinhaVocal: null,
+    coda: null, classe: null, freq: null,
+};
+
+let FILTROS_NEG = {
+    numSilabas: false, acentuacao: false, vogalTonica: false,
+    onsetTonico: false, familiaCluster: false,
+    rimaPerfeita: false, vogaisRima: false, espinhaVocal: false,
+    coda: false, classe: false, freq: false,
+};
+
+let resultadosFiltrados = [];
+let resultadosVisiveis  =[];
+let FILTRO_BANDAS       = new Set();
+let itemsRenderizados   = 0;
+const CHUNK             = 60;
+let iObserver           = null;
+let buildSilabas        = 0;
+
+/* ═══════════════════════════════════════════════════════════════
+   5. INDEXAÇÃO
+═══════════════════════════════════════════════════════════════ */
+async function indexarDicionario() {
+    let st  = document.getElementById('status-text');
+    let inp = document.getElementById('input-palavra');
+    st.textContent = 'Baixando palavras.txt…';
+    try {
+        const resp = await fetch('./palavras.txt');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const lista = (await resp.text()).split(/\r?\n/)
+            .map(p => p.trim())
+            .filter(p => p.length > 1 && /[a-záàâãéêíóôõúü]/i.test(p));
+        st.textContent = `Indexando ${lista.length.toLocaleString('pt-BR')} palavras…`;
+        setTimeout(() => {
+            dicionario = lista.map(p => perfilFonetico(p)).filter(Boolean);
+            st.textContent = `✅ ${dicionario.length.toLocaleString('pt-BR')} palavras prontas`;
+            inp.disabled = false;
+            renderHistorico();
+            document.getElementById('empty-state').innerHTML =
+                `Banco com <b>${dicionario.length.toLocaleString('pt-BR')}</b> palavras carregado.<br>
+                 Digite no <b>Molde</b> ou explore pelo <b>Construtor</b>.`;
+            _restoreFromHash();
+        }, 30);
+    } catch(e) {
+        st.textContent = '⚠️ Erro ao carregar palavras.txt';
+        document.getElementById('empty-state').innerHTML =
+            'Não foi possível carregar <b>palavras.txt</b>.<br>Abra via servidor local.';
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   6. PROCESSAMENTO CENTRAL
+═══════════════════════════════════════════════════════════════ */
+function processarBusca() {
+    let temCriterio = alvoAtual !== null || Object.values(FILTROS).some(v => v !== null);
+    if (!temCriterio) {
+        resultadosFiltrados =[];
+        renderResultados();
+        _updateHash();
+        return;
+    }
+
+    let base = alvoAtual ? dicionario.filter(i => i.palavra !== alvoAtual.palavra) : dicionario;
+    if (alvoB) base = base.filter(i => i.palavra !== alvoB.palavra);
+
+    let filtrados = base.filter(item => {
+        for (let [k, v] of Object.entries(FILTROS)) {
+            if (v === null) continue;
+            let match = item[k] === v;
+            if (FILTROS_NEG[k]) { if (match)  return false; }
+            else                 { if (!match) return false; }
+        }
+        return true;
+    });
+
+    if (alvoAtual) {
+        let setOnsetA = new Set(alvoAtual.onsetTonico);
+        let setAsscA  = new Set(alvoAtual.assConsonantal);
+        let lenAsscA  = alvoAtual.assConsonantal.length;
+
+        if (alvoB) {
+            let setOnsetB = new Set(alvoB.onsetTonico);
+            let setAsscB  = new Set(alvoB.assConsonantal);
+            let lenAsscB  = alvoB.assConsonantal.length;
+            resultadosFiltrados = filtrados
+                .map(i => {
+                    let sA = calcScore(i, alvoAtual, setOnsetA, setAsscA, lenAsscA);
+                    let sB = calcScore(i, alvoB,     setOnsetB, setAsscB, lenAsscB);
+                    return { ...i, score: Math.min(sA, sB) };
+                })
+                .filter(i => i.score > 0)
+                .sort((a, b) => b.score - a.score);
+        } else {
+            resultadosFiltrados = filtrados
+                .map(i => ({ ...i, score: calcScore(i, alvoAtual, setOnsetA, setAsscA, lenAsscA) }))
+                .filter(i => i.score > 0)
+                .sort((a, b) => b.score - a.score);
+        }
+    } else {
+        resultadosFiltrados = filtrados
+            .map(i => ({ ...i, score: 0 }))
+            .sort((a, b) => a.palavra.localeCompare(b.palavra, 'pt-BR'));
+    }
+
+    renderResultados();
+    _updateHash();
+}
+
+function _calcVisiveis() {
+    resultadosVisiveis = FILTRO_BANDAS.size === 0
+        ? resultadosFiltrados
+        : resultadosFiltrados.filter(i => FILTRO_BANDAS.has(getBandaKey(i.score)));
+}
+
+function _renderBandaChips() {
+    let counts = {};
+    BANDAS.forEach(b => counts[b.key] = 0);
+    resultadosFiltrados.forEach(r => counts[getBandaKey(r.score)]++);
+    let chipsEl = document.getElementById('bands-chips');
+    chipsEl.innerHTML = BANDAS
+        .filter(b => counts[b.key] > 0)
+        .map(b => {
+            let ativo = FILTRO_BANDAS.size === 0 || FILTRO_BANDAS.has(b.key);
+            return `<span class="band-chip${ativo ? '' : ' dimmed'}"
+                         style="background:${b.color}"
+                         onclick="toggleBanda(${b.key})"
+                    >${b.label} ${counts[b.key]}</span>`;
+        }).join('');
+    document.getElementById('clear-banda').style.display = FILTRO_BANDAS.size > 0 ? 'inline' : 'none';
+}
+
+function toggleBanda(key) {
+    if (FILTRO_BANDAS.has(key)) FILTRO_BANDAS.delete(key); else FILTRO_BANDAS.add(key);
+    if (navigator.vibrate) navigator.vibrate(15);
+    _calcVisiveis();
+    _atualizarGridFaixa();
+}
+
+function clearFiltroBanda() {
+    FILTRO_BANDAS.clear();
+    if (navigator.vibrate) navigator.vibrate(20);
+    _calcVisiveis();
+    _atualizarGridFaixa();
+}
+
+function _atualizarGridFaixa() {
+    let grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    itemsRenderizados = 0;
+    if (iObserver) iObserver.disconnect();
+
+    let nTotal = resultadosFiltrados.length, nVis = resultadosVisiveis.length;
+    let sufixo = alvoB ? ' (A∩B)' : '';
+    document.getElementById('count-label').textContent = FILTRO_BANDAS.size > 0
+        ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal!==1?'s':''}${sufixo}`
+        : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal!==1?'s':''}${sufixo}`;
+    
+    _renderBandaChips();
+    if (nVis === 0) return grid.innerHTML = `<div class="empty-state">Nenhuma palavra nesta faixa.</div>`;
+    renderChunk();
+    setupObserver();
+    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   7. RENDERIZAÇÃO
+═══════════════════════════════════════════════════════════════ */
+function renderResultados() {
+    let grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    itemsRenderizados = 0;
+    if (iObserver) iObserver.disconnect();
+
+    let header = document.getElementById('results-header');
+    if (resultadosFiltrados.length === 0) {
+        header.style.display = 'none';
+        document.getElementById('bands-chips').innerHTML = '';
+        document.getElementById('clear-banda').style.display = 'none';
+        grid.innerHTML = `<div class="empty-state">Nenhuma palavra encontrada. Destrave alguns filtros.</div>`;
+        return;
+    }
+
+    _calcVisiveis();
+    header.style.display = 'flex';
+
+    let nTotal = resultadosFiltrados.length, nVis = resultadosVisiveis.length;
+    let sufixo = alvoB ? ' (A∩B)' : '';
+    document.getElementById('count-label').textContent = FILTRO_BANDAS.size > 0
+        ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal!==1?'s':''}${sufixo}`
+        : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal!==1?'s':''}${sufixo}`;
+
+    if (alvoAtual) _renderBandaChips();
+    else { document.getElementById('bands-chips').innerHTML=''; document.getElementById('clear-banda').style.display='none'; }
+
+    if (nVis === 0) return grid.innerHTML = `<div class="empty-state">Nenhuma palavra nesta faixa.</div>`;
+    renderChunk();
+    setupObserver();
+}
+
+function setupObserver() {
+    let sentinel = document.getElementById('sentinel');
+    iObserver = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) renderChunk();
+    }, { root: document.getElementById('viewport'), rootMargin: '120px' });
+    iObserver.observe(sentinel);
+}
+
+function renderChunk() {
+    if (itemsRenderizados >= resultadosVisiveis.length) return;
+    let chunk = resultadosVisiveis.slice(itemsRenderizados, itemsRenderizados + CHUNK);
+    let frag  = document.createDocumentFragment();
+    chunk.forEach(item => {
+        let card = document.createElement('div');
+        if (alvoAtual && item.score > 0) {
+            let b = BANDAS.find(b => b.key === getBandaKey(item.score));
+            card.className = `word-card ${b.cls}`;
+        } else card.className = 'word-card';
+        card.dataset.palavra = item.palavra;
+        card.innerHTML = item.silabas.map((s, i) => i === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s).join('·');
+        frag.appendChild(card);
+    });
+    document.getElementById('grid').appendChild(frag);
+    itemsRenderizados += chunk.length;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   8. MOLDE — palavra-base + lego locks
+═══════════════════════════════════════════════════════════════ */
+const DEF_BLOCOS =[
+    { id: 'numSilabas',     label: v => `${v} síl.`,                           show: ()  => true              },
+    { id: 'acentuacao',     label: v => ACENT_LABEL[v] || v,                   show: ()  => true              },
+    { id: 'vogalTonica',    label: v => `vogal /${v.toUpperCase()}/`,           show: ()  => true              },
+    { id: 'onsetTonico',    label: v => `onset /${v}/`,                         show: v   => v !== ''          },
+    { id: 'coda',           label: v => `coda: -${v}`,                          show: v   => v !== ''          },
+    { id: 'classe',         label: v => CLASSE_LABEL[v] || v,                  show: v   => v !== 'outro'     },
+    { id: 'freq',            label: v => FREQ_LABEL[v] || v,                   show: ()  => true              },
+    { id: 'familiaCluster', label: v => FAM_LABEL[v] || v,                     show: v   => v!=='si'&&v!=='vz'},
+    { id: 'rimaPerfeita',   label: v => `rima: -${v}`,                         show: ()  => true              },
+    { id: 'vogaisRima',     label: v => `vogRima: ${v}`,                       show: v   => v.length > 1      },
+    { id: 'espinhaVocal',   label: v => `espinha: ${v}`,                       show: v   => v.length > 1      },
+];
+
+const CAMPOS_MOLDE =['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda','classe','freq'];
+
+function setAlvoPalavra(palavra) {
+    let perfil = perfilFonetico(palavra);
+    if (!perfil) return;
+    alvoAtual = perfil; alvoB = null;
+    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+    FILTRO_BANDAS.clear();
+    document.getElementById('input-palavra').value = palavra;
+    document.getElementById('intersect-zone').style.display = 'block';
+    document.getElementById('intersect-input-wrap').style.display = 'none';
+    document.getElementById('intersect-btn').classList.remove('active');
+    document.getElementById('intersect-clear').style.display = 'none';
+    document.getElementById('input-palavra-b').value = '';
+    _addToHistorico(palavra);
+    renderLegoPanel();
+    processarBusca();
+    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('bottom-panel').classList.remove('collapsed');
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function renderLegoPanel() {
+    let panel = document.getElementById('lego-panel');
+    if (!alvoAtual) {
+        panel.innerHTML = '<span class="lego-hint">Digite uma palavra para extrair blocos fonéticos.</span>';
+        return;
+    }
+    panel.innerHTML = DEF_BLOCOS.map(def => {
+        let val     = alvoAtual[def.id];
+        if (!def.show(val)) return '';
+        let locked  = FILTROS[def.id] !== null;
+        let negated = locked && FILTROS_NEG[def.id];
+        let cls     = negated ? 'negated' : locked ? 'locked' : '';
+        let prefix  = negated ? '≠ ' : locked ? '🔒 ' : '';
+        return `<button class="lego-pill${cls ? ' '+cls : ''}" data-lego="${def.id}" onclick="toggleLego('${def.id}')">
+                    ${prefix}${def.label(val)}
+                </button>`;
+    }).join('');
+}
+
+// Comportamento cíclico dos blocos: 1.Trava -> 2.Nega -> 3.Livre
+function toggleLego(id) {
+    if (!alvoAtual) return;
+    if (FILTROS[id] === null) {
+        FILTROS[id] = alvoAtual[id];
+        FILTROS_NEG[id] = false;
+        if (navigator.vibrate) navigator.vibrate(15);
+    } else if (FILTROS[id] !== null && !FILTROS_NEG[id]) {
+        FILTROS_NEG[id] = true;
+        if (navigator.vibrate) navigator.vibrate([10, 30, 70]);
+    } else {
+        FILTROS[id] = null;
+        FILTROS_NEG[id] = false;
+        if (navigator.vibrate) navigator.vibrate(45);
+    }
+    renderLegoPanel();
+    processarBusca();
+    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   9. CONSTRUTOR
+═══════════════════════════════════════════════════════════════ */
+function _ativarConstrutor() {
+    if (!alvoAtual) return;
+    alvoAtual = null; alvoB = null;
+    FILTRO_BANDAS.clear();
+    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+    document.getElementById('input-palavra').value = '';
+    document.getElementById('intersect-zone').style.display = 'none';
+    document.getElementById('intersect-input-wrap').style.display = 'none';
+    document.getElementById('intersect-btn').classList.remove('active');
+    document.getElementById('intersect-clear').style.display = 'none';
+    document.getElementById('input-palavra-b').value = '';
+    renderLegoPanel();
+}
+
+function stepSilabas(delta) {
+    _ativarConstrutor();
+    buildSilabas = Math.max(0, buildSilabas + delta);
+    FILTROS.numSilabas = buildSilabas === 0 ? null : buildSilabas;
+    document.getElementById('step-val').textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
+function setAcento(val, btn) {
+    _ativarConstrutor();
+    document.querySelectorAll('[data-acento]').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.acentuacao = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
+function setVogal(v, btn) {
+    _ativarConstrutor();
+    let jaSelecionado = btn.classList.contains('selected');
+    document.querySelectorAll('.vowel-btn').forEach(b => b.classList.remove('selected'));
+    FILTROS.vogalTonica = jaSelecionado ? null : v;
+    if (!jaSelecionado) btn.classList.add('selected');
+    if (navigator.vibrate) navigator.vibrate(jaSelecionado ? 15 : 40);
+    processarBusca();
+}
+
+function setClasse(val, btn) {
+    _ativarConstrutor();
+    document.querySelectorAll('.morfo-btn[data-classe]').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.classe = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
+function setFreq(val, btn) {
+    _ativarConstrutor();
+    document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.freq = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
+function setFamilia(val, btn) {
+    _ativarConstrutor();
+    document.querySelectorAll('.fam-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTROS.familiaCluster = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
+function mostrarInputB() {
+    if (!alvoAtual) return;
+    let wrap = document.getElementById('intersect-input-wrap');
+    let btn  = document.getElementById('intersect-btn');
+    if (wrap.style.display === 'none') {
+        wrap.style.display = 'block';
+        btn.classList.add('active');
+        document.getElementById('input-palavra-b').focus();
+    } else clearAlvoB();
+}
+
+function setAlvoB(palavra) {
+    if (!alvoAtual) return;
+    let perfil = perfilFonetico(palavra);
+    if (!perfil) return;
+    alvoB = perfil;
+    document.getElementById('input-palavra-b').value = palavra;
+    document.getElementById('intersect-clear').style.display = 'inline';
+    FILTRO_BANDAS.clear(); processarBusca();
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function clearAlvoB() {
+    alvoB = null;
+    document.getElementById('intersect-input-wrap').style.display = 'none';
+    document.getElementById('intersect-btn').classList.remove('active');
+    document.getElementById('input-palavra-b').value = '';
+    document.getElementById('intersect-clear').style.display = 'none';
+    FILTRO_BANDAS.clear(); processarBusca();
+    if (navigator.vibrate) navigator.vibrate(20);
+}
+
+function _syncConstrutorUI() {
+    buildSilabas = FILTROS.numSilabas || 0;
+    document.getElementById('step-val').textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
+    document.querySelectorAll('[data-acento]').forEach(b => b.classList.toggle('selected', (b.dataset.acento || null) === FILTROS.acentuacao));
+    document.querySelectorAll('.vowel-btn').forEach(b => b.classList.toggle('selected', b.dataset.vogal === FILTROS.vogalTonica));
+    document.querySelectorAll('.morfo-btn[data-classe]').forEach(b => b.classList.toggle('selected', (b.dataset.classe || null) === FILTROS.classe));
+    document.querySelectorAll('.freq-btn').forEach(b => b.classList.toggle('selected', (b.dataset.freq || null) === FILTROS.freq));
+    document.querySelectorAll('.fam-btn').forEach(b => b.classList.toggle('selected', (b.dataset.fam || null) === FILTROS.familiaCluster));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   10. PAINEL — abas, scroll direcional e drag gesture
+═══════════════════════════════════════════════════════════════ */
+const bottomPanel = document.getElementById('bottom-panel');
+const viewport = document.getElementById('viewport');
+let _lastScrollY = 0;
+
+function switchTab(nome) {
+    bottomPanel.classList.remove('collapsed');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-btn-' + nome).classList.add('active');
+    document.getElementById('tab-' + nome).classList.add('active');
+    if (nome === 'construtor') _syncConstrutorUI();
+    if (nome === 'molde')      document.getElementById('input-palavra').focus();
+}
+
+function togglePanelCollapse() { bottomPanel.classList.toggle('collapsed'); }
+
+// 10.1 SCROLL DIRECIONAL (Apenas fecha se descer; só volta no topo absoluto)
+viewport.addEventListener('scroll', function () {
+    let y = viewport.scrollTop;
+    if (y > _lastScrollY && y > 20) {
+        if (!bottomPanel.classList.contains('collapsed')) bottomPanel.classList.add('collapsed');
+    } else if (y < 10) {
+        if (bottomPanel.classList.contains('collapsed')) bottomPanel.classList.remove('collapsed');
+    }
+    _lastScrollY = y;
+}, { passive: true });
+
+// 10.2 GESTO DE ARRASTAR (PointerEvents na handle)
+let startY = 0;
+let currentY = 0;
+const dragHandle = document.getElementById('drag-handle');
+
+dragHandle.addEventListener('pointerdown', (e) => {
+    startY = e.clientY;
+    bottomPanel.style.transition = 'none'; 
+    dragHandle.setPointerCapture(e.pointerId);
+});
+
+dragHandle.addEventListener('pointermove', (e) => {
+    if (!startY) return;
+    currentY = e.clientY - startY;
+    if (currentY > 0 && !bottomPanel.classList.contains('collapsed')) {
+        bottomPanel.style.transform = `translateY(${currentY}px)`;
+    }
+});
+
+dragHandle.addEventListener('pointerup', (e) => {
+    if (!startY) return;
+    bottomPanel.style.transition = ''; 
+    bottomPanel.style.transform = '';  
+    if (currentY > 50) {
+        bottomPanel.classList.add('collapsed');
+    } else if (currentY < -50) {
+        bottomPanel.classList.remove('collapsed');
+    }
+    startY = 0; currentY = 0;
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   11. HISTÓRICO
+═══════════════════════════════════════════════════════════════ */
+const HIST_KEY = 'explorador_historico';
+function _getHistorico() { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch { return[]; } }
+function _saveHistorico(arr) { try { localStorage.setItem(HIST_KEY, JSON.stringify(arr)); } catch {} }
+function _addToHistorico(palavra) {
+    let p = palavra.toLowerCase().trim();
+    let hist = _getHistorico().filter(h => h !== p);
+    hist.unshift(p);
+    if (hist.length > 20) hist.length = 20;
+    _saveHistorico(hist); renderHistorico();
+}
+function renderHistorico() {
+    let row = document.getElementById('historico-row');
+    let hist = _getHistorico();
+    if (!hist.length) return row.innerHTML = '';
+    row.innerHTML = hist.map(h => `<span class="hist-chip" data-hist="${h}">${h}</span>`).join('') + `<button class="hist-clear" onclick="clearHistorico()">Limpar histórico</button>`;
+}
+function clearHistorico() { _saveHistorico([]); renderHistorico(); }
+
+/* ═══════════════════════════════════════════════════════════════
+   12. URL HASH
+═══════════════════════════════════════════════════════════════ */
+let _hashPaused = false;
+function _updateHash() {
+    if (_hashPaused) return;
+    let parts =[];
+    if (alvoAtual) {
+        parts.push('molde=' + encodeURIComponent(alvoAtual.palavra));
+        if (alvoB) parts.push('alvoB=' + encodeURIComponent(alvoB.palavra));
+        let locks = [], negs =[];
+        for (let k of Object.keys(FILTROS)) {
+            if (FILTROS[k] !== null) { if (FILTROS_NEG[k]) negs.push(k); else locks.push(k); }
+        }
+        if (locks.length) parts.push('locks=' + locks.join(','));
+        if (negs.length)  parts.push('neg=' + negs.join(','));
+    } else {
+        let hasFilter = Object.values(FILTROS).some(v => v !== null);
+        if (!hasFilter) return history.replaceState(null, '', location.pathname);
+        parts.push('construtor');
+        for (let [k, v] of Object.entries(FILTROS)) if (v !== null) parts.push(k + '=' + encodeURIComponent(v));
+    }
+    history.replaceState(null, '', '#' + parts.join('&'));
+}
+function _restoreFromHash() {
+    let hash = location.hash.slice(1);
+    if (!hash) return;
+    _hashPaused = true;
+    try {
+        let params = {};
+        hash.split('&').forEach(p => { let [k, v] = p.split('='); params[k] = v ? decodeURIComponent(v) : ''; });
+        if ('molde' in params && params.molde) {
+            let palavra = params.molde, perfil = perfilFonetico(palavra);
+            if (!perfil) return;
+            alvoAtual = perfil;
+            CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+            document.getElementById('input-palavra').value = palavra;
+            if (params.locks) params.locks.split(',').forEach(k => { if (k in FILTROS && alvoAtual[k] !== undefined) FILTROS[k] = alvoAtual[k]; });
+            if (params.neg) params.neg.split(',').forEach(k => { if (k in FILTROS && alvoAtual[k] !== undefined) { FILTROS[k] = alvoAtual[k]; FILTROS_NEG[k] = true; }});
+            if (params.alvoB) {
+                let perfilB = perfilFonetico(params.alvoB);
+                if (perfilB) { alvoB = perfilB; document.getElementById('intersect-zone').style.display = 'block'; document.getElementById('intersect-input-wrap').style.display = 'block'; document.getElementById('intersect-btn').classList.add('active'); document.getElementById('input-palavra-b').value = params.alvoB; document.getElementById('intersect-clear').style.display = 'inline'; }
+            }
+            renderLegoPanel(); processarBusca();
+        } else if ('construtor' in params) {
+            alvoAtual = null;
+            for (let[k, v] of Object.entries(params)) {
+                if (k === 'construtor') continue;
+                if (k in FILTROS) FILTROS[k] = (k === 'numSilabas') ? parseInt(v, 10) : v;
+            }
+            switchTab('construtor'); processarBusca();
+        }
+    } finally { _hashPaused = false; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   13. EVENTOS
+═══════════════════════════════════════════════════════════════ */
+document.getElementById('grid').addEventListener('click', e => {
+    let card = e.target.closest('.word-card');
+    if (!card || !card.dataset.palavra) return;
+    switchTab('molde'); setAlvoPalavra(card.dataset.palavra);
+});
+
+let _debounce;
+document.getElementById('input-palavra').addEventListener('input', e => {
+    let val = e.target.value.trim();
+    clearTimeout(_debounce);
+    if (val.length < 2) return;
+    _debounce = setTimeout(() => { if (perfilFonetico(val)) setAlvoPalavra(val); }, 280);
+});
+document.getElementById('input-palavra').addEventListener('keypress', e => {
+    if (e.key !== 'Enter') return;
+    clearTimeout(_debounce); let val = e.target.value.trim();
+    if (val.length >= 2) setAlvoPalavra(val);
+    e.target.blur();
+});
+
+let _debounceB;
+document.getElementById('input-palavra-b').addEventListener('input', e => {
+    let val = e.target.value.trim();
+    clearTimeout(_debounceB);
+    if (val.length < 2) { if (alvoB) { alvoB = null; document.getElementById('intersect-clear').style.display = 'none'; processarBusca(); } return; }
+    _debounceB = setTimeout(() => { if (perfilFonetico(val)) setAlvoB(val); }, 280);
+});
+document.getElementById('input-palavra-b').addEventListener('keypress', e => {
+    if (e.key !== 'Enter') return;
+    clearTimeout(_debounceB); let val = e.target.value.trim();
+    if (val.length >= 2) setAlvoB(val);
+    e.target.blur();
+});
+
+document.getElementById('historico-row').addEventListener('click', e => {
+    let chip = e.target.closest('[data-hist]');
+    if (!chip) return;
+    setAlvoPalavra(chip.dataset.hist);
+});
+
+window.addEventListener('hashchange', () => { if (dicionario.length > 0) _restoreFromHash(); });
+
+/* ═══════════════════════════════════════════════════════════════
+   14. VOZ — Web Speech API
+═══════════════════════════════════════════════════════════════ */
+(function setupVoice() {
+    let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    let mic = document.getElementById('btn-mic');
+    let recog = new SR();
+    recog.lang = 'pt-BR'; recog.maxAlternatives = 1;
+    mic.classList.add('visible');
+    mic.onclick = () => { try { recog.start(); mic.classList.add('listening'); } catch(e) {} };
+    recog.onresult = e => { let ultima = e.results[0][0].transcript.trim().split(/\s+/).pop(); switchTab('molde'); setAlvoPalavra(ultima); };
+    recog.onend   = () => mic.classList.remove('listening');
+    recog.onerror = () => mic.classList.remove('listening');
+})();
+
+window.onload = indexarDicionario;
+</script>
+</body>
+</html>
