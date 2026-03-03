@@ -1287,8 +1287,9 @@ function switchTab(nome) {
 }
 
 /* ── 10a. Scroll no viewport: minimiza descendo, expande subindo rápido ── */
-let _lastScrollY = 0;
-let _lastScrollT = 0;
+let _lastScrollY    = 0;
+let _lastScrollT    = 0;
+let _expandCooldown = false;  // evita re-colapso imediato após expansão por inércia
 
 document.getElementById('viewport').addEventListener('scroll', function () {
     const y  = this.scrollTop;
@@ -1296,13 +1297,15 @@ document.getElementById('viewport').addEventListener('scroll', function () {
     const dy = y - _lastScrollY;
     const dt = t - _lastScrollT;
 
-    if (dy > 2) {
-        // Qualquer scroll para baixo → minimizar
+    if (dy > 4 && !_expandCooldown) {
+        // Qualquer scroll para baixo → minimizar (bloqueado durante cooldown)
         bottomPanel.classList.add('collapsed');
-    } else if (dy < -2 && dt > 0) {
-        // Scroll para cima: só expande se for rápido (> 0.6 px/ms)
-        if (Math.abs(dy / dt) > 0.6) {
+    } else if (dy < -4 && dt > 0) {
+        // Scroll rápido para cima OU já perto do topo → expandir
+        if (Math.abs(dy / dt) > 0.5 || y < 60) {
             bottomPanel.classList.remove('collapsed');
+            _expandCooldown = true;
+            setTimeout(() => { _expandCooldown = false; }, 500);
         }
     }
 
@@ -1324,7 +1327,7 @@ handleZone.addEventListener('pointerdown', e => {
 handleZone.addEventListener('pointermove', e => {
     if (_dragStartY === null) return;
     const dy = e.clientY - _dragStartY;
-    if (Math.abs(dy) > 12) {
+    if (Math.abs(dy) > 20) {                                     // threshold maior: 20px
         _didDrag = true;
         if (dy < 0) bottomPanel.classList.remove('collapsed');  // arrasto ↑ → expande
         else         bottomPanel.classList.add('collapsed');     // arrasto ↓ → minimiza
@@ -1335,9 +1338,13 @@ handleZone.addEventListener('pointermove', e => {
 handleZone.addEventListener('pointerup', () => {
     if (!_didDrag) bottomPanel.classList.toggle('collapsed');    // toque simples → toggle
     _dragStartY = null;
+    _didDrag    = false;                                         // sempre resetar
 });
 
-handleZone.addEventListener('pointercancel', () => { _dragStartY = null; });
+handleZone.addEventListener('pointercancel', () => {
+    _dragStartY = null;
+    _didDrag    = false;                                         // sempre resetar
+});
 
 /* ── 10c. Scroll interno: prioriza colapso do painel ── */
 document.querySelectorAll('.tab-content').forEach(tc => {
@@ -1351,7 +1358,7 @@ document.querySelectorAll('.tab-content').forEach(tc => {
         if (_touchY === null) return;
         const dy = e.touches[0].clientY - _touchY;
         // Conteúdo no topo + arrastando para baixo → colapsar painel
-        if (tc.scrollTop <= 0 && dy > 15) {
+        if (tc.scrollTop <= 0 && dy > 20) {
             e.preventDefault();
             bottomPanel.classList.add('collapsed');
             _touchY = null;
