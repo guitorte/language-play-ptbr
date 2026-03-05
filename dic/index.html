@@ -260,10 +260,22 @@
             font-size: 11px; color: var(--muted); cursor: pointer;
             padding: 4px 6px; opacity: 0.6;
         }
+        .hist-more {
+            background: none; border: 1px dashed var(--border);
+            padding: 4px 10px; border-radius: 14px;
+            font-size: 11px; color: var(--muted); cursor: pointer;
+            user-select: none;
+        }
 
         /* Lego pills — três estados: padrão | travado | negado */
         .lego-panel { display: flex; flex-wrap: wrap; gap: 7px; min-height: 32px; }
         .lego-hint  { font-size: 13px; color: var(--muted); align-self: center; }
+        .lego-onboarding {
+            font-size: 11px; color: var(--muted); opacity: 0.75;
+            width: 100%; text-align: center; margin-top: 2px;
+            animation: lego-fade 0.4s ease;
+        }
+        @keyframes lego-fade { from { opacity: 0; } to { opacity: 0.75; } }
 
         .lego-pill {
             background: var(--bg); border: 2px solid var(--border);
@@ -385,7 +397,8 @@
     <div class="results-grid" id="grid">
         <div class="empty-state" id="empty-state">
             <span class="loader"></span>
-            Carregando banco de palavras…
+            Carregando banco de palavras…<br>
+            <span style="font-size:13px;opacity:0.7">Pode digitar enquanto carrega.</span>
         </div>
     </div>
     <div id="sentinel"></div>
@@ -413,7 +426,7 @@
                        placeholder="Digite uma palavra-base…"
                        inputmode="search" enterkeyhint="search"
                        autocorrect="off" autocapitalize="none"
-                       spellcheck="false" disabled>
+                       spellcheck="false">
                 <button class="btn-clear-input" id="btn-clear-molde" title="Limpar busca">✕</button>
                 <button id="btn-mic" title="Busca por voz">🎤</button>
             </div>
@@ -842,7 +855,6 @@ let buildSilabas        = 0;
 ═══════════════════════════════════════════════════════════════ */
 async function indexarDicionario() {
     let st  = document.getElementById('status-text');
-    let inp = document.getElementById('input-palavra');
     st.textContent = 'Baixando palavras.txt…';
     try {
         const resp = await fetch('./palavras.txt');
@@ -853,14 +865,15 @@ async function indexarDicionario() {
         st.textContent = `Indexando ${lista.length.toLocaleString('pt-BR')} palavras…`;
         setTimeout(() => {
             dicionario = lista.map(p => perfilFonetico(p)).filter(Boolean);
-            st.textContent = `✅ ${dicionario.length.toLocaleString('pt-BR')} palavras prontas`;
-            inp.disabled = false;
+            st.textContent = `${dicionario.length.toLocaleString('pt-BR')} palavras prontas`;
             renderHistorico();
             document.getElementById('empty-state').innerHTML =
                 `Banco com <b>${dicionario.length.toLocaleString('pt-BR')}</b> palavras carregado.<br>
                  Digite no <b>Molde</b> ou explore pelo <b>Construtor</b>.`;
             // Restaurar estado da URL hash (se existir)
             _restoreFromHash();
+            // Se o usuário já digitou algo antes do dicionário carregar, refaz a busca
+            if (alvoAtual || Object.values(FILTROS).some(v => v !== null)) processarBusca();
         }, 30);
     } catch(e) {
         st.textContent = '⚠️ Erro ao carregar palavras.txt';
@@ -1129,13 +1142,17 @@ function setAlvoPalavra(palavra) {
     if (navigator.vibrate) navigator.vibrate(30);
 }
 
+const LEGO_ONBOARD_KEY = 'lego_onboard_seen';
+let _legoOnboardSeen = false;
+try { _legoOnboardSeen = !!localStorage.getItem(LEGO_ONBOARD_KEY); } catch {}
+
 function renderLegoPanel() {
     let panel = document.getElementById('lego-panel');
     if (!alvoAtual) {
         panel.innerHTML = '<span class="lego-hint">Digite uma palavra para extrair blocos fonéticos.</span>';
         return;
     }
-    panel.innerHTML = DEF_BLOCOS.map(def => {
+    let pills = DEF_BLOCOS.map(def => {
         let val     = alvoAtual[def.id];
         if (!def.show(val)) return '';
         let locked  = FILTROS[def.id] !== null;
@@ -1146,6 +1163,18 @@ function renderLegoPanel() {
                     ${prefix}${def.label(val)}
                 </button>`;
     }).join('');
+    let hint = '';
+    if (!_legoOnboardSeen) {
+        hint = '<div class="lego-onboarding">Toque para travar · Segure para excluir</div>';
+    }
+    panel.innerHTML = pills + hint;
+}
+function _dismissLegoOnboard() {
+    if (_legoOnboardSeen) return;
+    _legoOnboardSeen = true;
+    try { localStorage.setItem(LEGO_ONBOARD_KEY, '1'); } catch {}
+    let el = document.querySelector('.lego-onboarding');
+    if (el) el.remove();
 }
 
 function toggleLego(id) {
@@ -1177,19 +1206,12 @@ function negarLego(id) {
 /* ═══════════════════════════════════════════════════════════════
    9. CONSTRUTOR
 ═══════════════════════════════════════════════════════════════ */
+// Construtor agora é não-destrutivo: filtros do Construtor se somam ao Molde.
+// Não apaga mais alvoAtual ao usar o Construtor.
 function _ativarConstrutor() {
-    if (!alvoAtual && !alvoB) return; // Já está no modo construtor puro
-    alvoAtual = null;
-    alvoB     = null;
-    FILTRO_BANDAS.clear();
-    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
-    document.getElementById('input-palavra').value = '';
-    document.getElementById('intersect-zone').style.display = 'none';
-    document.getElementById('intersect-input-wrap').style.display = 'none';
-    document.getElementById('intersect-btn').classList.remove('active');
-    document.getElementById('intersect-clear').style.display = 'none';
-    document.getElementById('input-palavra-b').value = '';
-    renderLegoPanel();
+    // Noop — os filtros do Construtor (numSilabas, acentuacao, vogalTonica,
+    // onsetTonico, familiaCluster, classe, freq) agora coexistem com o Molde.
+    // Se quiser modo "puro construtor" sem palavra-base, use o botão Limpar.
 }
 
 function stepSilabas(delta) {
@@ -1463,13 +1485,22 @@ function _addToHistorico(palavra) {
     _saveHistorico(hist);
     renderHistorico();
 }
+const HIST_VISIBLE = 5;
+let _histExpanded = false;
+
 function renderHistorico() {
     let row = document.getElementById('historico-row');
     let hist = _getHistorico();
     if (!hist.length) { row.innerHTML = ''; return; }
-    row.innerHTML = hist.map(h =>
+    let visible = _histExpanded ? hist : hist.slice(0, HIST_VISIBLE);
+    let chips = visible.map(h =>
         `<span class="hist-chip" data-hist="${h}">${h}</span>`
-    ).join('') + `<button class="hist-clear" onclick="clearHistorico()">limpar</button>`;
+    ).join('');
+    let more = '';
+    if (!_histExpanded && hist.length > HIST_VISIBLE) {
+        more = `<button class="hist-more" id="hist-more-btn">+${hist.length - HIST_VISIBLE}</button>`;
+    }
+    row.innerHTML = chips + more + `<button class="hist-clear" onclick="clearHistorico()">limpar</button>`;
 }
 function clearHistorico() {
     _saveHistorico([]);
@@ -1647,6 +1678,11 @@ document.getElementById('input-palavra-b').addEventListener('keypress', e => {
 
 // Histórico: click em chip → buscar palavra
 document.getElementById('historico-row').addEventListener('click', e => {
+    if (e.target.id === 'hist-more-btn') {
+        _histExpanded = true;
+        renderHistorico();
+        return;
+    }
     let chip = e.target.closest('[data-hist]');
     if (!chip) return;
     setAlvoPalavra(chip.dataset.hist);
@@ -1663,6 +1699,7 @@ legoPanel.addEventListener('pointerdown', e => {
     _legoLongFired = false;
     _legoTimer = setTimeout(() => {
         _legoLongFired = true;
+        _dismissLegoOnboard();
         negarLego(pill.dataset.lego);
     }, 500);
 });
@@ -1671,7 +1708,7 @@ legoPanel.addEventListener('pointercancel', () => clearTimeout(_legoTimer));
 legoPanel.addEventListener('click', e => {
     if (_legoLongFired) { _legoLongFired = false; return; }
     let pill = e.target.closest('[data-lego]');
-    if (pill) toggleLego(pill.dataset.lego);
+    if (pill) { _dismissLegoOnboard(); toggleLego(pill.dataset.lego); }
 });
 legoPanel.addEventListener('contextmenu', e => e.preventDefault());
 
