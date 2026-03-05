@@ -344,6 +344,22 @@
         }
 
         #status-text { font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
+
+        /* Rima Express — inline preview */
+        .rima-express {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            padding: 4px 0; min-height: 0;
+            transition: opacity 0.15s;
+        }
+        .rima-express:empty { display: none; }
+        .rima-express-chip {
+            font-size: 12px; font-weight: 600; padding: 3px 10px;
+            border-radius: 8px; background: var(--bg); border: 1.5px solid var(--border);
+            color: var(--text); cursor: pointer; user-select: none;
+            transition: transform 0.1s, border-color 0.15s;
+        }
+        .rima-express-chip:active { transform: scale(0.93); }
+        .rima-express-chip:hover  { border-color: var(--accent); }
         #construtor-count {
             font-size: 12px; font-weight: 700; color: var(--muted);
             text-align: center; padding: 6px 0 2px;
@@ -443,7 +459,7 @@
         <div id="bands-chips"></div>
         <button id="clear-banda" style="display:none" onclick="clearFiltroBanda()">✕ faixas</button>
     </div>
-    <div class="results-grid" id="grid">
+    <div class="results-grid" id="grid" role="list" aria-label="Resultados de rimas">
         <div class="empty-state" id="empty-state">
             <span class="loader"></span>
             Carregando banco de palavras…<br>
@@ -456,30 +472,32 @@
 <!-- ══════════════════════════════════════════
      ZONA DO POLEGAR — Bottom Sheet
 ══════════════════════════════════════════ -->
-<div id="bottom-panel" data-panel-state="normal">
-    <div class="handle-zone" id="panel-handle">
+<div id="bottom-panel" data-panel-state="normal" aria-expanded="true">
+    <div class="handle-zone" id="panel-handle" role="button" aria-label="Arrastar painel" tabindex="0">
         <div class="handle"></div>
         <div class="handle-chevron">▼</div>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" id="tab-btn-molde"      onclick="switchTab('molde')"><span class="tab-icon tab-icon-molde"></span>Molde</button>
-        <button class="tab-btn"        id="tab-btn-construtor" onclick="switchTab('construtor')"><span class="tab-icon tab-icon-construtor"></span>Construtor</button>
+    <div class="tabs" role="tablist" aria-label="Modo de busca">
+        <button class="tab-btn active" id="tab-btn-molde"      role="tab" aria-selected="true"  aria-controls="tab-molde"      onclick="switchTab('molde')"><span class="tab-icon tab-icon-molde"></span>Molde</button>
+        <button class="tab-btn"        id="tab-btn-construtor" role="tab" aria-selected="false" aria-controls="tab-construtor" onclick="switchTab('construtor')"><span class="tab-icon tab-icon-construtor"></span>Construtor</button>
     </div>
 
     <div class="tab-wrapper">
 
         <!-- ABA: MOLDE -->
-        <div id="tab-molde" class="tab-content active">
+        <div id="tab-molde" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-molde">
             <div class="search-wrap">
                 <input type="search" id="input-palavra"
                        placeholder="Digite uma palavra-base…"
+                       aria-label="Palavra-base para busca de rimas"
                        inputmode="search" enterkeyhint="search"
                        autocorrect="off" autocapitalize="none"
                        spellcheck="false">
                 <button class="btn-clear-input" id="btn-clear-molde" title="Limpar busca">✕</button>
                 <button id="btn-mic" title="Busca por voz">🎤</button>
             </div>
+            <div class="rima-express" id="rima-express" aria-label="Sugestões rápidas"></div>
             <div class="historico-row" id="historico-row"></div>
             <div class="lego-panel" id="lego-panel">
                 <span class="lego-hint">Digite uma palavra para extrair blocos fonéticos.</span>
@@ -502,7 +520,7 @@
         </div>
 
         <!-- ABA: CONSTRUTOR -->
-        <div id="tab-construtor" class="tab-content">
+        <div id="tab-construtor" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-construtor">
             <div id="construtor-count"></div>
             <div class="builder-section">
                 <span class="builder-label">Número de sílabas</span>
@@ -592,18 +610,22 @@ function tratarHiatosVogais(blocoVoc, pLower) {
     let resultado = [], atual = blocoVoc[0];
     for (let i = 1; i < blocoVoc.length; i++) {
         let char = blocoVoc[i], par = (atual.slice(-1) + char).toLowerCase();
-        let formamDitongo   = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe|ia|ie|io|ua|ue|uo)$/.test(par);
+        // Só ditongos decrescentes — crescentes (ia,ie,io,ua,ue,uo) são hiato em pt-BR
+        let formamDitongo   = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe)$/.test(par);
         let vogaisIdenticas = par[0] === par[1];
         let temHiatoAcent   = /[aeiouáéíóúâêôãõü][íú]/.test(par);
         let ehHiatoFinal    = /^(ai|ui|au|oe)$/.test(par) &&
                               (pLower.endsWith(par+"r")||pLower.endsWith(par+"z")||pLower.endsWith(par+"l"));
         let seguidoDeNh     = pLower.includes(par+"nh");
+        // Hiato quando ditongo decrescente é seguido de nasal+consoante (ex: "ainda" → a-in-da)
+        let pos = pLower.indexOf(par);
+        let seguidoDeNasal  = pos >= 0 && pLower[pos+2] === 'n' && pos+3 < pLower.length && !vRegex.test(pLower[pos+3]);
         let formaHiatoDit   = false;
         if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
             let prox = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
             if (/^(iu|ia|io|ie|ui)$/.test(char+prox)) formaHiatoDit = true;
         }
-        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !formaHiatoDit)
+        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !seguidoDeNasal && !formaHiatoDit)
             atual += char;
         else { resultado.push(atual); atual = char; }
     }
@@ -1153,6 +1175,7 @@ function renderChunk() {
         } else {
             card.className = 'word-card';
         }
+        card.setAttribute('role', 'listitem');
         card.dataset.palavra = item.palavra;
         let sylHtml = item.silabas
             .map((s, i) => i === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s)
@@ -1190,6 +1213,7 @@ const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','
 
 function setAlvoPalavra(palavra) {
     clearTimeout(_onsetDebounce);
+    document.getElementById('rima-express').innerHTML = '';
     let perfil = perfilFonetico(palavra);
     if (!perfil) return;
     alvoAtual = perfil;
@@ -1230,7 +1254,9 @@ function renderLegoPanel() {
         let negated = locked && FILTROS_NEG[def.id];
         let cls     = negated ? 'negated' : locked ? 'locked' : '';
         let prefix  = negated ? '≠ ' : locked ? '🔒 ' : '';
-        return `<button class="lego-pill${cls ? ' '+cls : ''}" data-lego="${def.id}">
+        let ariaL   = negated ? 'Excluir ' : locked ? 'Filtro ativo: ' : 'Travar filtro: ';
+        return `<button class="lego-pill${cls ? ' '+cls : ''}" data-lego="${def.id}"
+                    role="switch" aria-checked="${locked}" aria-label="${ariaL}${def.label(val)}">
                     ${prefix}${def.label(val)}
                 </button>`;
     }).join('');
@@ -1434,6 +1460,7 @@ function getPanelState() {
 function setPanelState(state) {
     if (!PANEL_STATES.includes(state)) return;
     bottomPanel.dataset.panelState = state;
+    bottomPanel.setAttribute('aria-expanded', state !== 'collapsed');
 }
 
 function panelPromote() {
@@ -1450,9 +1477,11 @@ function panelDemote() {
 function switchTab(nome) {
     // Se collapsed, abre para normal; caso contrário mantém estado atual
     if (getPanelState() === 'collapsed') setPanelState('normal');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById('tab-btn-' + nome).classList.add('active');
+    let btn = document.getElementById('tab-btn-' + nome);
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
     document.getElementById('tab-' + nome).classList.add('active');
     if (nome === 'construtor') _syncConstrutorUI();
     if (nome === 'molde')      document.getElementById('input-palavra').focus();
@@ -1502,6 +1531,14 @@ panelHandle.addEventListener('pointercancel', () => {
     _dragStartY = null;
     _dragStartState = null;
     _isDragging = false;
+});
+
+panelHandle.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        let cur = getPanelState();
+        setPanelState(cur === 'collapsed' ? 'normal' : 'collapsed');
+    }
 });
 
 // ── Scroll inteligente no viewport ──
@@ -1709,11 +1746,34 @@ btnClearMolde.addEventListener('click', () => {
 });
 
 let _debounce;
+let _debounceExpress;
+function _rimaExpress(val) {
+    let box = document.getElementById('rima-express');
+    if (!dicionario.length || val.length < 2) { box.innerHTML = ''; return; }
+    let perfil = perfilFonetico(val);
+    if (!perfil) { box.innerHTML = ''; return; }
+    let setOnset = new Set(perfil.onsetTonico);
+    let setAssC  = new Set(perfil.assConsonantal);
+    let lenAssC  = perfil.assConsonantal.length;
+    let top = dicionario
+        .filter(i => i.palavra !== perfil.palavra)
+        .map(i => ({ p: i.palavra, s: calcScore(i, perfil, setOnset, setAssC, lenAssC), sil: i.silabas }))
+        .filter(i => i.s >= 130)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 5);
+    if (!top.length) { box.innerHTML = ''; return; }
+    box.innerHTML = top.map(t =>
+        `<span class="rima-express-chip" onclick="document.getElementById('input-palavra').value='${t.p}';setAlvoPalavra('${t.p}')">${t.sil.join('·')}</span>`
+    ).join('');
+}
+
 document.getElementById('input-palavra').addEventListener('input', e => {
     let val = e.target.value.trim();
     clearTimeout(_debounce);
+    clearTimeout(_debounceExpress);
     _syncClearBtn();
-    if (val.length < 2) return;
+    if (val.length < 2) { document.getElementById('rima-express').innerHTML = ''; return; }
+    _debounceExpress = setTimeout(() => _rimaExpress(val), 120);
     _debounce = setTimeout(() => { if (perfilFonetico(val)) setAlvoPalavra(val); }, 280);
 });
 document.getElementById('input-palavra').addEventListener('keypress', e => {
