@@ -132,10 +132,7 @@
             .results-grid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
         }
 
-        /* ── ZONA DO POLEGAR — Bottom Sheet ──
-           3 estados: collapsed | normal | expanded
-           Controlado via atributo data-panel-state no #bottom-panel
-        ── */
+        /* ── ZONA DO POLEGAR — Bottom Sheet ── */
         #bottom-panel {
             flex-shrink: 0;
             background: var(--surface);
@@ -144,23 +141,19 @@
             z-index: 100;
             display: flex; flex-direction: column;
             padding-bottom: var(--safe-b);
-            /* transição suave entre estados */
-            transition: none;
         }
 
         .handle-zone {
-            padding: 10px 0 4px;
-            display: flex; justify-content: center; align-items: center;
-            user-select: none; cursor: grab;
-            touch-action: none; /* para pointer events de drag */
+            padding: 10px 0 0; cursor: pointer;
+            display: flex; justify-content: center;
+            user-select: none;
         }
-        .handle-zone:active { cursor: grabbing; }
         .handle {
             width: 38px; height: 4px;
             background: var(--border); border-radius: 2px;
-            transition: background 0.2s, width 0.2s;
+            transition: background 0.2s;
         }
-        .handle-zone:active .handle { background: var(--muted); width: 48px; }
+        .handle-zone:active .handle { background: var(--muted); }
 
         .tabs {
             display: flex; padding: 0 16px;
@@ -179,28 +172,17 @@
         }
 
         .tab-wrapper {
-            overflow: hidden;
+            max-height: 46vh;
             transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow: hidden;
         }
-
-        /* ── Estados do painel ── */
-        #bottom-panel[data-panel-state="collapsed"] .tab-wrapper { max-height: 0; }
-        #bottom-panel[data-panel-state="normal"]    .tab-wrapper { max-height: 38vh; }
-        #bottom-panel[data-panel-state="expanded"]  .tab-wrapper { max-height: 70vh; }
-
-        /* Visual feedback no handle por estado */
-        #bottom-panel[data-panel-state="expanded"] .handle {
-            background: var(--accent); width: 48px;
-        }
+        #bottom-panel.collapsed .tab-wrapper { max-height: 0; }
 
         .tab-content {
             display: none; padding: 14px 16px 10px;
-            overflow-y: auto;
+            overflow-y: auto; max-height: 42vh;
             overscroll-behavior-y: contain;
         }
-        /* altura do conteúdo acompanha o estado */
-        #bottom-panel[data-panel-state="normal"]   .tab-content { max-height: 34vh; }
-        #bottom-panel[data-panel-state="expanded"] .tab-content { max-height: 66vh; }
         .tab-content.active { display: block; }
 
         /* ── ABA MOLDE ── */
@@ -377,8 +359,8 @@
 <!-- ══════════════════════════════════════════
      ZONA DO POLEGAR — Bottom Sheet
 ══════════════════════════════════════════ -->
-<div id="bottom-panel" data-panel-state="normal">
-    <div class="handle-zone" id="panel-handle">
+<div id="bottom-panel">
+    <div class="handle-zone" onclick="togglePanelCollapse()">
         <div class="handle"></div>
     </div>
 
@@ -1099,8 +1081,7 @@ function setAlvoPalavra(palavra) {
     renderLegoPanel();
     processarBusca();
     document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
-    // Garante que o painel esteja pelo menos em 'normal' (não força expanded)
-    if (getPanelState() === 'collapsed') setPanelState('normal');
+    document.getElementById('bottom-panel').classList.remove('collapsed');
     if (navigator.vibrate) navigator.vibrate(30);
 }
 
@@ -1153,7 +1134,7 @@ function negarLego(id) {
    9. CONSTRUTOR
 ═══════════════════════════════════════════════════════════════ */
 function _ativarConstrutor() {
-    if (!alvoAtual && !alvoB) return; // Já está no modo construtor puro
+    if (!alvoAtual) return;
     alvoAtual = null;
     alvoB     = null;
     FILTRO_BANDAS.clear();
@@ -1291,47 +1272,12 @@ function _syncConstrutorUI() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   10. PAINEL — máquina de estados + drag + scroll inteligente
-
-   Estados: 'collapsed' | 'normal' | 'expanded'
-   Transições:
-     - Handle tap: collapsed ↔ normal (se expanded, vai pra normal)
-     - Handle drag up: promove estado (collapsed→normal→expanded)
-     - Handle drag down: rebaixa estado (expanded→normal→collapsed)
-     - Tab click: se collapsed, abre pra normal
-     - Scroll down no viewport: normal→collapsed (só se user não está
-       interagindo com o painel)
-     - Seleção de palavra: garante 'normal' (não expande forçado)
+   10. PAINEL — abas + colapso no scroll
 ═══════════════════════════════════════════════════════════════ */
 const bottomPanel = document.getElementById('bottom-panel');
-const panelHandle = document.getElementById('panel-handle');
 
-// ── Estado central ──
-const PANEL_STATES = ['collapsed', 'normal', 'expanded'];
-
-function getPanelState() {
-    return bottomPanel.dataset.panelState || 'normal';
-}
-
-function setPanelState(state) {
-    if (!PANEL_STATES.includes(state)) return;
-    bottomPanel.dataset.panelState = state;
-}
-
-function panelPromote() {
-    let idx = PANEL_STATES.indexOf(getPanelState());
-    if (idx < PANEL_STATES.length - 1) setPanelState(PANEL_STATES[idx + 1]);
-}
-
-function panelDemote() {
-    let idx = PANEL_STATES.indexOf(getPanelState());
-    if (idx > 0) setPanelState(PANEL_STATES[idx - 1]);
-}
-
-// ── Tab switching ──
 function switchTab(nome) {
-    // Se collapsed, abre para normal; caso contrário mantém estado atual
-    if (getPanelState() === 'collapsed') setPanelState('normal');
+    bottomPanel.classList.remove('collapsed');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.getElementById('tab-btn-' + nome).classList.add('active');
@@ -1340,80 +1286,13 @@ function switchTab(nome) {
     if (nome === 'molde')      document.getElementById('input-palavra').focus();
 }
 
-// ── Drag gesture no handle ──
-let _dragStartY = null;
-let _dragStartState = null;
-let _isDragging = false;
+function togglePanelCollapse() { bottomPanel.classList.toggle('collapsed'); }
 
-panelHandle.addEventListener('pointerdown', e => {
-    _dragStartY = e.clientY;
-    _dragStartState = getPanelState();
-    _isDragging = false;
-    panelHandle.setPointerCapture(e.pointerId);
-});
-
-panelHandle.addEventListener('pointermove', e => {
-    if (_dragStartY === null) return;
-    let dy = e.clientY - _dragStartY;
-    if (Math.abs(dy) > 10) _isDragging = true;
-});
-
-panelHandle.addEventListener('pointerup', e => {
-    if (_dragStartY === null) return;
-    let dy = e.clientY - _dragStartY;
-
-    if (!_isDragging || Math.abs(dy) < 15) {
-        // Tap simples: toggle entre collapsed e normal
-        let cur = getPanelState();
-        if (cur === 'collapsed') setPanelState('normal');
-        else if (cur === 'expanded') setPanelState('normal');
-        else setPanelState('collapsed');
-    } else {
-        // Drag: up = promove, down = rebaixa
-        if (dy < -30)      panelPromote();
-        else if (dy > 30)  panelDemote();
-    }
-
-    if (navigator.vibrate) navigator.vibrate(15);
-    _dragStartY = null;
-    _dragStartState = null;
-    _isDragging = false;
-});
-
-panelHandle.addEventListener('pointercancel', () => {
-    _dragStartY = null;
-    _dragStartState = null;
-    _isDragging = false;
-});
-
-// ── Scroll inteligente no viewport ──
-// Só colapsa quando: estado é 'normal', user scrollou para baixo, e
-// não está interagindo com o painel (evita conflito)
 let _lastScrollY = 0;
-let _panelInteracting = false;
-
-bottomPanel.addEventListener('pointerdown', () => { _panelInteracting = true; });
-document.addEventListener('pointerup', () => {
-    // Delay para não triggar scroll imediato após soltar o painel
-    setTimeout(() => { _panelInteracting = false; }, 300);
-});
-
 document.getElementById('viewport').addEventListener('scroll', function () {
-    if (_panelInteracting) { _lastScrollY = this.scrollTop; return; }
-
     let y = this.scrollTop;
-    let delta = y - _lastScrollY;
-
-    // Só auto-colapsa se estiver em 'normal' e scrollando para baixo
-    if (getPanelState() === 'normal' && delta > 30 && y > 100) {
-        setPanelState('collapsed');
-    }
-    // Restaura para normal se scrollou de volta pro topo
-    else if (getPanelState() === 'collapsed' && y < 40) {
-        setPanelState('normal');
-    }
-    // Se expanded e scrollar, não muda — user escolheu expandir
-
+    if (y > 80 && y > _lastScrollY + 20) bottomPanel.classList.add('collapsed');
+    else if (y < 60)                      bottomPanel.classList.remove('collapsed');
     _lastScrollY = y;
 });
 
