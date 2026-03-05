@@ -114,12 +114,19 @@
         }
         .word-card {
             background: var(--surface); border: 2px solid var(--border);
-            border-radius: 12px; padding: 13px 6px 9px;
+            border-radius: 12px; padding: 10px 6px 7px;
             text-align: center; font-size: 15px; font-weight: 500;
             cursor: pointer; user-select: none;
             transition: transform 0.1s;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
         }
         .word-card:active { transform: scale(0.91); }
+        .card-rhyme-key {
+            font-size: 10px; font-weight: 600;
+            color: var(--muted); opacity: 0.7;
+            letter-spacing: 0.02em;
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
         .word-card.b-rima  { border-color: var(--c-rima); }
         .word-card.b-eco   { border-color: var(--c-eco); }
         .word-card.b-ass   { border-color: var(--c-ass); }
@@ -214,6 +221,16 @@
         }
         .search-wrap input:focus    { border-color: var(--accent); background: var(--surface); }
         .search-wrap input:disabled { opacity: 0.45; }
+
+        .btn-clear-input {
+            position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; font-size: 16px; cursor: pointer;
+            padding: 5px 7px; border-radius: 8px; line-height: 1;
+            color: var(--muted); display: none;
+            transition: color 0.15s;
+        }
+        .btn-clear-input:active { color: var(--accent); }
+        .btn-clear-input.visible { display: flex; align-items: center; }
 
         #btn-mic {
             position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
@@ -397,6 +414,7 @@
                        inputmode="search" enterkeyhint="search"
                        autocorrect="off" autocapitalize="none"
                        spellcheck="false" disabled>
+                <button class="btn-clear-input" id="btn-clear-molde" title="Limpar busca">✕</button>
                 <button id="btn-mic" title="Busca por voz">🎤</button>
             </div>
             <div class="historico-row" id="historico-row"></div>
@@ -982,7 +1000,7 @@ function _atualizarGridFaixa() {
     }
     renderChunk();
     setupObserver();
-    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+    // Não faz scroll-to-top ao alternar faixas — mantém posição
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1052,9 +1070,15 @@ function renderChunk() {
             card.className = 'word-card';
         }
         card.dataset.palavra = item.palavra;
-        card.innerHTML = item.silabas
+        let sylHtml = item.silabas
             .map((s, i) => i === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s)
             .join('·');
+        // Badge de rima: mostra a chave de rima quando há palavra-base
+        let rhymeTag = '';
+        if (alvoAtual && item.rimaPerfeita) {
+            rhymeTag = `<span class="card-rhyme-key">-${item.rimaPerfeita}</span>`;
+        }
+        card.innerHTML = `<span>${sylHtml}</span>${rhymeTag}`;
         frag.appendChild(card);
     });
     document.getElementById('grid').appendChild(frag);
@@ -1101,6 +1125,7 @@ function setAlvoPalavra(palavra) {
     document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
     // Garante que o painel esteja pelo menos em 'normal' (não força expanded)
     if (getPanelState() === 'collapsed') setPanelState('normal');
+    if (typeof _syncClearBtn === 'function') _syncClearBtn();
     if (navigator.vibrate) navigator.vibrate(30);
 }
 
@@ -1131,7 +1156,7 @@ function toggleLego(id) {
     if (navigator.vibrate) navigator.vibrate(wasLocked ? 15 : 45);
     renderLegoPanel();
     processarBusca();
-    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+    // Não faz scroll-to-top: mantém posição de leitura ao ajustar filtros
 }
 
 function negarLego(id) {
@@ -1146,7 +1171,7 @@ function negarLego(id) {
     if (navigator.vibrate) navigator.vibrate([10, 30, 70]);
     renderLegoPanel();
     processarBusca();
-    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+    // Não faz scroll-to-top: mantém posição de leitura ao ajustar filtros
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1557,10 +1582,35 @@ document.getElementById('grid').addEventListener('click', e => {
     setAlvoPalavra(card.dataset.palavra);
 });
 
+// ── Botão Limpar Molde ──
+const btnClearMolde = document.getElementById('btn-clear-molde');
+function _syncClearBtn() {
+    let hasContent = document.getElementById('input-palavra').value.trim().length > 0 || alvoAtual;
+    btnClearMolde.classList.toggle('visible', !!hasContent);
+}
+btnClearMolde.addEventListener('click', () => {
+    alvoAtual = null;
+    alvoB     = null;
+    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+    FILTRO_BANDAS.clear();
+    document.getElementById('input-palavra').value = '';
+    document.getElementById('intersect-zone').style.display = 'none';
+    document.getElementById('intersect-input-wrap').style.display = 'none';
+    document.getElementById('intersect-btn').classList.remove('active');
+    document.getElementById('intersect-clear').style.display = 'none';
+    document.getElementById('input-palavra-b').value = '';
+    renderLegoPanel();
+    processarBusca();
+    _syncClearBtn();
+    document.getElementById('input-palavra').focus();
+    if (navigator.vibrate) navigator.vibrate(15);
+});
+
 let _debounce;
 document.getElementById('input-palavra').addEventListener('input', e => {
     let val = e.target.value.trim();
     clearTimeout(_debounce);
+    _syncClearBtn();
     if (val.length < 2) return;
     _debounce = setTimeout(() => { if (perfilFonetico(val)) setAlvoPalavra(val); }, 280);
 });
