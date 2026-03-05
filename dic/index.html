@@ -79,13 +79,20 @@
             background: var(--header-bg);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             padding: 9px 14px;
-            display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+            display: flex; align-items: center; gap: 5px;
             border-bottom: 1px solid var(--border);
+            overflow: hidden;
         }
         .count-label { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; margin-right: 2px; }
+        #bands-chips {
+            display: flex; gap: 5px; overflow-x: auto; flex: 1; min-width: 0;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        #bands-chips::-webkit-scrollbar { display: none; }
         .band-chip {
             font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; color: white;
             cursor: pointer; user-select: none; transition: opacity 0.18s, transform 0.1s;
+            white-space: nowrap; flex-shrink: 0;
         }
         .band-chip:active { transform: scale(0.91); }
         .band-chip.dimmed { opacity: 0.28; }
@@ -111,7 +118,9 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
             gap: 9px; padding: 12px 12px 16px;
+            transition: opacity 0.15s ease;
         }
+        .results-grid.fading { opacity: 0.3; }
         .word-card {
             background: var(--surface); border: 2px solid var(--border);
             border-radius: 12px; padding: 10px 6px 7px;
@@ -156,8 +165,8 @@
         }
 
         .handle-zone {
-            padding: 10px 0 4px;
-            display: flex; justify-content: center; align-items: center;
+            padding: 10px 0 2px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             user-select: none; cursor: grab;
             touch-action: none; /* para pointer events de drag */
         }
@@ -168,6 +177,14 @@
             transition: background 0.2s, width 0.2s;
         }
         .handle-zone:active .handle { background: var(--muted); width: 48px; }
+        .handle-chevron {
+            font-size: 10px; color: var(--muted); line-height: 1;
+            margin-top: 2px; transition: transform 0.3s ease, opacity 0.3s;
+            opacity: 0.6;
+        }
+        #bottom-panel[data-panel-state="collapsed"] .handle-chevron { transform: rotate(180deg); }
+        #bottom-panel[data-panel-state="normal"]    .handle-chevron { transform: rotate(0deg); opacity: 0; }
+        #bottom-panel[data-panel-state="expanded"]  .handle-chevron { transform: rotate(0deg); }
 
         .tabs {
             display: flex; padding: 0 16px;
@@ -183,6 +200,33 @@
         .tab-btn.active::after {
             content: ''; position: absolute; bottom: -1px; left: 20%; width: 60%;
             height: 3px; background: var(--accent); border-radius: 3px 3px 0 0;
+        }
+        .tab-icon {
+            display: inline-block; width: 14px; height: 14px;
+            vertical-align: -2px; margin-right: 4px;
+        }
+        .tab-icon-molde {
+            border: 2px solid currentColor; border-radius: 50%;
+            width: 13px; height: 13px;
+            position: relative;
+        }
+        .tab-icon-molde::after {
+            content: ''; position: absolute; bottom: -4px; right: -4px;
+            width: 6px; height: 2px; background: currentColor;
+            transform: rotate(45deg); border-radius: 1px;
+        }
+        .tab-icon-construtor {
+            border-bottom: 2px solid currentColor;
+            border-left: 2px solid currentColor;
+            width: 12px; height: 10px;
+            position: relative;
+        }
+        .tab-icon-construtor::before {
+            content: ''; position: absolute; top: -4px; left: 2px;
+            width: 0; height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 5px solid currentColor;
         }
 
         .tab-wrapper {
@@ -300,6 +344,11 @@
         }
 
         #status-text { font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
+        #construtor-count {
+            font-size: 12px; font-weight: 700; color: var(--muted);
+            text-align: center; padding: 6px 0 2px;
+            transition: opacity 0.2s;
+        }
 
         /* ── ABA CONSTRUTOR ── */
         .builder-section { margin-bottom: 18px; }
@@ -410,11 +459,12 @@
 <div id="bottom-panel" data-panel-state="normal">
     <div class="handle-zone" id="panel-handle">
         <div class="handle"></div>
+        <div class="handle-chevron">▼</div>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" id="tab-btn-molde"      onclick="switchTab('molde')">🔍 Molde</button>
-        <button class="tab-btn"        id="tab-btn-construtor" onclick="switchTab('construtor')">🏗 Construtor</button>
+        <button class="tab-btn active" id="tab-btn-molde"      onclick="switchTab('molde')"><span class="tab-icon tab-icon-molde"></span>Molde</button>
+        <button class="tab-btn"        id="tab-btn-construtor" onclick="switchTab('construtor')"><span class="tab-icon tab-icon-construtor"></span>Construtor</button>
     </div>
 
     <div class="tab-wrapper">
@@ -453,6 +503,7 @@
 
         <!-- ABA: CONSTRUTOR -->
         <div id="tab-construtor" class="tab-content">
+            <div id="construtor-count"></div>
             <div class="builder-section">
                 <span class="builder-label">Número de sílabas</span>
                 <div class="stepper">
@@ -891,6 +942,7 @@ function processarBusca() {
     if (!temCriterio) {
         resultadosFiltrados = [];
         renderResultados();
+        _syncConstrutorCount();
         _updateHash();
         return;
     }
@@ -940,7 +992,19 @@ function processarBusca() {
     }
 
     renderResultados();
+    _syncConstrutorCount();
     _updateHash();
+}
+
+function _syncConstrutorCount() {
+    let el = document.getElementById('construtor-count');
+    let n = resultadosFiltrados.length;
+    let hasFiltro = Object.values(FILTROS).some(v => v !== null) || alvoAtual;
+    if (!hasFiltro) {
+        el.textContent = '';
+    } else {
+        el.textContent = `${n.toLocaleString('pt-BR')} resultado${n !== 1 ? 's' : ''}`;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -992,6 +1056,7 @@ function clearFiltroBanda() {
 
 function _atualizarGridFaixa() {
     let grid = document.getElementById('grid');
+    grid.classList.add('fading');
     grid.innerHTML = '';
     itemsRenderizados = 0;
     if (iObserver) iObserver.disconnect();
@@ -1009,10 +1074,12 @@ function _atualizarGridFaixa() {
     if (nVis === 0) {
         grid.innerHTML = `<div class="empty-state">Nenhuma faixa selecionada tem resultados.<br>
             Clique em <b>✕ faixas</b> para ver tudo.</div>`;
+        requestAnimationFrame(() => grid.classList.remove('fading'));
         return;
     }
     renderChunk();
     setupObserver();
+    requestAnimationFrame(() => grid.classList.remove('fading'));
     // Não faz scroll-to-top ao alternar faixas — mantém posição
 }
 
@@ -1021,6 +1088,7 @@ function _atualizarGridFaixa() {
 ═══════════════════════════════════════════════════════════════ */
 function renderResultados() {
     let grid = document.getElementById('grid');
+    grid.classList.add('fading');
     grid.innerHTML = '';
     itemsRenderizados = 0;
     if (iObserver) iObserver.disconnect();
@@ -1031,6 +1099,7 @@ function renderResultados() {
         document.getElementById('bands-chips').innerHTML = '';
         document.getElementById('clear-banda').style.display = 'none';
         grid.innerHTML = `<div class="empty-state">Nenhuma palavra atende a estes critérios.<br>Destrave alguns blocos ou ajuste os filtros.</div>`;
+        requestAnimationFrame(() => grid.classList.remove('fading'));
         return;
     }
 
@@ -1055,11 +1124,13 @@ function renderResultados() {
     if (nVis === 0) {
         grid.innerHTML = `<div class="empty-state">Nenhuma faixa selecionada tem resultados.<br>
             Clique em <b>✕ faixas</b> para ver tudo.</div>`;
+        requestAnimationFrame(() => grid.classList.remove('fading'));
         return;
     }
 
     renderChunk();
     setupObserver();
+    requestAnimationFrame(() => grid.classList.remove('fading'));
 }
 
 function setupObserver() {
