@@ -32,18 +32,22 @@ function tratarHiatosVogais(blocoVoc, pLower) {
     let resultado = [], atual = blocoVoc[0];
     for (let i = 1; i < blocoVoc.length; i++) {
         let char = blocoVoc[i], par = (atual.slice(-1) + char).toLowerCase();
-        let formamDitongo   = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe|ia|ie|io|ua|ue|uo)$/.test(par);
+        // Só ditongos decrescentes — crescentes (ia,ie,io,ua,ue,uo) são hiato em pt-BR
+        let formamDitongo   = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe)$/.test(par);
         let vogaisIdenticas = par[0] === par[1];
         let temHiatoAcent   = /[aeiouáéíóúâêôãõü][íú]/.test(par);
         let ehHiatoFinal    = /^(ai|ui|au|oe)$/.test(par) &&
                               (pLower.endsWith(par+"r")||pLower.endsWith(par+"z")||pLower.endsWith(par+"l"));
         let seguidoDeNh     = pLower.includes(par+"nh");
+        // Hiato quando ditongo decrescente é seguido de nasal+consoante (ex: "ainda" → a-in-da)
+        let pos = pLower.indexOf(par);
+        let seguidoDeNasal  = pos >= 0 && pLower[pos+2] === 'n' && pos+3 < pLower.length && !vRegex.test(pLower[pos+3]);
         let formaHiatoDit   = false;
         if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
             let prox = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
             if (/^(iu|ia|io|ie|ui)$/.test(char+prox)) formaHiatoDit = true;
         }
-        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !formaHiatoDit)
+        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !seguidoDeNasal && !formaHiatoDit)
             atual += char;
         else { resultado.push(atual); atual = char; }
     }
