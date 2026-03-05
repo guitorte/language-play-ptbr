@@ -82,19 +82,18 @@
             display: flex; align-items: center; gap: 5px;
             border-bottom: 1px solid var(--border);
         }
-        .count-label { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; margin-right: 2px; }
         #bands-chips {
             display: flex; gap: 5px; overflow-x: auto; min-width: 0;
             scrollbar-width: none; -ms-overflow-style: none;
-            flex: 1 1 auto; scroll-behavior: auto;
-            touch-action: pan-x;
+            flex: 1 1 auto;
             -webkit-overflow-scrolling: touch;
         }
         #bands-chips::-webkit-scrollbar { display: none; }
         .band-chip {
-            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; color: white;
+            font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; color: white;
             cursor: pointer; user-select: none; transition: opacity 0.18s, transform 0.1s;
             white-space: nowrap; flex-shrink: 0;
+            touch-action: manipulation;
         }
         .band-chip:active { transform: scale(0.91); }
         .band-chip.dimmed { opacity: 0.28; }
@@ -457,7 +456,6 @@
 ══════════════════════════════════════════ -->
 <div id="viewport">
     <div class="results-header" id="results-header" style="display:none">
-        <span class="count-label" id="count-label"></span>
         <div id="bands-chips"></div>
         <button id="clear-banda" style="display:none" onclick="clearFiltroBanda()">✕ faixas</button>
     </div>
@@ -1087,24 +1085,15 @@ function _atualizarGridFaixa() {
     itemsRenderizados = 0;
     if (iObserver) iObserver.disconnect();
 
-    let nTotal = resultadosFiltrados.length;
-    let nVis   = resultadosVisiveis.length;
-    let sufixo = alvoB ? ' (A∩B)' : '';
-    document.getElementById('count-label').textContent =
-        FILTRO_BANDAS.size > 0
-            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`
-            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`;
-
     _renderBandaChips();
 
-    if (nVis === 0) {
+    if (resultadosVisiveis.length === 0) {
         grid.innerHTML = `<div class="empty-state">Nenhuma faixa selecionada tem resultados.<br>
             Clique em <b>✕ faixas</b> para ver tudo.</div>`;
         return;
     }
     renderChunk();
     setupObserver();
-    // Não faz scroll-to-top ao alternar faixas — mantém posição
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1129,14 +1118,6 @@ function renderResultados() {
 
     _calcVisiveis();
     header.style.display = 'flex';
-
-    let nTotal = resultadosFiltrados.length;
-    let nVis   = resultadosVisiveis.length;
-    let sufixo = alvoB ? ' (A∩B)' : '';
-    document.getElementById('count-label').textContent =
-        FILTRO_BANDAS.size > 0
-            ? `${nVis.toLocaleString('pt-BR')} de ${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`
-            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`;
 
     if (alvoAtual) {
         _renderBandaChips();
@@ -1544,14 +1525,14 @@ panelHandle.addEventListener('keydown', e => {
 });
 
 // ── Scroll inteligente no viewport ──
-// Só colapsa quando: estado é 'normal', user scrollou para baixo, e
-// não está interagindo com o painel (evita conflito)
+// Só auto-colapsa em 'normal' ao scrollar para baixo.
+// NÃO re-expande automaticamente — o user controla pelo handle/tap.
 let _lastScrollY = 0;
 let _panelInteracting = false;
+let _manualCollapse = false; // flag: user colapsou pelo handle
 
 bottomPanel.addEventListener('pointerdown', () => { _panelInteracting = true; });
 document.addEventListener('pointerup', () => {
-    // Delay para não triggar scroll imediato após soltar o painel
     setTimeout(() => { _panelInteracting = false; }, 300);
 });
 
@@ -1565,11 +1546,7 @@ document.getElementById('viewport').addEventListener('scroll', function () {
     if (getPanelState() === 'normal' && delta > 30 && y > 100) {
         setPanelState('collapsed');
     }
-    // Restaura para normal se scrollou de volta pro topo
-    else if (getPanelState() === 'collapsed' && y < 40) {
-        setPanelState('normal');
-    }
-    // Se expanded e scrollar, não muda — user escolheu expandir
+    // NÃO re-expande automaticamente — respeita collapse manual
 
     _lastScrollY = y;
 });
