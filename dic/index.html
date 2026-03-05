@@ -82,6 +82,7 @@
             display: flex; align-items: center; gap: 5px;
             border-bottom: 1px solid var(--border);
         }
+        .count-label { font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; white-space: nowrap; }
         #bands-chips {
             display: flex; gap: 5px; overflow-x: auto; min-width: 0;
             scrollbar-width: none; -ms-overflow-style: none;
@@ -456,6 +457,7 @@
 ══════════════════════════════════════════ -->
 <div id="viewport">
     <div class="results-header" id="results-header" style="display:none">
+        <span class="count-label" id="count-label"></span>
         <div id="bands-chips"></div>
         <button id="clear-banda" style="display:none" onclick="clearFiltroBanda()">✕ faixas</button>
     </div>
@@ -1065,29 +1067,34 @@ function toggleBanda(key) {
         FILTRO_BANDAS.add(key);
     }
     _calcVisiveis();
-    // Defer rebuild para não bloquear scroll
-    (window.requestIdleCallback || (cb => setTimeout(cb, 0)))(_atualizarGridFaixa);
+    _atualizarGridFaixa();
     if (navigator.vibrate) navigator.vibrate(15);
 }
 
 function clearFiltroBanda() {
     FILTRO_BANDAS.clear();
     _calcVisiveis();
-    // Defer rebuild para não bloquear scroll
-    (window.requestIdleCallback || (cb => setTimeout(cb, 0)))(_atualizarGridFaixa);
+    _atualizarGridFaixa();
     if (navigator.vibrate) navigator.vibrate(20);
 }
 
 function _atualizarGridFaixa() {
     let grid = document.getElementById('grid');
-    // Sem fade durante toggle de faixa — apenas durante full search
     grid.innerHTML = '';
     itemsRenderizados = 0;
     if (iObserver) iObserver.disconnect();
 
+    let nTotal = resultadosFiltrados.length;
+    let nVis   = resultadosVisiveis.length;
+    let sufixo = alvoB ? ' (A∩B)' : '';
+    document.getElementById('count-label').textContent =
+        FILTRO_BANDAS.size > 0
+            ? `${nVis.toLocaleString('pt-BR')}/${nTotal.toLocaleString('pt-BR')}`
+            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`;
+
     _renderBandaChips();
 
-    if (resultadosVisiveis.length === 0) {
+    if (nVis === 0) {
         grid.innerHTML = `<div class="empty-state">Nenhuma faixa selecionada tem resultados.<br>
             Clique em <b>✕ faixas</b> para ver tudo.</div>`;
         return;
@@ -1118,6 +1125,14 @@ function renderResultados() {
 
     _calcVisiveis();
     header.style.display = 'flex';
+
+    let nTotal = resultadosFiltrados.length;
+    let nVis   = resultadosVisiveis.length;
+    let sufixo = alvoB ? ' (A∩B)' : '';
+    document.getElementById('count-label').textContent =
+        FILTRO_BANDAS.size > 0
+            ? `${nVis.toLocaleString('pt-BR')}/${nTotal.toLocaleString('pt-BR')}`
+            : `${nTotal.toLocaleString('pt-BR')} palavra${nTotal !== 1 ? 's' : ''}${sufixo}`;
 
     if (alvoAtual) {
         _renderBandaChips();
