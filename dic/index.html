@@ -81,12 +81,14 @@
             padding: 9px 14px;
             display: flex; align-items: center; gap: 5px;
             border-bottom: 1px solid var(--border);
-            overflow: hidden;
         }
         .count-label { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; margin-right: 2px; }
         #bands-chips {
-            display: flex; gap: 5px; overflow-x: auto; flex: 1; min-width: 0;
+            display: flex; gap: 5px; overflow-x: auto; min-width: 0;
             scrollbar-width: none; -ms-overflow-style: none;
+            flex: 1 1 auto; scroll-behavior: auto;
+            touch-action: pan-x;
+            -webkit-overflow-scrolling: touch;
         }
         #bands-chips::-webkit-scrollbar { display: none; }
         .band-chip {
@@ -1065,20 +1067,22 @@ function toggleBanda(key) {
         FILTRO_BANDAS.add(key);
     }
     _calcVisiveis();
-    _atualizarGridFaixa();
+    // Defer rebuild para não bloquear scroll
+    (window.requestIdleCallback || (cb => setTimeout(cb, 0)))(_atualizarGridFaixa);
     if (navigator.vibrate) navigator.vibrate(15);
 }
 
 function clearFiltroBanda() {
     FILTRO_BANDAS.clear();
     _calcVisiveis();
-    _atualizarGridFaixa();
+    // Defer rebuild para não bloquear scroll
+    (window.requestIdleCallback || (cb => setTimeout(cb, 0)))(_atualizarGridFaixa);
     if (navigator.vibrate) navigator.vibrate(20);
 }
 
 function _atualizarGridFaixa() {
     let grid = document.getElementById('grid');
-    grid.classList.add('fading');
+    // Sem fade durante toggle de faixa — apenas durante full search
     grid.innerHTML = '';
     itemsRenderizados = 0;
     if (iObserver) iObserver.disconnect();
@@ -1096,12 +1100,10 @@ function _atualizarGridFaixa() {
     if (nVis === 0) {
         grid.innerHTML = `<div class="empty-state">Nenhuma faixa selecionada tem resultados.<br>
             Clique em <b>✕ faixas</b> para ver tudo.</div>`;
-        requestAnimationFrame(() => grid.classList.remove('fading'));
         return;
     }
     renderChunk();
     setupObserver();
-    requestAnimationFrame(() => grid.classList.remove('fading'));
     // Não faz scroll-to-top ao alternar faixas — mantém posição
 }
 
