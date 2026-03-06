@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<title>Rimas PT-BR</title>
+<style>
+:root {
+  --primary:    #1A252C;
+  --accent:     #E74C3C;
+  --accent2:    #C0392B;
+  --bg:         #F0F3F4;
+  --surface:    #FFFFFF;
+  --border:     #DFE6EC;
+  --text:       #2C3E50;
+  --muted:      #7F8C8D;
+  --lock-bg:    #FFF4E6;
+  --lock-color: #A04000;
+  --lock-border:#E67E22;
+  --neg-bg:     #fdecea;
+  --neg-color:  #922b21;
+  --c-rima:     #27AE60;
+  --c-qrima:    #16A085;
+  --c-eco:      #2980B9;
+  --c-ass:      #E67E22;
+  --c-prox:     #8E44AD;
+  --c-ritmo:    #95A5A6;
+  --safe-b:     env(safe-area-inset-bottom, 0px);
+  --sidebar-w:  268px;
+  --topbar-h:   56px;
+  --subbar-h:   auto;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary:    #E8ECEF;
+    --bg:         #181C20;
+    --surface:    #23282E;
+    --border:     #3A4048;
+    --text:       #D5DBE0;
+    --muted:      #8A949E;
+    --lock-bg:    #3D2E1A;
+    --lock-color: #F0A860;
+    --lock-border:#C87820;
+    --neg-bg:     #3D1A1A;
+    --neg-color:  #F08080;
+    --c-rima:     #2ECC71;
+    --c-qrima:    #1ABC9C;
+    --c-eco:      #3498DB;
+    --c-ass:      #F39C12;
+    --c-prox:     #9B59B6;
+    --c-ritmo:    #7F8C8D;
+  }
+}
+*,*::before,*::after { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; margin:0; padding:0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column;
+  height: 100dvh; overflow: hidden;
+}
+
+/* ═══ TOP BAR ═══════════════════════════════════════════════ */
+#topbar {
+  flex-shrink: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px 8px;
+  z-index: 200;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+}
+.search-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.search-pill {
+  flex: 1; display: flex; align-items: center;
+  background: var(--bg); border: 2px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-pill:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(231,76,60,0.12);
+}
+.search-pill input {
+  flex: 1; background: none; border: none; outline: none;
+  padding: 11px 0 11px 14px;
+  font-size: 16px; font-weight: 600; color: var(--text);
+  min-width: 0;
+}
+.search-pill input::placeholder { color: var(--muted); font-weight: 400; }
+.pill-btn {
+  background: none; border: none; cursor: pointer;
+  padding: 0 10px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 16px;
+  transition: color 0.15s;
+}
+.pill-btn:active { color: var(--accent); }
+.pill-btn.hidden { display: none; }
+/* Separator between A and B inputs */
+.intersect-sep {
+  font-size: 13px; font-weight: 800; color: var(--muted);
+  padding: 0 2px; flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.intersect-sep.visible { opacity: 1; }
+#input-b-wrap {
+  display: flex; align-items: center;
+  max-width: 0; overflow: hidden;
+  transition: max-width 0.3s cubic-bezier(0.25,1,0.5,1);
+}
+#input-b-wrap.open { max-width: 160px; }
+#input-b-wrap input {
+  width: 110px; flex: none;
+}
+/* Topbar action buttons */
+.topbar-btn {
+  width: 40px; height: 40px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: var(--muted); flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.topbar-btn:active { background: var(--border); }
+.topbar-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.topbar-btn.hidden { display: none; }
+#btn-mic.listening { animation: pulse 1s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* Rima express row */
+#rima-express {
+  display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 2px;
+  scrollbar-width: none; -ms-overflow-style: none;
+  min-height: 0; transition: max-height 0.2s;
+}
+#rima-express:empty { display: none; }
+#rima-express::-webkit-scrollbar { display: none; }
+.rex-chip {
+  flex-shrink: 0; background: var(--bg); border: 1.5px solid var(--border);
+  padding: 4px 11px; border-radius: 10px;
+  font-size: 12px; font-weight: 600; color: var(--text);
+  cursor: pointer; user-select: none; white-space: nowrap;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.rex-chip:active { transform: scale(0.93); border-color: var(--accent); }
+
+/* History dropdown */
+#hist-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 300; display: none;
+  max-height: 200px; overflow-y: auto;
+}
+#hist-dropdown.open { display: block; }
+.hist-item {
+  padding: 9px 12px; border-radius: 8px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: background 0.1s;
+}
+.hist-item:hover, .hist-item:active { background: var(--bg); }
+.hist-item .hist-icon { color: var(--muted); font-size: 12px; }
+.hist-footer {
+  padding: 6px 12px 2px; border-top: 1px solid var(--border); margin-top: 4px;
+  display: flex; justify-content: flex-end;
+}
+.hist-footer button {
+  background: none; border: none; font-size: 11px; color: var(--muted);
+  cursor: pointer; padding: 2px 4px;
+}
+#topbar { position: relative; }
+
+/* ═══ BODY AREA ═════════════════════════════════════════════ */
+#body-area {
+  flex: 1; display: flex; overflow: hidden;
+}
+
+/* ═══ SIDEBAR (desktop) ══════════════════════════════════════ */
+#sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 16px 14px calc(16px + var(--safe-b));
+  display: none; /* hidden on mobile */
+}
+@media (min-width: 820px) {
+  #sidebar { display: block; }
+}
+.sb-section { margin-bottom: 20px; }
+.sb-label {
+  display: block; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.7px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+/* Stepper */
+.stepper { display: flex; align-items: center; gap: 8px; }
+.step-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 2px solid var(--border); background: var(--bg);
+  font-size: 20px; font-weight: 700; color: var(--primary);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.1s, background 0.1s;
+}
+.step-btn:active { transform: scale(0.88); background: var(--border); }
+.step-val { font-size: 15px; font-weight: 800; flex: 1; text-align: center; }
+/* Radio row */
+.radio-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.r-btn {
+  padding: 7px 10px; border-radius: 9px;
+  border: 2px solid var(--border); background: var(--bg);
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  cursor: pointer; white-space: nowrap;
+  transition: transform 0.1s;
+}
+.r-btn:active { transform: scale(0.91); }
+.r-btn.sel { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* Vowel row */
+.vowel-row { display: flex; gap: 6px; }
+.v-btn {
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 2px solid var(--border); background: var(--bg);
+  font-size: 17px; font-weight: 800; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.1s;
+}
+.v-btn:active { transform: scale(0.88); }
+.v-btn.sel { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 3px 10px rgba(231,76,60,0.3); }
+/* Text input */
+.sb-input {
+  width: 100%; padding: 9px 12px;
+  font-size: 14px; font-weight: 600;
+  background: var(--bg); border: 2px solid var(--border);
+  border-radius: 10px; outline: none;
+  color: var(--text); transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.sb-input:focus { border-color: var(--accent); background: var(--surface); }
+.sb-hint { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+/* Intersect in sidebar */
+.sb-intersect-wrap {
+  margin-top: 6px; overflow: hidden;
+  max-height: 0; transition: max-height 0.3s cubic-bezier(0.25,1,0.5,1);
+}
+.sb-intersect-wrap.open { max-height: 80px; }
+.sb-intersect-input {
+  width: 100%; padding: 9px 12px; margin-top: 6px;
+  font-size: 14px; font-weight: 600;
+  background: var(--bg); border: 2px solid var(--accent);
+  border-radius: 10px; outline: none; color: var(--text);
+  -webkit-appearance: none;
+}
+.sb-intersect-input:focus { background: var(--surface); }
+/* Sidebar intersection button */
+.sb-intersect-btn {
+  width: 100%; padding: 9px; border-radius: 10px;
+  border: 2px dashed var(--border); background: none;
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  cursor: pointer; text-align: center;
+  transition: border-color 0.2s, color 0.2s;
+}
+.sb-intersect-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sb-intersect-btn.active { border-style: solid; background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* ═══ RESULTS ZONE ═══════════════════════════════════════════ */
+#results-zone {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  min-width: 0;
+}
+
+/* Subbar: spectrum + lego pills (sticky) */
+#subbar {
+  flex-shrink: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+/* Spectrum bar */
+#spectrum-wrap {
+  padding: 8px 12px 0;
+  display: none; /* visible only when alvoAtual */
+}
+#spectrum-wrap.visible { display: block; }
+#spectrum-bar {
+  display: flex; height: 20px; border-radius: 10px; overflow: hidden;
+  gap: 2px; cursor: pointer;
+}
+.spec-seg {
+  flex-shrink: 0; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.9);
+  transition: opacity 0.18s, transform 0.1s;
+  white-space: nowrap; overflow: hidden;
+  border-radius: 4px;
+  user-select: none;
+  min-width: 6px;
+}
+.spec-seg.dimmed { opacity: 0.3; }
+.spec-seg:active { transform: scaleY(0.88); }
+/* Spectrum count label + clear */
+#spectrum-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 3px 12px 4px; font-size: 11px; color: var(--muted);
+}
+#spec-count { font-weight: 700; }
+#spec-clear {
+  background: none; border: none; font-size: 11px;
+  color: var(--muted); cursor: pointer; padding: 1px 4px;
+  display: none;
+}
+#spec-clear:hover { color: var(--accent); }
+#spec-clear.visible { display: inline; }
+
+/* Lego pills bar */
+#lego-bar {
+  display: flex; gap: 6px; overflow-x: auto;
+  padding: 6px 12px 8px;
+  scrollbar-width: none; -ms-overflow-style: none;
+  align-items: center; min-height: 0;
+}
+#lego-bar:empty { display: none; }
+#lego-bar::-webkit-scrollbar { display: none; }
+.lego-pill {
+  flex-shrink: 0;
+  background: var(--bg); border: 2px solid var(--border);
+  padding: 5px 11px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  cursor: pointer; user-select: none;
+  display: flex; align-items: center; gap: 3px;
+  transition: transform 0.1s;
+  touch-action: none;
+  white-space: nowrap;
+}
+.lego-pill:active { transform: scale(0.91); }
+.lego-pill.locked {
+  background: var(--lock-bg); border-color: var(--lock-border); color: var(--lock-color);
+}
+.lego-pill.negated {
+  background: var(--neg-bg); border-color: var(--accent); color: var(--neg-color);
+}
+
+/* Results count bar (when no alvoAtual, just show count) */
+#count-bar {
+  padding: 8px 14px 6px;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  display: none;
+}
+#count-bar.visible { display: block; }
+
+/* ═══ GRID ═══════════════════════════════════════════════════ */
+#viewport {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px; padding: 12px 10px 16px;
+  transition: opacity 0.15s ease;
+}
+.grid.fading { opacity: 0.3; }
+@media (min-width: 540px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; }
+}
+@media (min-width: 820px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(114px, 1fr)); gap: 9px; padding: 14px 12px; }
+}
+.word-card {
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: 12px; padding: 10px 6px 7px;
+  text-align: center; font-size: 15px; font-weight: 500;
+  cursor: pointer; user-select: none;
+  transition: transform 0.1s, border-color 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.word-card:active { transform: scale(0.91); }
+.word-card.b-rima  { border-color: var(--c-rima); }
+.word-card.b-qrima { border-color: var(--c-qrima); }
+.word-card.b-eco   { border-color: var(--c-eco); }
+.word-card.b-ass   { border-color: var(--c-ass); }
+.word-card.b-prox  { border-color: var(--c-prox); }
+.word-card.b-ritmo { border-color: var(--c-ritmo); }
+.tonica { font-weight: 800; color: var(--accent); }
+.card-rkey {
+  font-size: 9px; font-weight: 600; color: var(--muted);
+  opacity: 0.65; letter-spacing: 0.02em;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.empty-state {
+  padding: 52px 24px; text-align: center;
+  color: var(--muted); font-size: 15px; line-height: 1.7;
+  grid-column: 1/-1;
+}
+.loader {
+  display: block; width: 26px; height: 26px; margin: 0 auto 12px;
+  border-radius: 50%;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#status-text {
+  font-size: 11px; color: var(--muted);
+  text-align: center; padding: 8px;
+}
+
+/* ═══ FILTER SHEET (mobile) ════════════════════════════════ */
+/* Overlay */
+#sheet-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+  z-index: 400; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+#sheet-overlay.open { opacity: 1; pointer-events: all; }
+/* Sheet */
+#filter-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 30px rgba(0,0,0,0.15);
+  z-index: 500;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  max-height: 85dvh;
+  display: flex; flex-direction: column;
+  padding-bottom: var(--safe-b);
+}
+#filter-sheet.open { transform: translateY(0); }
+@media (min-width: 820px) {
+  #filter-sheet, #sheet-overlay, #filter-fab { display: none !important; }
+}
+.sheet-handle-row {
+  padding: 12px 0 8px;
+  display: flex; justify-content: center; align-items: center;
+  flex-shrink: 0; cursor: grab;
+  touch-action: none;
+}
+.sheet-handle-row:active { cursor: grabbing; }
+.sheet-handle {
+  width: 38px; height: 4px; background: var(--border);
+  border-radius: 2px; transition: width 0.2s, background 0.2s;
+}
+.sheet-handle-row:active .sheet-handle { width: 52px; background: var(--muted); }
+.sheet-title {
+  padding: 0 16px 10px;
+  font-size: 13px; font-weight: 800; letter-spacing: 0.4px;
+  text-transform: uppercase; color: var(--muted); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sheet-title button {
+  background: none; border: none; font-size: 12px;
+  color: var(--accent); cursor: pointer; font-weight: 700;
+}
+.sheet-body {
+  flex: 1; overflow-y: auto; overscroll-behavior: contain;
+  padding: 0 14px 16px;
+}
+.sh-section { margin-bottom: 20px; }
+.sh-label {
+  display: block; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.7px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+
+/* FAB for filter sheet on mobile */
+#filter-fab {
+  position: fixed; bottom: calc(20px + var(--safe-b)); right: 16px;
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  border: none; cursor: pointer; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+#filter-fab:active { transform: scale(0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+#filter-fab.has-filters {
+  background: var(--accent);
+  box-shadow: 0 4px 16px rgba(231,76,60,0.4);
+}
+
+/* freq-btn, morfo-btn, fam-btn aliased to r-btn in sheet */
+.sh-section .r-btn { font-size: 12px; padding: 7px 10px; }
+
+/* ═══ TRANSITIONS / MISC ════════════════════════════════════ */
+@keyframes card-in {
+  from { opacity: 0; transform: scale(0.95) translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ TOP BAR ═══════════════════════════════ -->
+<div id="topbar">
+  <div class="search-row">
+    <div class="search-pill" id="search-pill">
+      <input type="search" id="input-a"
+             placeholder="Palavra ou rima…"
+             autocorrect="off" autocapitalize="none" spellcheck="false"
+             inputmode="search" enterkeyhint="search"
+             aria-label="Palavra-base">
+      <span class="intersect-sep" id="intersect-sep">∩</span>
+      <div id="input-b-wrap">
+        <input type="search" id="input-b"
+               placeholder="segunda palavra"
+               autocorrect="off" autocapitalize="none" spellcheck="false"
+               inputmode="search" enterkeyhint="search"
+               aria-label="Segunda palavra para interseção">
+      </div>
+      <button class="pill-btn hidden" id="btn-clear-a" title="Limpar" aria-label="Limpar busca">✕</button>
+    </div>
+    <button class="topbar-btn" id="btn-intersect" title="Interseção A∩B" aria-label="Busca de interseção" style="font-size:14px;font-weight:800;">∩</button>
+    <button class="topbar-btn hidden" id="btn-mic" title="Busca por voz" aria-label="Busca por voz">🎤</button>
+    <button class="topbar-btn" id="btn-hist" title="Histórico" aria-label="Histórico de buscas" style="font-size:15px;">⏱</button>
+  </div>
+  <div id="rima-express" aria-label="Sugestões rápidas de rima"></div>
+  <!-- History dropdown -->
+  <div id="hist-dropdown" role="listbox" aria-label="Histórico de palavras buscadas">
+    <div id="hist-list"></div>
+    <div class="hist-footer"><button onclick="clearHistorico()">Limpar histórico</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ BODY ═══════════════════════════════════ -->
+<div id="body-area">
+
+  <!-- Sidebar (desktop only) -->
+  <aside id="sidebar" aria-label="Filtros">
+    <div class="sb-section">
+      <span class="sb-label">Número de sílabas</span>
+      <div class="stepper">
+        <button class="step-btn" onclick="stepSilabas(-1)" aria-label="Menos sílabas">−</button>
+        <span class="step-val" id="step-val">Qualquer</span>
+        <button class="step-btn" onclick="stepSilabas(1)" aria-label="Mais sílabas">+</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Acentuação</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-acento="" onclick="setAcento(null,this)">Qualquer</button>
+        <button class="r-btn" data-acento="ox"  onclick="setAcento('ox',this)">Oxítona</button>
+        <button class="r-btn" data-acento="px"  onclick="setAcento('px',this)">Paroxítona</button>
+        <button class="r-btn" data-acento="ppx" onclick="setAcento('ppx',this)">Proparox.</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Vogal tônica</span>
+      <div class="vowel-row">
+        <button class="v-btn" data-vogal="a" onclick="setVogal('a',this)">A</button>
+        <button class="v-btn" data-vogal="e" onclick="setVogal('e',this)">E</button>
+        <button class="v-btn" data-vogal="i" onclick="setVogal('i',this)">I</button>
+        <button class="v-btn" data-vogal="o" onclick="setVogal('o',this)">O</button>
+        <button class="v-btn" data-vogal="u" onclick="setVogal('u',this)">U</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Onset tônico</span>
+      <input id="onset-input" class="sb-input" type="text"
+             placeholder="tr, pr, fl, s, r…"
+             autocorrect="off" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Classe gramatical</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-classe="" onclick="setClasse(null,this)">Qualquer</button>
+        <button class="r-btn" data-classe="sub" onclick="setClasse('sub',this)">Subst.</button>
+        <button class="r-btn" data-classe="adj" onclick="setClasse('adj',this)">Adj.</button>
+        <button class="r-btn" data-classe="vrb" onclick="setClasse('vrb',this)">Verbo</button>
+        <button class="r-btn" data-classe="adv" onclick="setClasse('adv',this)">Adv.</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Frequência</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-freq=""      onclick="setFreq(null,this)">Qualquer</button>
+        <button class="r-btn" data-freq="comum" onclick="setFreq('comum',this)">Comum</button>
+        <button class="r-btn" data-freq="media" onclick="setFreq('media',this)">Neutra</button>
+        <button class="r-btn" data-freq="rara"  onclick="setFreq('rara',this)">Rara</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Cluster onset</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-fam=""   onclick="setFamilia(null,this)">Qualquer</button>
+        <button class="r-btn" data-fam="vz"  onclick="setFamilia('vz',this)">— vazio</button>
+        <button class="r-btn" data-fam="si"  onclick="setFamilia('si',this)">simples</button>
+        <button class="r-btn" data-fam="pl"  onclick="setFamilia('pl',this)">plos+líq</button>
+        <button class="r-btn" data-fam="fl"  onclick="setFamilia('fl',this)">fric+líq</button>
+        <button class="r-btn" data-fam="af"  onclick="setFamilia('af',this)">ch</button>
+        <button class="r-btn" data-fam="lp"  onclick="setFamilia('lp',this)">lh</button>
+        <button class="r-btn" data-fam="np"  onclick="setFamilia('np',this)">nh</button>
+        <button class="r-btn" data-fam="cx"  onclick="setFamilia('cx',this)">complexo</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <span class="sb-label">Interseção A ∩ B</span>
+      <button class="sb-intersect-btn" id="sb-intersect-btn" onclick="toggleIntersect()">
+        ∩ também rima com…
+      </button>
+      <div class="sb-intersect-wrap" id="sb-intersect-wrap">
+        <input id="sb-input-b" class="sb-intersect-input" type="search"
+               placeholder="Segunda palavra…"
+               autocorrect="off" autocapitalize="none" spellcheck="false">
+      </div>
+    </div>
+    <div id="status-text"></div>
+  </aside>
+
+  <!-- Results zone -->
+  <div id="results-zone">
+    <!-- Subbar: spectrum + lego -->
+    <div id="subbar">
+      <div id="spectrum-wrap">
+        <div id="spectrum-bar" role="group" aria-label="Filtrar por qualidade de rima"></div>
+        <div id="spectrum-meta">
+          <span id="spec-count"></span>
+          <button id="spec-clear" onclick="clearBandFilter()">✕ limpar filtro</button>
+        </div>
+      </div>
+      <div id="lego-bar" role="group" aria-label="Blocos fonéticos"></div>
+      <div id="count-bar"></div>
+    </div>
+    <!-- Grid -->
+    <div id="viewport">
+      <div class="grid" id="grid" role="list" aria-label="Resultados">
+        <div class="empty-state" id="empty-state">
+          <span class="loader"></span>
+          Carregando banco de palavras…
+          <br><span style="font-size:13px;opacity:0.7">Pode digitar enquanto carrega.</span>
+        </div>
+      </div>
+      <div id="sentinel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FILTER SHEET (mobile) ══════════════════════════════════════════════ -->
+<div id="sheet-overlay" onclick="closeFilterSheet()"></div>
+<div id="filter-sheet" role="dialog" aria-label="Filtros avançados" aria-modal="true">
+  <div class="sheet-handle-row" id="sheet-handle">
+    <div class="sheet-handle"></div>
+  </div>
+  <div class="sheet-title">
+    Filtros avançados
+    <button onclick="resetFiltros()">Limpar tudo</button>
+  </div>
+  <div class="sheet-body">
+    <div class="sh-section">
+      <span class="sh-label">Número de sílabas</span>
+      <div class="stepper">
+        <button class="step-btn" onclick="stepSilabas(-1)">−</button>
+        <span class="step-val" id="step-val-sh">Qualquer</span>
+        <button class="step-btn" onclick="stepSilabas(1)">+</button>
+      </div>
+    </div>
+    <div class="sh-section">
+      <span class="sh-label">Acentuação</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-acento-sh="" onclick="setAcento(null,this,true)">Qualquer</button>
+        <button class="r-btn" data-acento-sh="ox"  onclick="setAcento('ox',this,true)">Oxítona</button>
+        <button class="r-btn" data-acento-sh="px"  onclick="setAcento('px',this,true)">Paroxítona</button>
+        <button class="r-btn" data-acento-sh="ppx" onclick="setAcento('ppx',this,true)">Proparox.</button>
+      </div>
+    </div>
+    <div class="sh-section">
+      <span class="sh-label">Vogal tônica</span>
+      <div class="vowel-row">
+        <button class="v-btn" data-vogal-sh="a" onclick="setVogal('a',this,true)">A</button>
+        <button class="v-btn" data-vogal-sh="e" onclick="setVogal('e',this,true)">E</button>
+        <button class="v-btn" data-vogal-sh="i" onclick="setVogal('i',this,true)">I</button>
+        <button class="v-btn" data-vogal-sh="o" onclick="setVogal('o',this,true)">O</button>
+        <button class="v-btn" data-vogal-sh="u" onclick="setVogal('u',this,true)">U</button>
+      </div>
+    </div>
+    <div class="sh-section">
+      <span class="sh-label">Onset tônico</span>
+      <input id="onset-input-sh" class="sb-input" type="text"
+             placeholder="tr, pr, fl, s, r…"
+             autocorrect="off" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="sh-section">
+      <span class="sh-label">Classe gramatical</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-classe-sh="" onclick="setClasse(null,this,true)">Qualquer</button>
+        <button class="r-btn" data-classe-sh="sub" onclick="setClasse('sub',this,true)">Subst.</button>
+        <button class="r-btn" data-classe-sh="adj" onclick="setClasse('adj',this,true)">Adj.</button>
+        <button class="r-btn" data-classe-sh="vrb" onclick="setClasse('vrb',this,true)">Verbo</button>
+        <button class="r-btn" data-classe-sh="adv" onclick="setClasse('adv',this,true)">Adv.</button>
+      </div>
+    </div>
+    <div class="sh-section">
+      <span class="sh-label">Frequência</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-freq-sh=""      onclick="setFreq(null,this,true)">Qualquer</button>
+        <button class="r-btn" data-freq-sh="comum" onclick="setFreq('comum',this,true)">Comum</button>
+        <button class="r-btn" data-freq-sh="media" onclick="setFreq('media',this,true)">Neutra</button>
+        <button class="r-btn" data-freq-sh="rara"  onclick="setFreq('rara',this,true)">Rara</button>
+      </div>
+    </div>
+    <div class="sh-section">
+      <span class="sh-label">Cluster onset</span>
+      <div class="radio-row">
+        <button class="r-btn sel" data-fam-sh=""   onclick="setFamilia(null,this,true)">Qualquer</button>
+        <button class="r-btn" data-fam-sh="vz"  onclick="setFamilia('vz',this,true)">— vazio</button>
+        <button class="r-btn" data-fam-sh="si"  onclick="setFamilia('si',this,true)">simples</button>
+        <button class="r-btn" data-fam-sh="pl"  onclick="setFamilia('pl',this,true)">plos+líq</button>
+        <button class="r-btn" data-fam-sh="fl"  onclick="setFamilia('fl',this,true)">fric+líq</button>
+        <button class="r-btn" data-fam-sh="af"  onclick="setFamilia('af',this,true)">ch</button>
+        <button class="r-btn" data-fam-sh="lp"  onclick="setFamilia('lp',this,true)">lh</button>
+        <button class="r-btn" data-fam-sh="np"  onclick="setFamilia('np',this,true)">nh</button>
+        <button class="r-btn" data-fam-sh="cx"  onclick="setFamilia('cx',this,true)">complexo</button>
+      </div>
+    </div>
+    <div class="sh-section">
+      <span class="sh-label">Interseção A ∩ B</span>
+      <button class="sb-intersect-btn" id="sh-intersect-btn" onclick="toggleIntersect()">
+        ∩ também rima com…
+      </button>
+      <div class="sb-intersect-wrap" id="sh-intersect-wrap">
+        <input id="sh-input-b" class="sb-intersect-input" type="search"
+               placeholder="Segunda palavra…"
+               autocorrect="off" autocapitalize="none" spellcheck="false">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button id="filter-fab" onclick="openFilterSheet()" aria-label="Abrir filtros avançados">⚙</button>
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════════════════════════
+   1. MOTOR FONÉTICO (idêntico ao original)
+═══════════════════════════════════════════════════════════════ */
+const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+
+function tratarHiatosVogais(blocoVoc, pLower) {
+    if (blocoVoc.length <= 1) return [blocoVoc];
+    let resultado = [], atual = blocoVoc[0];
+    for (let i = 1; i < blocoVoc.length; i++) {
+        let char = blocoVoc[i], par = (atual.slice(-1) + char).toLowerCase();
+        let formamDitongo   = /^(ai|au|ei|eu|iu|oi|ou|ui|ão|õe|ãe)$/.test(par);
+        let vogaisIdenticas = par[0] === par[1];
+        let temHiatoAcent   = /[aeiouáéíóúâêôãõü][íú]/.test(par);
+        let ehHiatoFinal    = /^(ai|ui|au|oe)$/.test(par) &&
+                              (pLower.endsWith(par+"r")||pLower.endsWith(par+"z")||pLower.endsWith(par+"l"));
+        let seguidoDeNh     = pLower.includes(par+"nh");
+        let pos = pLower.indexOf(par);
+        let seguidoDeNasal  = pos >= 0 && pLower[pos+2] === 'n' && pos+3 < pLower.length && !vRegex.test(pLower[pos+3]);
+        let formaHiatoDit   = false;
+        if (blocoVoc.length >= 3 && /^[aeo]$/.test(atual.slice(-1))) {
+            let prox = blocoVoc[i+1] ? blocoVoc[i+1].toLowerCase() : "";
+            if (/^(iu|ia|io|ie|ui)$/.test(char+prox)) formaHiatoDit = true;
+        }
+        if (formamDitongo && !temHiatoAcent && !vogaisIdenticas && !ehHiatoFinal && !seguidoDeNh && !seguidoDeNasal && !formaHiatoDit)
+            atual += char;
+        else { resultado.push(atual); atual = char; }
+    }
+    resultado.push(atual);
+    return resultado;
+}
+
+function separarConsoantes(cBlock) {
+    if (cBlock.length <= 1) return ["", cBlock];
+    let tL = cBlock.toLowerCase();
+    if (cBlock.length === 2) {
+        if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL)) return ["", cBlock];
+        return [cBlock.slice(0,1), cBlock.slice(1)];
+    }
+    if (/^(ch|lh|nh|gu|qu|br|cr|dr|fr|gr|pr|tr|vr|bl|cl|fl|gl|pl|tl)$/.test(tL.slice(-2)))
+        return [cBlock.slice(0,-2), cBlock.slice(-2)];
+    return [cBlock.slice(0,-1), cBlock.slice(-1)];
+}
+
+function silabificar(palavra) {
+    let blocos = [], tipoAt = '', textoAt = '';
+    for (let i = 0; i < palavra.length; i++) {
+        let ch = palavra[i], chL = ch.toLowerCase();
+        if ((chL==='q'||chL==='g') && palavra[i+1] && palavra[i+1].toLowerCase()==='u'
+            && palavra[i+2] && vRegex.test(palavra[i+2])) {
+            if (tipoAt==='V') { blocos.push({tipo:'V',texto:textoAt}); textoAt=''; }
+            blocos.push({tipo:'C',texto:ch+palavra[i+1]}); i++; tipoAt=''; continue;
+        }
+        let tipo = vRegex.test(ch) ? 'V' : 'C';
+        if (tipo !== tipoAt) { if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt}); tipoAt=tipo; textoAt=ch; }
+        else textoAt += ch;
+    }
+    if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt});
+    let bExp = [];
+    for (let b of blocos) {
+        if (b.tipo==='V') tratarHiatosVogais(b.texto, palavra.toLowerCase()).forEach(v=>bExp.push({tipo:'V',texto:v}));
+        else bExp.push(b);
+    }
+    let idxV = bExp.reduce((a,b,i)=>(b.tipo==='V'?[...a,i]:a),[]);
+    if (!idxV.length) return [palavra];
+    let sil = new Array(idxV.length).fill("");
+    for (let i=0; i<idxV[0]; i++) sil[0] += bExp[i].texto;
+    for (let k=0; k<idxV.length-1; k++) {
+        sil[k] += bExp[idxV[k]].texto;
+        let cT=""; for (let j=idxV[k]+1; j<idxV[k+1]; j++) cT+=bExp[j].texto;
+        let [esq,dir] = separarConsoantes(cT); sil[k]+=esq; sil[k+1]+=dir;
+    }
+    let uV = idxV[idxV.length-1];
+    sil[sil.length-1] += bExp[uV].texto;
+    for (let i=uV+1; i<bExp.length; i++) sil[sil.length-1]+=bExp[i].texto;
+    return sil;
+}
+
+function identificarTonica(silabas, p) {
+    let t = p.toLowerCase();
+    for (let i=0;i<silabas.length;i++) if(/[áéíóúâêô]/i.test(silabas[i])) return i;
+    for (let i=0;i<silabas.length;i++) if(/[ãõ]/i.test(silabas[i])) return i;
+    if (t.match(/(r|l|z|x|i|is|u|us|im|ins|um|uns)$/)) return silabas.length-1;
+    if (t.match(/(a|as|e|es|o|os|am|em|ens)$/))        return Math.max(0,silabas.length-2);
+    return Math.max(0,silabas.length-2);
+}
+
+function normV(s) {
+    return s.toLowerCase()
+        .replace(/[áàâ]/g,'a').replace(/[éê]/g,'e').replace(/í/g,'i')
+        .replace(/[óô]/g,'o').replace(/[úü]/g,'u');
+}
+
+const CLUSTER_FAM = {
+    br:'pl',cr:'pl',dr:'pl',fr:'fl',gr:'pl',pr:'pl',tr:'pl',vr:'fl',
+    bl:'pl',cl:'pl',fl:'fl',gl:'pl',pl:'pl',tl:'pl',
+    ch:'af',lh:'lp',nh:'np'
+};
+const ACENT_LABEL  = { ox:'Oxítona', px:'Paroxítona', ppx:'Proparoxítona', spx:'Superproparox.' };
+const FAM_LABEL    = { pl:'plos+líq', fl:'fric+líq', af:'ch', lp:'lh', np:'nh', si:'simples', vz:'—', cx:'complexo' };
+const CLASSE_LABEL = { sub:'Subst.', adj:'Adj.', vrb:'Verbo', adv:'Adv.', outro:'Outro' };
+const FREQ_LABEL   = { comum:'Comum', media:'Neutra', rara:'Rara' };
+
+function calcOnset(sil)        { let m=sil.match(/^([^aeiouáàâãéêíóôõúü]*)/i); return m?m[1].toLowerCase():''; }
+function calcVogalT(sil)       { let m=sil.match(/[aeiouáàâãéêíóôõúü]/i); return m?normV(m[0]):''; }
+function calcVogaisRima(sil,ti){ return normV(sil.slice(ti).join('')).replace(/[^aeiouãõ]/g,''); }
+function calcEspinha(p)        { return normV(p).replace(/[^aeiouãõ]/g,''); }
+function calcAssC(sil,ti) {
+    let span = sil.slice(ti).join('').toLowerCase().replace(/[aeiouáàâãéêíóôõúü]/g,'');
+    return [...new Set(span)].sort().join('');
+}
+function calcFam(o)  { return !o?'vz':o.length===1?'si':(CLUSTER_FAM[o]||'cx'); }
+function calcAcent(sil,ti) { let d=sil.length-1-ti; return d===0?'ox':d===1?'px':d===2?'ppx':'spx'; }
+function extrairRima(sil,ti)   { let pf=sil.slice(ti).join(''),m=pf.match(vRegex); return m?pf.slice(m.index).toLowerCase():pf.toLowerCase(); }
+function calcCoda(p) {
+    let pL = p.toLowerCase();
+    for (let i = pL.length - 1; i >= 0; i--) {
+        if (vRegex.test(pL[i])) return pL.slice(i + 1);
+    }
+    return '';
+}
+function calcFreq(p, numSil) {
+    let len = p.length;
+    if (len <= 4) return 'comum';
+    if (numSil <= 2 && len <= 6) return 'comum';
+    if (len >= 12 || numSil >= 6) return 'rara';
+    if (/(?:ismo|fobia|filia|grafia|logia|metria|nomia|scopia|cracia|genia|terapia)$/i.test(p)) return 'rara';
+    if (/^(?:pseudo|proto|infra|ultra|supra|hiper|macro|micro)/.test(p) && len > 9) return 'rara';
+    return 'media';
+}
+function levenshtein(a, b) {
+    let la = a.length, lb = b.length;
+    if (la === 0) return lb; if (lb === 0) return la;
+    let prev = Array.from({length: lb + 1}, (_, i) => i);
+    for (let i = 1; i <= la; i++) {
+        let curr = [i];
+        for (let j = 1; j <= lb; j++) {
+            curr[j] = a[i-1] === b[j-1] ? prev[j-1] : 1 + Math.min(prev[j-1], prev[j], curr[j-1]);
+        }
+        prev = curr;
+    }
+    return prev[lb];
+}
+function calcClasse(p) {
+    const pL = p.toLowerCase(), len = pL.length;
+    if (pL.endsWith('mente')) return 'adv';
+    if (/(?:ção|são|xão)$/.test(pL)) return 'sub';
+    if (/(?:dade|tude)$/.test(pL)) return 'sub';
+    if (/(?:ismo|ista)$/.test(pL)) return 'sub';
+    if (/(?:eiro|eira)$/.test(pL)) return 'sub';
+    if (/(?:agem|igem)$/.test(pL)) return 'sub';
+    if (/mento$/.test(pL)) return 'sub';
+    if (/(?:ência|ância|encia|ancia)$/.test(pL)) return 'sub';
+    if (/(?:ança|ença)$/.test(pL)) return 'sub';
+    if (/eza$/.test(pL)) return 'sub';
+    if (/ura$/.test(pL) && len > 4) return 'sub';
+    if (/(?:logia|grafia|nomia|metria|fobia|filia|cracia|terapia|scopia|algia|mania|latria|genia)$/.test(pL)) return 'sub';
+    if (/(?:oso|osa|ivo|iva)$/.test(pL)) return 'adj';
+    if (/(?:ável|ível)$/.test(pL)) return 'adj';
+    if (/vel$/.test(pL) && len > 5) return 'adj';
+    if (/nte$/.test(pL) && len > 5) return 'adj';
+    if (/(?:ório|ória)$/.test(pL)) return 'adj';
+    if (/(?:olar|unar)$/.test(pL) && len > 4) return 'adj';
+    if (/(?:ular|onal|inal|eral|ival|ural)$/.test(pL) && len > 5) return 'adj';
+    if (/(?:ando|endo|indo)$/.test(pL)) return 'vrb';
+    if (/(?:asse|esse|isse)$/.test(pL)) return 'vrb';
+    if (/(?:aria|eria|iria)$/.test(pL)) return 'vrb';
+    if (/(?:aram|eram|iram)$/.test(pL)) return 'vrb';
+    if (/ava$/.test(pL) && len > 4) return 'vrb';
+    if (/rria$/.test(pL)) return 'vrb';
+    if (/ir$/.test(pL) && len > 3) return 'vrb';
+    if (/er$/.test(pL) && len > 3) return 'vrb';
+    if (/ar$/.test(pL) && len > 3) return 'vrb';
+    if (/(?:ado|ada|ido|ida)$/.test(pL) && len > 4) return 'outro';
+    if (/ia$/.test(pL) && len > 4) return 'outro';
+    if (/(?:ário|ária)$/.test(pL)) return 'outro';
+    return 'outro';
+}
+
+function perfilFonetico(palavra) {
+    let pL = palavra.toLowerCase().trim();
+    if (!pL || !/[a-záàâãéêíóôõúü]/i.test(pL)) return null;
+    let sil = silabificar(pL), ti = identificarTonica(sil, pL), onset = calcOnset(sil[ti]);
+    let numSil = sil.length;
+    return {
+        palavra: pL, silabas: sil, tonicaIndex: ti, numSilabas: numSil,
+        acentuacao: calcAcent(sil, ti),
+        rimaPerfeita: extrairRima(sil, ti),
+        vogaisRima: calcVogaisRima(sil, ti),
+        onsetTonico: onset,
+        vogalTonica: calcVogalT(sil[ti]),
+        espinhaVocal: calcEspinha(pL),
+        assConsonantal: calcAssC(sil, ti),
+        familiaCluster: calcFam(onset),
+        coda: calcCoda(pL),
+        classe: calcClasse(pL),
+        freq: calcFreq(pL, numSil),
+    };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. SCORE + BANDAS
+═══════════════════════════════════════════════════════════════ */
+function calcScore(item, alvo, setOnset, setAssC, lenAssC) {
+    let s = 0;
+    if (item.rimaPerfeita === alvo.rimaPerfeita) {
+        s += 100;
+    } else if (alvo.rimaPerfeita.length >= 2) {
+        let d = levenshtein(item.rimaPerfeita, alvo.rimaPerfeita);
+        if (d === 1) s += 70;
+        else if (d === 2 && alvo.rimaPerfeita.length >= 3) s += 40;
+    }
+    if (alvo.vogaisRima && item.vogaisRima === alvo.vogaisRima)      s += 60;
+    if (alvo.onsetTonico) {
+        if (item.onsetTonico === alvo.onsetTonico) s += 50;
+        else if (item.onsetTonico) {
+            for (let c of item.onsetTonico) if (setOnset.has(c)) { s += 25; break; }
+        }
+    }
+    if (alvo.familiaCluster !== 'vz' && alvo.familiaCluster !== 'si'
+        && item.familiaCluster === alvo.familiaCluster) s += 20;
+    if (lenAssC > 0 && item.assConsonantal) {
+        let inter = 0;
+        for (let c of item.assConsonantal) if (setAssC.has(c)) inter++;
+        let union = lenAssC + item.assConsonantal.length - inter;
+        if (union > 0 && inter / union >= 0.5) s += 30;
+    }
+    if (alvo.espinhaVocal.length > 1 && item.espinhaVocal === alvo.espinhaVocal) s += 40;
+    if (alvo.vogalTonica && item.vogalTonica === alvo.vogalTonica) s += 15;
+    if (item.numSilabas === alvo.numSilabas && item.acentuacao === alvo.acentuacao) s += 10;
+    return s;
+}
+
+const BANDAS = [
+    { key:160, label:'Rima',        cls:'b-rima',  color:'var(--c-rima)'  },
+    { key:130, label:'Quase-rima',  cls:'b-qrima', color:'var(--c-qrima)' },
+    { key:100, label:'Eco forte',   cls:'b-eco',   color:'var(--c-eco)'   },
+    { key:60,  label:'Assonância',  cls:'b-ass',   color:'var(--c-ass)'   },
+    { key:25,  label:'Proximidade', cls:'b-prox',  color:'var(--c-prox)'  },
+    { key:10,  label:'Ritmo',       cls:'b-ritmo', color:'var(--c-ritmo)' },
+];
+function getBandaKey(score) {
+    if (score >= 160) return 160;
+    if (score >= 130) return 130;
+    if (score >= 100) return 100;
+    if (score >= 60)  return 60;
+    if (score >= 25)  return 25;
+    return 10;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   3. ESTADO GLOBAL
+═══════════════════════════════════════════════════════════════ */
+let dicionario         = [];
+let alvoAtual          = null;
+let alvoB              = null;
+let FILTROS = {
+    numSilabas: null, acentuacao: null, vogalTonica: null,
+    onsetTonico: null, familiaCluster: null,
+    rimaPerfeita: null, vogaisRima: null, espinhaVocal: null,
+    coda: null, classe: null, freq: null,
+};
+let FILTROS_NEG = {
+    numSilabas: false, acentuacao: false, vogalTonica: false,
+    onsetTonico: false, familiaCluster: false,
+    rimaPerfeita: false, vogaisRima: false, espinhaVocal: false,
+    coda: false, classe: false, freq: false,
+};
+let resultadosFiltrados = [];
+let resultadosVisiveis  = [];
+let FILTRO_BANDAS       = new Set();
+let itemsRenderizados   = 0;
+const CHUNK             = 60;
+let iObserver           = null;
+let buildSilabas        = 0;
+
+const CAMPOS_MOLDE = ['rimaPerfeita','vogaisRima','espinhaVocal','onsetTonico','familiaCluster','coda','classe','freq'];
+
+/* ═══════════════════════════════════════════════════════════════
+   4. INDEXAÇÃO
+═══════════════════════════════════════════════════════════════ */
+async function indexarDicionario() {
+    let st = document.getElementById('status-text');
+    st.textContent = 'Baixando palavras.txt…';
+    try {
+        const resp = await fetch('../dic/palavras.txt');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const lista = (await resp.text()).split(/\r?\n/)
+            .map(p => p.trim())
+            .filter(p => p.length > 1 && /[a-záàâãéêíóôõúü]/i.test(p));
+        st.textContent = `Indexando ${lista.length.toLocaleString('pt-BR')} palavras…`;
+        setTimeout(() => {
+            dicionario = lista.map(p => perfilFonetico(p)).filter(Boolean);
+            st.textContent = '';
+            document.getElementById('empty-state').innerHTML =
+                `Banco com <b>${dicionario.length.toLocaleString('pt-BR')}</b> palavras.<br>
+                 <span style="font-size:13px;opacity:0.7">Digite uma palavra para buscar rimas.</span>`;
+            renderHistorico();
+            _restoreFromHash();
+            if (alvoAtual || Object.values(FILTROS).some(v => v !== null)) processarBusca();
+        }, 30);
+    } catch(e) {
+        st.textContent = '⚠ Erro ao carregar palavras.txt';
+        document.getElementById('empty-state').innerHTML =
+            'Não foi possível carregar <b>palavras.txt</b>.<br>Abra via servidor local.';
+        console.error(e);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   5. PROCESSAMENTO CENTRAL
+═══════════════════════════════════════════════════════════════ */
+function processarBusca() {
+    let temCriterio = alvoAtual !== null || Object.values(FILTROS).some(v => v !== null);
+    if (!temCriterio) {
+        resultadosFiltrados = [];
+        renderResultados();
+        _updateHash();
+        return;
+    }
+    let base = alvoAtual ? dicionario.filter(i => i.palavra !== alvoAtual.palavra) : dicionario;
+    if (alvoB) base = base.filter(i => i.palavra !== alvoB.palavra);
+    let filtrados = base.filter(item => {
+        for (let [k, v] of Object.entries(FILTROS)) {
+            if (v === null) continue;
+            let match = item[k] === v;
+            if (FILTROS_NEG[k]) { if (match) return false; }
+            else                 { if (!match) return false; }
+        }
+        return true;
+    });
+    if (alvoAtual) {
+        let setOnsetA = new Set(alvoAtual.onsetTonico);
+        let setAsscA  = new Set(alvoAtual.assConsonantal);
+        let lenAsscA  = alvoAtual.assConsonantal.length;
+        if (alvoB) {
+            let setOnsetB = new Set(alvoB.onsetTonico);
+            let setAsscB  = new Set(alvoB.assConsonantal);
+            let lenAsscB  = alvoB.assConsonantal.length;
+            resultadosFiltrados = filtrados
+                .map(i => {
+                    let sA = calcScore(i, alvoAtual, setOnsetA, setAsscA, lenAsscA);
+                    let sB = calcScore(i, alvoB, setOnsetB, setAsscB, lenAsscB);
+                    return { ...i, score: Math.min(sA, sB) };
+                })
+                .filter(i => i.score > 0)
+                .sort((a, b) => b.score - a.score);
+        } else {
+            resultadosFiltrados = filtrados
+                .map(i => ({ ...i, score: calcScore(i, alvoAtual, setOnsetA, setAsscA, lenAsscA) }))
+                .filter(i => i.score > 0)
+                .sort((a, b) => b.score - a.score);
+        }
+    } else {
+        resultadosFiltrados = filtrados
+            .map(i => ({ ...i, score: 0 }))
+            .sort((a, b) => a.palavra.localeCompare(b.palavra, 'pt-BR'));
+    }
+    renderResultados();
+    _updateHash();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   6. BAND FILTER
+═══════════════════════════════════════════════════════════════ */
+function _calcVisiveis() {
+    resultadosVisiveis = FILTRO_BANDAS.size === 0
+        ? resultadosFiltrados
+        : resultadosFiltrados.filter(i => FILTRO_BANDAS.has(getBandaKey(i.score)));
+}
+
+function toggleBanda(key) {
+    if (FILTRO_BANDAS.has(key)) FILTRO_BANDAS.delete(key);
+    else FILTRO_BANDAS.add(key);
+    _calcVisiveis();
+    _rebuildGrid();
+    _renderSpectrum();
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+function clearBandFilter() {
+    FILTRO_BANDAS.clear();
+    _calcVisiveis();
+    _rebuildGrid();
+    _renderSpectrum();
+    if (navigator.vibrate) navigator.vibrate(20);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   7. SPECTRUM BAR
+═══════════════════════════════════════════════════════════════ */
+function _renderSpectrum() {
+    let wrap = document.getElementById('spectrum-wrap');
+    if (!alvoAtual) { wrap.classList.remove('visible'); return; }
+    wrap.classList.add('visible');
+
+    let counts = {};
+    BANDAS.forEach(b => counts[b.key] = 0);
+    resultadosFiltrados.forEach(r => counts[getBandaKey(r.score)]++);
+    let total = resultadosFiltrados.length;
+    let nVis  = resultadosVisiveis.length;
+
+    let bar = document.getElementById('spectrum-bar');
+    bar.innerHTML = BANDAS.map(b => {
+        if (!counts[b.key]) return '';
+        let pct = (counts[b.key] / Math.max(total, 1)) * 100;
+        let ativo = FILTRO_BANDAS.size === 0 || FILTRO_BANDAS.has(b.key);
+        let label = pct > 12 ? `${b.label} ${counts[b.key]}` : pct > 6 ? `${counts[b.key]}` : '';
+        return `<div class="spec-seg${ativo ? '' : ' dimmed'}"
+                     style="flex:${pct.toFixed(2)};background:${b.color}"
+                     title="${b.label}: ${counts[b.key]}"
+                     onclick="toggleBanda(${b.key})"
+                     role="button" tabindex="0"
+                     aria-label="${b.label}: ${counts[b.key]} palavras${ativo ? '' : ' (oculta)'}"
+                >${label}</div>`;
+    }).join('');
+
+    let sufixo = alvoB ? ' (A∩B)' : '';
+    let countEl = document.getElementById('spec-count');
+    countEl.textContent = FILTRO_BANDAS.size > 0
+        ? `${nVis.toLocaleString('pt-BR')} / ${total.toLocaleString('pt-BR')} palavras${sufixo}`
+        : `${total.toLocaleString('pt-BR')} palavras${sufixo}`;
+
+    let clrBtn = document.getElementById('spec-clear');
+    clrBtn.classList.toggle('visible', FILTRO_BANDAS.size > 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   8. LEGO PILLS BAR
+═══════════════════════════════════════════════════════════════ */
+const DEF_BLOCOS = [
+    { id: 'rimaPerfeita',   label: v => `-${v}`,                          show: () => true },
+    { id: 'vogaisRima',     label: v => `vog: ${v}`,                      show: v => v.length > 1 },
+    { id: 'numSilabas',     label: v => `${v} síl.`,                      show: () => true },
+    { id: 'acentuacao',     label: v => ACENT_LABEL[v] || v,              show: () => true },
+    { id: 'vogalTonica',    label: v => `/${v.toUpperCase()}/`,            show: () => true },
+    { id: 'onsetTonico',    label: v => `onset:${v}`,                     show: v => v !== '' },
+    { id: 'coda',           label: v => `-${v}`,                          show: v => v !== '' },
+    { id: 'classe',         label: v => CLASSE_LABEL[v] || v,             show: v => v !== 'outro' },
+    { id: 'freq',           label: v => FREQ_LABEL[v] || v,               show: () => true },
+    { id: 'familiaCluster', label: v => FAM_LABEL[v] || v,                show: v => v!=='si'&&v!=='vz' },
+    { id: 'espinhaVocal',   label: v => `spine:${v}`,                     show: v => v.length > 1 },
+];
+
+function renderLegoBar() {
+    let bar = document.getElementById('lego-bar');
+    if (!alvoAtual) { bar.innerHTML = ''; return; }
+    bar.innerHTML = DEF_BLOCOS.map(def => {
+        let val = alvoAtual[def.id];
+        if (!def.show(val)) return '';
+        let locked  = FILTROS[def.id] !== null;
+        let negated = locked && FILTROS_NEG[def.id];
+        let cls     = negated ? ' negated' : locked ? ' locked' : '';
+        let prefix  = negated ? '≠ ' : locked ? '🔒 ' : '';
+        return `<button class="lego-pill${cls}" data-lego="${def.id}"
+                    role="switch" aria-checked="${locked}"
+                    aria-label="${negated?'Excluir ':locked?'Ativo: ':'Travar: '}${def.label(val)}"
+                >${prefix}${def.label(val)}</button>`;
+    }).join('');
+}
+
+function toggleLego(id) {
+    if (!alvoAtual) return;
+    let wasLocked = FILTROS[id] !== null;
+    FILTROS[id]     = wasLocked ? null : alvoAtual[id];
+    FILTROS_NEG[id] = false;
+    if (navigator.vibrate) navigator.vibrate(wasLocked ? 15 : 45);
+    renderLegoBar();
+    processarBusca();
+}
+function negarLego(id) {
+    if (!alvoAtual) return;
+    if (FILTROS_NEG[id]) {
+        FILTROS[id] = null; FILTROS_NEG[id] = false;
+    } else {
+        FILTROS[id] = alvoAtual[id]; FILTROS_NEG[id] = true;
+    }
+    if (navigator.vibrate) navigator.vibrate([10,30,70]);
+    renderLegoBar();
+    processarBusca();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   9. RENDERIZAÇÃO
+═══════════════════════════════════════════════════════════════ */
+function renderResultados() {
+    _calcVisiveis();
+    _renderSpectrum();
+    renderLegoBar();
+    _updateCountBar();
+    _rebuildGrid();
+}
+
+function _updateCountBar() {
+    let bar = document.getElementById('count-bar');
+    if (alvoAtual) { bar.classList.remove('visible'); return; }
+    let n = resultadosFiltrados.length;
+    let hasFiltro = Object.values(FILTROS).some(v => v !== null);
+    if (!hasFiltro || n === 0) { bar.classList.remove('visible'); return; }
+    bar.textContent = `${n.toLocaleString('pt-BR')} palavra${n !== 1 ? 's' : ''}`;
+    bar.classList.add('visible');
+}
+
+function _rebuildGrid() {
+    let grid = document.getElementById('grid');
+    grid.classList.add('fading');
+    grid.innerHTML = '';
+    itemsRenderizados = 0;
+    if (iObserver) { iObserver.disconnect(); iObserver = null; }
+
+    if (resultadosVisiveis.length === 0) {
+        let msg = resultadosFiltrados.length === 0
+            ? 'Nenhuma palavra atende a estes critérios.<br><span style="font-size:13px">Ajuste os filtros ou limpe os blocos travados.</span>'
+            : 'Nenhuma faixa selecionada tem resultados.<br><span style="font-size:13px">Clique em <b>limpar filtro</b> no espectro.</span>';
+        grid.innerHTML = `<div class="empty-state">${msg}</div>`;
+        requestAnimationFrame(() => grid.classList.remove('fading'));
+        return;
+    }
+    renderChunk();
+    _setupObserver();
+    requestAnimationFrame(() => grid.classList.remove('fading'));
+}
+
+function _setupObserver() {
+    let sentinel = document.getElementById('sentinel');
+    iObserver = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) renderChunk();
+    }, { root: document.getElementById('viewport'), rootMargin: '120px' });
+    iObserver.observe(sentinel);
+}
+
+function renderChunk() {
+    if (itemsRenderizados >= resultadosVisiveis.length) return;
+    let chunk = resultadosVisiveis.slice(itemsRenderizados, itemsRenderizados + CHUNK);
+    let frag  = document.createDocumentFragment();
+    chunk.forEach(item => {
+        let card = document.createElement('div');
+        if (alvoAtual && item.score > 0) {
+            let b = BANDAS.find(b => b.key === getBandaKey(item.score));
+            card.className = `word-card ${b.cls}`;
+        } else {
+            card.className = 'word-card';
+        }
+        card.setAttribute('role', 'listitem');
+        card.dataset.palavra = item.palavra;
+        let sylHtml = item.silabas
+            .map((s, i) => i === item.tonicaIndex ? `<span class="tonica">${s}</span>` : s)
+            .join('·');
+        let rhymeTag = (alvoAtual && item.rimaPerfeita)
+            ? `<span class="card-rkey">-${item.rimaPerfeita}</span>` : '';
+        card.innerHTML = `<span>${sylHtml}</span>${rhymeTag}`;
+        frag.appendChild(card);
+    });
+    document.getElementById('grid').appendChild(frag);
+    itemsRenderizados += chunk.length;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   10. DEFINIR ALVO
+═══════════════════════════════════════════════════════════════ */
+function setAlvoPalavra(palavra) {
+    let perfil = perfilFonetico(palavra);
+    if (!perfil) return;
+    alvoAtual = perfil;
+    alvoB     = null;
+    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+    FILTRO_BANDAS.clear();
+    document.getElementById('input-a').value = palavra;
+    document.getElementById('btn-clear-a').classList.remove('hidden');
+    // Close intersect if open
+    _closeIntersect();
+    _addToHistorico(palavra);
+    renderLegoBar();
+    processarBusca();
+    document.getElementById('viewport').scrollTo({ top: 0, behavior: 'smooth' });
+    closeHistDropdown();
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function setAlvoB(palavra) {
+    if (!alvoAtual) return;
+    let perfil = perfilFonetico(palavra);
+    if (!perfil) return;
+    alvoB = perfil;
+    FILTRO_BANDAS.clear();
+    processarBusca();
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function clearAlvo() {
+    alvoAtual = null; alvoB = null;
+    CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+    FILTRO_BANDAS.clear();
+    document.getElementById('input-a').value = '';
+    document.getElementById('input-b').value = '';
+    document.getElementById('btn-clear-a').classList.add('hidden');
+    document.getElementById('rima-express').innerHTML = '';
+    _closeIntersect();
+    renderLegoBar();
+    processarBusca();
+    document.getElementById('input-a').focus();
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   11. RIMA EXPRESS
+═══════════════════════════════════════════════════════════════ */
+function _rimaExpress(val) {
+    let box = document.getElementById('rima-express');
+    if (!dicionario.length || val.length < 2) { box.innerHTML = ''; return; }
+    let perfil = perfilFonetico(val);
+    if (!perfil) { box.innerHTML = ''; return; }
+    let setOnset = new Set(perfil.onsetTonico);
+    let setAssC  = new Set(perfil.assConsonantal);
+    let lenAssC  = perfil.assConsonantal.length;
+    let top = dicionario
+        .filter(i => i.palavra !== perfil.palavra)
+        .map(i => ({ p: i.palavra, s: calcScore(i, perfil, setOnset, setAssC, lenAssC), sil: i.silabas }))
+        .filter(i => i.s >= 130)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 6);
+    if (!top.length) { box.innerHTML = ''; return; }
+    box.innerHTML = top.map(t => {
+        let sylHtml = t.sil.map((s,i) => i === perfilFonetico(t.p)?.tonicaIndex
+            ? `<b>${s}</b>` : s).join('·');
+        return `<span class="rex-chip" data-palavra="${t.p}">${t.sil.join('·')}</span>`;
+    }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   12. FILTROS (Construtor)
+═══════════════════════════════════════════════════════════════ */
+function stepSilabas(delta) {
+    buildSilabas = Math.max(0, buildSilabas + delta);
+    FILTROS.numSilabas = buildSilabas === 0 ? null : buildSilabas;
+    let label = buildSilabas === 0 ? 'Qualquer' : String(buildSilabas);
+    document.getElementById('step-val').textContent = label;
+    let shEl = document.getElementById('step-val-sh');
+    if (shEl) shEl.textContent = label;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+    _updateFabBadge();
+}
+
+/* shared=true → called from sheet, need to sync sidebar too */
+function setAcento(val, btn, shared) {
+    let attr = shared ? 'data-acento-sh' : 'data-acento';
+    let otherAttr = shared ? 'data-acento' : 'data-acento-sh';
+    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
+        b.closest('#sidebar,#filter-sheet') && b.classList.add('sel');
+        // sync sibling deselect
+        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`)
+            .forEach(x => x !== b && x.classList.remove('sel'));
+        b.classList.add('sel');
+    });
+    FILTROS.acentuacao = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+    _updateFabBadge();
+}
+
+function setVogal(v, btn, shared) {
+    let attr = shared ? 'data-vogal-sh' : 'data-vogal';
+    let otherAttr = shared ? 'data-vogal' : 'data-vogal-sh';
+    let jaSel = btn.classList.contains('sel');
+    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
+    document.querySelectorAll(`[${otherAttr}]`).forEach(b => b.classList.remove('sel'));
+    FILTROS.vogalTonica = jaSel ? null : v;
+    if (!jaSel) {
+        btn.classList.add('sel');
+        document.querySelectorAll(`[${otherAttr}="${v}"]`).forEach(b => b.classList.add('sel'));
+    }
+    if (navigator.vibrate) navigator.vibrate(jaSel ? 15 : 40);
+    processarBusca();
+    _updateFabBadge();
+}
+
+let _onsetTimer;
+function _onOnsetInput(e, shared) {
+    clearTimeout(_onsetTimer);
+    _onsetTimer = setTimeout(() => {
+        let val = e.target.value.trim().toLowerCase();
+        FILTROS.onsetTonico = val || null;
+        // sync other input
+        let otherId = shared ? 'onset-input' : 'onset-input-sh';
+        let other = document.getElementById(otherId);
+        if (other) other.value = e.target.value;
+        processarBusca();
+        _updateFabBadge();
+    }, 300);
+}
+
+function setClasse(val, btn, shared) {
+    let attr = shared ? 'data-classe-sh' : 'data-classe';
+    let otherAttr = shared ? 'data-classe' : 'data-classe-sh';
+    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
+        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`).forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+    });
+    FILTROS.classe = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+    _updateFabBadge();
+}
+
+function setFreq(val, btn, shared) {
+    let attr = shared ? 'data-freq-sh' : 'data-freq';
+    let otherAttr = shared ? 'data-freq' : 'data-freq-sh';
+    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
+        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`).forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+    });
+    FILTROS.freq = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+    _updateFabBadge();
+}
+
+function setFamilia(val, btn, shared) {
+    let attr = shared ? 'data-fam-sh' : 'data-fam';
+    let otherAttr = shared ? 'data-fam' : 'data-fam-sh';
+    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
+        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`).forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+    });
+    FILTROS.familiaCluster = val;
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+    _updateFabBadge();
+}
+
+function resetFiltros() {
+    buildSilabas = 0;
+    FILTROS.numSilabas = null; FILTROS.acentuacao = null; FILTROS.vogalTonica = null;
+    FILTROS.onsetTonico = null; FILTROS.familiaCluster = null; FILTROS.classe = null; FILTROS.freq = null;
+    _syncFiltrosUI();
+    processarBusca();
+    _updateFabBadge();
+}
+
+function _syncFiltrosUI() {
+    ['step-val','step-val-sh'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
+    });
+    document.querySelectorAll('[data-acento],[data-acento-sh]').forEach(b => {
+        let v = b.dataset.acento ?? b.dataset.aceutsh ?? '';
+        b.classList.toggle('sel', (b.dataset.acento ?? b.dataset.acentoSh ?? '') === (FILTROS.acentuacao || ''));
+    });
+    document.querySelectorAll('[data-vogal],[data-vogal-sh]').forEach(b => {
+        let v = b.dataset.vogal || b.dataset.vogalSh;
+        b.classList.toggle('sel', v === FILTROS.vogalTonica);
+    });
+    ['onset-input','onset-input-sh'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.value = FILTROS.onsetTonico || '';
+    });
+    document.querySelectorAll('[data-classe],[data-classe-sh]').forEach(b => {
+        let v = b.dataset.classe ?? b.dataset.classeSh ?? '';
+        b.classList.toggle('sel', (b.dataset.classe ?? b.dataset.classeSh ?? '') === (FILTROS.classe || ''));
+    });
+    document.querySelectorAll('[data-freq],[data-freq-sh]').forEach(b => {
+        b.classList.toggle('sel', (b.dataset.freq ?? b.dataset.freqSh ?? '') === (FILTROS.freq || ''));
+    });
+    document.querySelectorAll('[data-fam],[data-fam-sh]').forEach(b => {
+        b.classList.toggle('sel', (b.dataset.fam ?? b.dataset.famSh ?? '') === (FILTROS.familiaCluster || ''));
+    });
+}
+
+function _updateFabBadge() {
+    let hasFiltros = Object.entries(FILTROS).some(([k,v]) => {
+        return !CAMPOS_MOLDE.includes(k) && v !== null;
+    });
+    document.getElementById('filter-fab').classList.toggle('has-filters', hasFiltros);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   13. INTERSECÇÃO
+═══════════════════════════════════════════════════════════════ */
+let _intersectOpen = false;
+
+function toggleIntersect() {
+    if (!alvoAtual) return;
+    _intersectOpen = !_intersectOpen;
+    _applyIntersectState();
+}
+
+function _applyIntersectState() {
+    // topbar
+    let tbBwrap = document.getElementById('input-b-wrap');
+    let tbSep   = document.getElementById('intersect-sep');
+    let tbBtn   = document.getElementById('btn-intersect');
+    tbBwrap.classList.toggle('open', _intersectOpen);
+    tbSep.classList.toggle('visible', _intersectOpen);
+    tbBtn.classList.toggle('active', _intersectOpen);
+    // sidebar
+    ['sb-intersect-btn','sh-intersect-btn'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.classList.toggle('active', _intersectOpen);
+    });
+    ['sb-intersect-wrap','sh-intersect-wrap'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.classList.toggle('open', _intersectOpen);
+    });
+    if (!_intersectOpen) {
+        alvoB = null;
+        document.getElementById('input-b').value = '';
+        let sbB = document.getElementById('sb-input-b');
+        if (sbB) sbB.value = '';
+        let shB = document.getElementById('sh-input-b');
+        if (shB) shB.value = '';
+        processarBusca();
+    } else {
+        setTimeout(() => document.getElementById('input-b').focus(), 50);
+    }
+}
+
+function _closeIntersect() {
+    _intersectOpen = false;
+    alvoB = null;
+    _applyIntersectState();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   14. FILTER SHEET (mobile)
+═══════════════════════════════════════════════════════════════ */
+function openFilterSheet() {
+    document.getElementById('filter-sheet').classList.add('open');
+    document.getElementById('sheet-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeFilterSheet() {
+    document.getElementById('filter-sheet').classList.remove('open');
+    document.getElementById('sheet-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// Sheet drag-to-close
+let _sheetDragY = null, _sheetDragging = false;
+const sheetHandle = document.getElementById('sheet-handle');
+sheetHandle.addEventListener('pointerdown', e => {
+    _sheetDragY = e.clientY; _sheetDragging = false;
+    sheetHandle.setPointerCapture(e.pointerId);
+});
+sheetHandle.addEventListener('pointermove', e => {
+    if (_sheetDragY === null) return;
+    if (Math.abs(e.clientY - _sheetDragY) > 10) _sheetDragging = true;
+});
+sheetHandle.addEventListener('pointerup', e => {
+    if (_sheetDragY === null) return;
+    let dy = e.clientY - _sheetDragY;
+    if (dy > 50 || (!_sheetDragging && Math.abs(dy) < 12)) closeFilterSheet();
+    _sheetDragY = null; _sheetDragging = false;
+});
+sheetHandle.addEventListener('pointercancel', () => { _sheetDragY = null; });
+
+/* ═══════════════════════════════════════════════════════════════
+   15. HISTÓRICO
+═══════════════════════════════════════════════════════════════ */
+const HIST_KEY = 'ptbrwp_hist_v2';
+const HIST_MAX = 20;
+
+function _getHistorico() {
+    try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch { return []; }
+}
+function _saveHistorico(arr) {
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(arr)); } catch {}
+}
+function _addToHistorico(palavra) {
+    let p = palavra.toLowerCase().trim();
+    let hist = _getHistorico().filter(h => h !== p);
+    hist.unshift(p);
+    if (hist.length > HIST_MAX) hist.length = HIST_MAX;
+    _saveHistorico(hist);
+    renderHistorico();
+}
+function renderHistorico() {
+    let hist = _getHistorico();
+    let list = document.getElementById('hist-list');
+    if (!hist.length) { list.innerHTML = '<div style="padding:8px 12px;font-size:13px;color:var(--muted)">Nenhuma busca recente.</div>'; return; }
+    list.innerHTML = hist.map(h =>
+        `<div class="hist-item" data-hist="${h}">
+            <span class="hist-icon">↩</span> ${h}
+         </div>`
+    ).join('');
+}
+function clearHistorico() {
+    _saveHistorico([]);
+    renderHistorico();
+}
+function toggleHistDropdown() {
+    let dd = document.getElementById('hist-dropdown');
+    dd.classList.toggle('open');
+    if (dd.classList.contains('open')) renderHistorico();
+}
+function closeHistDropdown() {
+    document.getElementById('hist-dropdown').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   16. URL HASH
+═══════════════════════════════════════════════════════════════ */
+let _hashPaused = false;
+function _updateHash() {
+    if (_hashPaused) return;
+    let parts = [];
+    if (alvoAtual) {
+        parts.push('molde=' + encodeURIComponent(alvoAtual.palavra));
+        if (alvoB) parts.push('alvoB=' + encodeURIComponent(alvoB.palavra));
+        let locks = [], negs = [];
+        for (let k of Object.keys(FILTROS)) {
+            if (FILTROS[k] !== null) {
+                if (FILTROS_NEG[k]) negs.push(k); else locks.push(k);
+            }
+        }
+        if (locks.length) parts.push('locks=' + locks.join(','));
+        if (negs.length)  parts.push('neg='   + negs.join(','));
+    } else {
+        let hasFilter = Object.values(FILTROS).some(v => v !== null);
+        if (!hasFilter) { history.replaceState(null,'',location.pathname); return; }
+        parts.push('c');
+        for (let [k,v] of Object.entries(FILTROS)) {
+            if (v !== null) parts.push(k + '=' + encodeURIComponent(v));
+        }
+    }
+    history.replaceState(null,'','#' + parts.join('&'));
+}
+function _restoreFromHash() {
+    let hash = location.hash.slice(1);
+    if (!hash) return;
+    _hashPaused = true;
+    try {
+        let params = {};
+        hash.split('&').forEach(p => { let [k,v] = p.split('='); params[k] = v ? decodeURIComponent(v) : ''; });
+        if ('molde' in params && params.molde) {
+            let perfil = perfilFonetico(params.molde);
+            if (!perfil) return;
+            alvoAtual = perfil;
+            CAMPOS_MOLDE.forEach(k => { FILTROS[k] = null; FILTROS_NEG[k] = false; });
+            document.getElementById('input-a').value = params.molde;
+            document.getElementById('btn-clear-a').classList.remove('hidden');
+            if (params.locks) params.locks.split(',').forEach(k => {
+                if (k in FILTROS && alvoAtual[k] !== undefined) FILTROS[k] = alvoAtual[k];
+            });
+            if (params.neg) params.neg.split(',').forEach(k => {
+                if (k in FILTROS && alvoAtual[k] !== undefined) { FILTROS[k] = alvoAtual[k]; FILTROS_NEG[k] = true; }
+            });
+            if (params.alvoB) {
+                let pb = perfilFonetico(params.alvoB);
+                if (pb) {
+                    alvoB = pb; _intersectOpen = true;
+                    document.getElementById('input-b').value = params.alvoB;
+                    _applyIntersectState();
+                }
+            }
+            renderLegoBar();
+            processarBusca();
+        } else if ('c' in params) {
+            alvoAtual = null;
+            for (let [k,v] of Object.entries(params)) {
+                if (k === 'c') continue;
+                if (k in FILTROS) FILTROS[k] = (k === 'numSilabas') ? parseInt(v,10) : v;
+            }
+            buildSilabas = FILTROS.numSilabas || 0;
+            _syncFiltrosUI();
+            processarBusca();
+        }
+    } finally { _hashPaused = false; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   17. EVENTOS
+═══════════════════════════════════════════════════════════════ */
+// Grid click → set as new base
+document.getElementById('grid').addEventListener('click', e => {
+    let card = e.target.closest('.word-card');
+    if (!card || !card.dataset.palavra) return;
+    setAlvoPalavra(card.dataset.palavra);
+});
+
+// Rima express click
+document.getElementById('rima-express').addEventListener('click', e => {
+    let chip = e.target.closest('[data-palavra]');
+    if (chip) setAlvoPalavra(chip.dataset.palavra);
+});
+
+// History dropdown
+document.getElementById('hist-list').addEventListener('click', e => {
+    let item = e.target.closest('[data-hist]');
+    if (item) { setAlvoPalavra(item.dataset.hist); closeHistDropdown(); }
+});
+document.getElementById('btn-hist').addEventListener('click', toggleHistDropdown);
+document.addEventListener('pointerdown', e => {
+    if (!e.target.closest('#hist-dropdown') && !e.target.closest('#btn-hist'))
+        closeHistDropdown();
+});
+
+// Input A
+let _debA, _debAexpress;
+document.getElementById('input-a').addEventListener('input', e => {
+    let val = e.target.value.trim();
+    document.getElementById('btn-clear-a').classList.toggle('hidden', !val);
+    clearTimeout(_debA); clearTimeout(_debAexpress);
+    if (val.length < 2) { document.getElementById('rima-express').innerHTML = ''; return; }
+    _debAexpress = setTimeout(() => _rimaExpress(val), 120);
+    _debA = setTimeout(() => { if (perfilFonetico(val)) setAlvoPalavra(val); }, 280);
+});
+document.getElementById('input-a').addEventListener('keypress', e => {
+    if (e.key !== 'Enter') return;
+    clearTimeout(_debA);
+    let val = e.target.value.trim();
+    if (val.length >= 2) setAlvoPalavra(val);
+    e.target.blur();
+});
+
+// Input B (topbar)
+let _debB;
+document.getElementById('input-b').addEventListener('input', e => {
+    let val = e.target.value.trim();
+    clearTimeout(_debB);
+    if (val.length < 2) { if (alvoB) { alvoB = null; processarBusca(); } return; }
+    _debB = setTimeout(() => { if (perfilFonetico(val)) setAlvoB(val); }, 280);
+});
+document.getElementById('input-b').addEventListener('keypress', e => {
+    if (e.key !== 'Enter') return;
+    clearTimeout(_debB);
+    let val = e.target.value.trim();
+    if (val.length >= 2) setAlvoB(val);
+    e.target.blur();
+});
+
+// sb-input-b (sidebar)
+let _debSbB;
+document.getElementById('sb-input-b').addEventListener('input', e => {
+    let val = e.target.value.trim();
+    clearTimeout(_debSbB);
+    // sync topbar
+    document.getElementById('input-b').value = e.target.value;
+    if (val.length < 2) { if (alvoB) { alvoB = null; processarBusca(); } return; }
+    _debSbB = setTimeout(() => { if (perfilFonetico(val)) setAlvoB(val); }, 280);
+});
+
+// sh-input-b (sheet)
+let _debShB;
+document.getElementById('sh-input-b').addEventListener('input', e => {
+    let val = e.target.value.trim();
+    clearTimeout(_debShB);
+    document.getElementById('input-b').value = e.target.value;
+    if (val.length < 2) { if (alvoB) { alvoB = null; processarBusca(); } return; }
+    _debShB = setTimeout(() => { if (perfilFonetico(val)) setAlvoB(val); }, 280);
+});
+
+// Clear A
+document.getElementById('btn-clear-a').addEventListener('click', clearAlvo);
+
+// Intersect toggle (topbar button)
+document.getElementById('btn-intersect').addEventListener('click', () => {
+    if (!alvoAtual) return;
+    toggleIntersect();
+});
+
+// Onset inputs
+document.getElementById('onset-input').addEventListener('input', e => _onOnsetInput(e, false));
+document.getElementById('onset-input-sh').addEventListener('input', e => _onOnsetInput(e, true));
+
+// Lego pills — click + long press
+let _legoTimer = null, _legoLongFired = false;
+const legoBar = document.getElementById('lego-bar');
+legoBar.addEventListener('pointerdown', e => {
+    let pill = e.target.closest('[data-lego]');
+    if (!pill) return;
+    _legoLongFired = false;
+    _legoTimer = setTimeout(() => {
+        _legoLongFired = true;
+        negarLego(pill.dataset.lego);
+    }, 500);
+});
+legoBar.addEventListener('pointerup',     () => clearTimeout(_legoTimer));
+legoBar.addEventListener('pointercancel', () => clearTimeout(_legoTimer));
+legoBar.addEventListener('click', e => {
+    if (_legoLongFired) { _legoLongFired = false; return; }
+    let pill = e.target.closest('[data-lego]');
+    if (pill) toggleLego(pill.dataset.lego);
+});
+legoBar.addEventListener('contextmenu', e => e.preventDefault());
+
+// Spectrum keyboard
+document.getElementById('spectrum-bar').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        let seg = e.target.closest('.spec-seg');
+        if (seg) { e.preventDefault(); seg.click(); }
+    }
+});
+
+// Hash navigation
+window.addEventListener('hashchange', () => {
+    if (dicionario.length > 0) _restoreFromHash();
+});
+
+// Close hist on Escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeHistDropdown();
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   18. VOZ
+═══════════════════════════════════════════════════════════════ */
+(function setupVoice() {
+    let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    let mic = document.getElementById('btn-mic');
+    let recog = new SR();
+    recog.lang = 'pt-BR'; recog.maxAlternatives = 1;
+    mic.classList.remove('hidden');
+    mic.onclick = () => {
+        try { recog.start(); mic.classList.add('listening'); } catch(e) {}
+    };
+    recog.onresult = e => {
+        let ultima = e.results[0][0].transcript.trim().split(/\s+/).pop();
+        setAlvoPalavra(ultima);
+    };
+    recog.onend   = () => mic.classList.remove('listening');
+    recog.onerror = () => mic.classList.remove('listening');
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   19. INIT
+═══════════════════════════════════════════════════════════════ */
+window.onload = indexarDicionario;
+</script>
+</body>
+</html>
