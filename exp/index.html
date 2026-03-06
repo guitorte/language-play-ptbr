@@ -540,20 +540,20 @@ body {
     <div class="sb-section">
       <span class="sb-label">Acentuação</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-acento="" onclick="setAcento(null,this)">Qualquer</button>
-        <button class="r-btn" data-acento="ox"  onclick="setAcento('ox',this)">Oxítona</button>
-        <button class="r-btn" data-acento="px"  onclick="setAcento('px',this)">Paroxítona</button>
-        <button class="r-btn" data-acento="ppx" onclick="setAcento('ppx',this)">Proparox.</button>
+        <button class="r-btn sel" data-acento="" onclick="setAcento(null)">Qualquer</button>
+        <button class="r-btn" data-acento="ox"  onclick="setAcento('ox')">Oxítona</button>
+        <button class="r-btn" data-acento="px"  onclick="setAcento('px')">Paroxítona</button>
+        <button class="r-btn" data-acento="ppx" onclick="setAcento('ppx')">Proparox.</button>
       </div>
     </div>
     <div class="sb-section">
       <span class="sb-label">Vogal tônica</span>
       <div class="vowel-row">
-        <button class="v-btn" data-vogal="a" onclick="setVogal('a',this)">A</button>
-        <button class="v-btn" data-vogal="e" onclick="setVogal('e',this)">E</button>
-        <button class="v-btn" data-vogal="i" onclick="setVogal('i',this)">I</button>
-        <button class="v-btn" data-vogal="o" onclick="setVogal('o',this)">O</button>
-        <button class="v-btn" data-vogal="u" onclick="setVogal('u',this)">U</button>
+        <button class="v-btn" data-vogal="a" onclick="setVogal('a')">A</button>
+        <button class="v-btn" data-vogal="e" onclick="setVogal('e')">E</button>
+        <button class="v-btn" data-vogal="i" onclick="setVogal('i')">I</button>
+        <button class="v-btn" data-vogal="o" onclick="setVogal('o')">O</button>
+        <button class="v-btn" data-vogal="u" onclick="setVogal('u')">U</button>
       </div>
     </div>
     <div class="sb-section">
@@ -565,34 +565,34 @@ body {
     <div class="sb-section">
       <span class="sb-label">Classe gramatical</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-classe="" onclick="setClasse(null,this)">Qualquer</button>
-        <button class="r-btn" data-classe="sub" onclick="setClasse('sub',this)">Subst.</button>
-        <button class="r-btn" data-classe="adj" onclick="setClasse('adj',this)">Adj.</button>
-        <button class="r-btn" data-classe="vrb" onclick="setClasse('vrb',this)">Verbo</button>
-        <button class="r-btn" data-classe="adv" onclick="setClasse('adv',this)">Adv.</button>
+        <button class="r-btn sel" data-classe="" onclick="setClasse(null)"">Qualquer</button>
+        <button class="r-btn" data-classe="sub" onclick=\"setClasse('sub')">Subst.</button>
+        <button class="r-btn" data-classe="adj" onclick=\"setClasse('adj')">Adj.</button>
+        <button class="r-btn" data-classe="vrb" onclick=\"setClasse('vrb')">Verbo</button>
+        <button class="r-btn" data-classe="adv" onclick=\"setClasse('adv')">Adv.</button>
       </div>
     </div>
     <div class="sb-section">
       <span class="sb-label">Frequência</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-freq=""      onclick="setFreq(null,this)">Qualquer</button>
-        <button class="r-btn" data-freq="comum" onclick="setFreq('comum',this)">Comum</button>
-        <button class="r-btn" data-freq="media" onclick="setFreq('media',this)">Neutra</button>
-        <button class="r-btn" data-freq="rara"  onclick="setFreq('rara',this)">Rara</button>
+        <button class="r-btn sel" data-freq=""      onclick="setFreq(null)"">Qualquer</button>
+        <button class="r-btn" data-freq="comum" onclick=\"setFreq('comum')">Comum</button>
+        <button class="r-btn" data-freq="media" onclick=\"setFreq('media')">Neutra</button>
+        <button class="r-btn" data-freq="rara"  onclick=\"setFreq('rara')">Rara</button>
       </div>
     </div>
     <div class="sb-section">
       <span class="sb-label">Cluster onset</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-fam=""   onclick="setFamilia(null,this)">Qualquer</button>
-        <button class="r-btn" data-fam="vz"  onclick="setFamilia('vz',this)">— vazio</button>
-        <button class="r-btn" data-fam="si"  onclick="setFamilia('si',this)">simples</button>
-        <button class="r-btn" data-fam="pl"  onclick="setFamilia('pl',this)">plos+líq</button>
-        <button class="r-btn" data-fam="fl"  onclick="setFamilia('fl',this)">fric+líq</button>
-        <button class="r-btn" data-fam="af"  onclick="setFamilia('af',this)">ch</button>
-        <button class="r-btn" data-fam="lp"  onclick="setFamilia('lp',this)">lh</button>
-        <button class="r-btn" data-fam="np"  onclick="setFamilia('np',this)">nh</button>
-        <button class="r-btn" data-fam="cx"  onclick="setFamilia('cx',this)">complexo</button>
+        <button class="r-btn sel" data-fam=""   onclick="setFamilia(null)"">Qualquer</button>
+        <button class="r-btn" data-fam="vz"  onclick=\"setFamilia('vz')">— vazio</button>
+        <button class="r-btn" data-fam="si"  onclick=\"setFamilia('si')">simples</button>
+        <button class="r-btn" data-fam="pl"  onclick=\"setFamilia('pl')">plos+líq</button>
+        <button class="r-btn" data-fam="fl"  onclick=\"setFamilia('fl')">fric+líq</button>
+        <button class="r-btn" data-fam="af"  onclick=\"setFamilia('af')">ch</button>
+        <button class="r-btn" data-fam="lp"  onclick=\"setFamilia('lp')">lh</button>
+        <button class="r-btn" data-fam="np"  onclick=\"setFamilia('np')">nh</button>
+        <button class="r-btn" data-fam="cx"  onclick=\"setFamilia('cx')">complexo</button>
       </div>
     </div>
     <div class="sb-section">
@@ -659,20 +659,20 @@ body {
     <div class="sh-section">
       <span class="sh-label">Acentuação</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-acento-sh="" onclick="setAcento(null,this,true)">Qualquer</button>
-        <button class="r-btn" data-acento-sh="ox"  onclick="setAcento('ox',this,true)">Oxítona</button>
-        <button class="r-btn" data-acento-sh="px"  onclick="setAcento('px',this,true)">Paroxítona</button>
-        <button class="r-btn" data-acento-sh="ppx" onclick="setAcento('ppx',this,true)">Proparox.</button>
+        <button class="r-btn sel" data-acento="" onclick="setAcento(null)">Qualquer</button>
+        <button class="r-btn" data-acento="ox"  onclick="setAcento('ox')">Oxítona</button>
+        <button class="r-btn" data-acento="px"  onclick="setAcento('px')">Paroxítona</button>
+        <button class="r-btn" data-acento="ppx" onclick="setAcento('ppx')">Proparox.</button>
       </div>
     </div>
     <div class="sh-section">
       <span class="sh-label">Vogal tônica</span>
       <div class="vowel-row">
-        <button class="v-btn" data-vogal-sh="a" onclick="setVogal('a',this,true)">A</button>
-        <button class="v-btn" data-vogal-sh="e" onclick="setVogal('e',this,true)">E</button>
-        <button class="v-btn" data-vogal-sh="i" onclick="setVogal('i',this,true)">I</button>
-        <button class="v-btn" data-vogal-sh="o" onclick="setVogal('o',this,true)">O</button>
-        <button class="v-btn" data-vogal-sh="u" onclick="setVogal('u',this,true)">U</button>
+        <button class="v-btn" data-vogal="a" onclick=\"setVogal('a')">A</button>
+        <button class="v-btn" data-vogal="e" onclick=\"setVogal('e')">E</button>
+        <button class="v-btn" data-vogal="i" onclick=\"setVogal('i')">I</button>
+        <button class="v-btn" data-vogal="o" onclick=\"setVogal('o')">O</button>
+        <button class="v-btn" data-vogal="u" onclick=\"setVogal('u')">U</button>
       </div>
     </div>
     <div class="sh-section">
@@ -684,34 +684,34 @@ body {
     <div class="sh-section">
       <span class="sh-label">Classe gramatical</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-classe-sh="" onclick="setClasse(null,this,true)">Qualquer</button>
-        <button class="r-btn" data-classe-sh="sub" onclick="setClasse('sub',this,true)">Subst.</button>
-        <button class="r-btn" data-classe-sh="adj" onclick="setClasse('adj',this,true)">Adj.</button>
-        <button class="r-btn" data-classe-sh="vrb" onclick="setClasse('vrb',this,true)">Verbo</button>
-        <button class="r-btn" data-classe-sh="adv" onclick="setClasse('adv',this,true)">Adv.</button>
+        <button class="r-btn sel" data-classe="" onclick="setClasse(null)"">Qualquer</button>
+        <button class="r-btn" data-classe="sub" onclick=\"setClasse('sub')">Subst.</button>
+        <button class="r-btn" data-classe="adj" onclick=\"setClasse('adj')">Adj.</button>
+        <button class="r-btn" data-classe="vrb" onclick=\"setClasse('vrb')">Verbo</button>
+        <button class="r-btn" data-classe="adv" onclick=\"setClasse('adv')">Adv.</button>
       </div>
     </div>
     <div class="sh-section">
       <span class="sh-label">Frequência</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-freq-sh=""      onclick="setFreq(null,this,true)">Qualquer</button>
-        <button class="r-btn" data-freq-sh="comum" onclick="setFreq('comum',this,true)">Comum</button>
-        <button class="r-btn" data-freq-sh="media" onclick="setFreq('media',this,true)">Neutra</button>
-        <button class="r-btn" data-freq-sh="rara"  onclick="setFreq('rara',this,true)">Rara</button>
+        <button class="r-btn sel" data-freq=""      onclick="setFreq(null)"">Qualquer</button>
+        <button class="r-btn" data-freq="comum" onclick=\"setFreq('comum')">Comum</button>
+        <button class="r-btn" data-freq="media" onclick=\"setFreq('media')">Neutra</button>
+        <button class="r-btn" data-freq="rara"  onclick=\"setFreq('rara')">Rara</button>
       </div>
     </div>
     <div class="sh-section">
       <span class="sh-label">Cluster onset</span>
       <div class="radio-row">
-        <button class="r-btn sel" data-fam-sh=""   onclick="setFamilia(null,this,true)">Qualquer</button>
-        <button class="r-btn" data-fam-sh="vz"  onclick="setFamilia('vz',this,true)">— vazio</button>
-        <button class="r-btn" data-fam-sh="si"  onclick="setFamilia('si',this,true)">simples</button>
-        <button class="r-btn" data-fam-sh="pl"  onclick="setFamilia('pl',this,true)">plos+líq</button>
-        <button class="r-btn" data-fam-sh="fl"  onclick="setFamilia('fl',this,true)">fric+líq</button>
-        <button class="r-btn" data-fam-sh="af"  onclick="setFamilia('af',this,true)">ch</button>
-        <button class="r-btn" data-fam-sh="lp"  onclick="setFamilia('lp',this,true)">lh</button>
-        <button class="r-btn" data-fam-sh="np"  onclick="setFamilia('np',this,true)">nh</button>
-        <button class="r-btn" data-fam-sh="cx"  onclick="setFamilia('cx',this,true)">complexo</button>
+        <button class="r-btn sel" data-fam=""   onclick="setFamilia(null)"">Qualquer</button>
+        <button class="r-btn" data-fam="vz"  onclick=\"setFamilia('vz')">— vazio</button>
+        <button class="r-btn" data-fam="si"  onclick=\"setFamilia('si')">simples</button>
+        <button class="r-btn" data-fam="pl"  onclick=\"setFamilia('pl')">plos+líq</button>
+        <button class="r-btn" data-fam="fl"  onclick=\"setFamilia('fl')">fric+líq</button>
+        <button class="r-btn" data-fam="af"  onclick=\"setFamilia('af')">ch</button>
+        <button class="r-btn" data-fam="lp"  onclick=\"setFamilia('lp')">lh</button>
+        <button class="r-btn" data-fam="np"  onclick=\"setFamilia('np')">nh</button>
+        <button class="r-btn" data-fam="cx"  onclick=\"setFamilia('cx')">complexo</button>
       </div>
     </div>
     <div class="sh-section">
@@ -1376,96 +1376,57 @@ function stepSilabas(delta) {
     _updateFabBadge();
 }
 
-/* shared=true → called from sheet, need to sync sidebar too */
-function setAcento(val, btn, shared) {
-    let attr = shared ? 'data-acento-sh' : 'data-acento';
-    let otherAttr = shared ? 'data-acento' : 'data-acento-sh';
-    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
-    btn.classList.add('sel');
-    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
-        b.closest('#sidebar,#filter-sheet') && b.classList.add('sel');
-        // sync sibling deselect
-        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`)
-            .forEach(x => x !== b && x.classList.remove('sel'));
-        b.classList.add('sel');
-    });
+function setAcento(val) {
     FILTROS.acentuacao = val;
+    _syncFiltrosUI();
     if (navigator.vibrate) navigator.vibrate(20);
     processarBusca();
     _updateFabBadge();
 }
 
-function setVogal(v, btn, shared) {
-    let attr = shared ? 'data-vogal-sh' : 'data-vogal';
-    let otherAttr = shared ? 'data-vogal' : 'data-vogal-sh';
-    let jaSel = btn.classList.contains('sel');
-    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
-    document.querySelectorAll(`[${otherAttr}]`).forEach(b => b.classList.remove('sel'));
-    FILTROS.vogalTonica = jaSel ? null : v;
-    if (!jaSel) {
-        btn.classList.add('sel');
-        document.querySelectorAll(`[${otherAttr}="${v}"]`).forEach(b => b.classList.add('sel'));
-    }
-    if (navigator.vibrate) navigator.vibrate(jaSel ? 15 : 40);
+function setVogal(v) {
+    FILTROS.vogalTonica = (FILTROS.vogalTonica === v) ? null : v;
+    _syncFiltrosUI();
+    if (navigator.vibrate) navigator.vibrate(FILTROS.vogalTonica ? 40 : 15);
     processarBusca();
     _updateFabBadge();
 }
 
 let _onsetTimer;
-function _onOnsetInput(e, shared) {
+function _onOnsetInput(e) {
     clearTimeout(_onsetTimer);
     _onsetTimer = setTimeout(() => {
         let val = e.target.value.trim().toLowerCase();
         FILTROS.onsetTonico = val || null;
-        // sync other input
-        let otherId = shared ? 'onset-input' : 'onset-input-sh';
-        let other = document.getElementById(otherId);
-        if (other) other.value = e.target.value;
+        // sync both inputs
+        ['onset-input','onset-input-sh'].forEach(id => {
+            let el = document.getElementById(id);
+            if (el && el !== e.target) el.value = e.target.value;
+        });
         processarBusca();
         _updateFabBadge();
     }, 300);
 }
 
-function setClasse(val, btn, shared) {
-    let attr = shared ? 'data-classe-sh' : 'data-classe';
-    let otherAttr = shared ? 'data-classe' : 'data-classe-sh';
-    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
-    btn.classList.add('sel');
-    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
-        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`).forEach(x => x.classList.remove('sel'));
-        b.classList.add('sel');
-    });
+function setClasse(val) {
     FILTROS.classe = val;
+    _syncFiltrosUI();
     if (navigator.vibrate) navigator.vibrate(20);
     processarBusca();
     _updateFabBadge();
 }
 
-function setFreq(val, btn, shared) {
-    let attr = shared ? 'data-freq-sh' : 'data-freq';
-    let otherAttr = shared ? 'data-freq' : 'data-freq-sh';
-    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
-    btn.classList.add('sel');
-    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
-        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`).forEach(x => x.classList.remove('sel'));
-        b.classList.add('sel');
-    });
+function setFreq(val) {
     FILTROS.freq = val;
+    _syncFiltrosUI();
     if (navigator.vibrate) navigator.vibrate(20);
     processarBusca();
     _updateFabBadge();
 }
 
-function setFamilia(val, btn, shared) {
-    let attr = shared ? 'data-fam-sh' : 'data-fam';
-    let otherAttr = shared ? 'data-fam' : 'data-fam-sh';
-    document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
-    btn.classList.add('sel');
-    document.querySelectorAll(`[${otherAttr}="${val || ''}"]`).forEach(b => {
-        b.closest('.radio-row')?.querySelectorAll(`[${otherAttr}]`).forEach(x => x.classList.remove('sel'));
-        b.classList.add('sel');
-    });
+function setFamilia(val) {
     FILTROS.familiaCluster = val;
+    _syncFiltrosUI();
     if (navigator.vibrate) navigator.vibrate(20);
     processarBusca();
     _updateFabBadge();
@@ -1485,27 +1446,27 @@ function _syncFiltrosUI() {
         let el = document.getElementById(id);
         if (el) el.textContent = buildSilabas === 0 ? 'Qualquer' : buildSilabas;
     });
-    document.querySelectorAll('[data-acento],[data-acento-sh]').forEach(b => {
-        let v = b.dataset.acento ?? b.dataset.aceutsh ?? '';
-        b.classList.toggle('sel', (b.dataset.acento ?? b.dataset.acentoSh ?? '') === (FILTROS.acentuacao || ''));
+    // Map: CSS attribute prefix → FILTROS key
+    const syncMap = [
+        ['data-acento', 'acentuacao'],
+        ['data-classe', 'classe'],
+        ['data-freq',   'freq'],
+        ['data-fam',    'familiaCluster'],
+    ];
+    for (let [attrBase, filtroKey] of syncMap) {
+        let val = FILTROS[filtroKey] || '';
+        document.querySelectorAll(`[${attrBase}]`).forEach(b => {
+            b.classList.toggle('sel', b.getAttribute(attrBase) === val);
+        });
+    }
+    // Vogal (toggle, not radio)
+    document.querySelectorAll('[data-vogal]').forEach(b => {
+        b.classList.toggle('sel', b.getAttribute('data-vogal') === FILTROS.vogalTonica);
     });
-    document.querySelectorAll('[data-vogal],[data-vogal-sh]').forEach(b => {
-        let v = b.dataset.vogal || b.dataset.vogalSh;
-        b.classList.toggle('sel', v === FILTROS.vogalTonica);
-    });
+    // Onset inputs
     ['onset-input','onset-input-sh'].forEach(id => {
         let el = document.getElementById(id);
         if (el) el.value = FILTROS.onsetTonico || '';
-    });
-    document.querySelectorAll('[data-classe],[data-classe-sh]').forEach(b => {
-        let v = b.dataset.classe ?? b.dataset.classeSh ?? '';
-        b.classList.toggle('sel', (b.dataset.classe ?? b.dataset.classeSh ?? '') === (FILTROS.classe || ''));
-    });
-    document.querySelectorAll('[data-freq],[data-freq-sh]').forEach(b => {
-        b.classList.toggle('sel', (b.dataset.freq ?? b.dataset.freqSh ?? '') === (FILTROS.freq || ''));
-    });
-    document.querySelectorAll('[data-fam],[data-fam-sh]').forEach(b => {
-        b.classList.toggle('sel', (b.dataset.fam ?? b.dataset.famSh ?? '') === (FILTROS.familiaCluster || ''));
     });
 }
 
@@ -1802,8 +1763,8 @@ document.getElementById('btn-intersect').addEventListener('click', () => {
 });
 
 // Onset inputs
-document.getElementById('onset-input').addEventListener('input', e => _onOnsetInput(e, false));
-document.getElementById('onset-input-sh').addEventListener('input', e => _onOnsetInput(e, true));
+document.getElementById('onset-input').addEventListener('input', _onOnsetInput);
+document.getElementById('onset-input-sh').addEventListener('input', _onOnsetInput);
 
 // Lego pills — click + long press
 let _legoTimer = null, _legoLongFired = false;
