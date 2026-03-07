@@ -2,7 +2,7 @@
 
 Standalone phonetic engine for Brazilian Portuguese. Handles syllabification, stress detection, rhyme extraction, morphological classification, and multi-criteria phonetic scoring — all in a single zero-dependency JavaScript file.
 
-Extracted from the [RimaBR](../RIMABR_README.md) experimental interface (`exp/index.html`).
+Extracted from the [RimaBR](../RIMABR_README.md) experimental interface (`exp/index.html`). See the [project README](../README.md) for full context on the project, corpus data, and web interfaces.
 
 ---
 
@@ -174,17 +174,17 @@ This is valuable because:
 - **Structured output enables chaining** — An agent can filter 300k words by `acentuacao === 'px' && numSilabas === 3 && vogalTonica === 'a'` to find specific rhythmic matches, something impossible with free-text reasoning alone.
 - **Deterministic = auditable** — Every decision the module makes can be inspected and verified, unlike an LLM's internal phonetic intuition.
 
-Example agent workflow:
+Example agent workflow (with corpus data from `data/`):
 
 ```
-User: "Write a sertanejo verse that rhymes with 'coracao', 3 syllables, paroxytone"
+User: "Write a sertanejo verse that rhymes with 'coracao', paroxytone"
 
 Agent:
-  1. Calls perfilFonetico('coracao') -> gets target profile
-  2. Scans word list, filters by numSilabas === 3 && acentuacao === 'px'
-  3. Scores each candidate with calcScore
-  4. Picks top matches: "paixao" (170), "emocao" (165), ...
-  5. Composes verse using the verified rhymes
+  1. Calls perfilFonetico('coracao') -> target profile (rima='ao', acentuacao='px')
+  2. Looks up phrase_rhymes.json for rima='ao' in Sertanejo genre
+  3. Gets real fragments: "meu coracao" (881x), "de paixao" (101x), "no chao" (189x)
+  4. Looks up rhyme_pairs.json for scored pairs with 'coracao'
+  5. Composes verse using verified rhymes + real phrase endings
 ```
 
 ---
@@ -206,6 +206,9 @@ Agent:
 
 ### Phase 3 — Data and scale
 
+- [x] **Empirical rhyme pairs** — 88,482 unique rhyme pairs extracted from 5,637 songs, with scores, genre tags, and occurrence counts. See `data/rhyme_pairs.json`.
+- [x] **Phrase rhyme index** — 170,752 multi-word phrase endings indexed by `rimaPerfeita`, with syllable counts and genre distribution. See `data/phrase_rhymes.json`.
+- [x] **Extraction pipeline** — `lib/extract-rhyme-data.js` processes both `letras_final.json` (478 songs) and `training_corpus.txt` (5,159 songs).
 - [ ] **Pre-built phonetic index** — Ship a pre-computed JSON index of the full 320k word list with all `perfilFonetico` fields. This lets browser apps do instant lookups without recomputing on the fly.
 - [ ] **Inverted indexes for fast search** — Build lookup tables keyed by `rimaPerfeita`, `vogaisRima`, `espinhaVocal`, etc. Turns O(n) scans into O(1) lookups. Critical for real-time autocomplete over large vocabularies.
 - [ ] **Frequency data from corpora** — Replace the heuristic `calcFreq` with actual frequency counts from Brazilian Portuguese corpora (NILC, Corpus Brasileiro, OpenSubtitles). A word being "common" or "rare" should come from data, not suffix patterns.
@@ -216,7 +219,8 @@ Agent:
 - [ ] **Verse generator API** — Given a target meter (e.g., decasyllable), stress pattern, and end-rhyme, generate or filter candidate lines from a word pool. This is the engine behind automated poetry and lyric tools.
 - [ ] **Rhyme scheme solver** — Given a scheme like ABAB and a set of end-words, find compatible completions. Compose entire stanzas where every line satisfies syllable count, stress, and rhyme constraints simultaneously.
 - [ ] **Genre-aware scoring profiles** — Different genres weight phonetic features differently. Rap values internal rhyme and polysyllabic matches; sertanejo values open vowels and simple codas; bossa nova values subtle assonance. Ship tunable scoring presets.
-- [ ] **Multi-word / phrase rhyming** — Support matching across word boundaries (`coração` ~ `meu irmão`, `matar saudade` ~ `de verdade`). This requires phrase-level syllabification and stress analysis — a significant but high-impact extension.
+- [x] **Multi-word / phrase rhyming** — 170K phrase endings extracted from real lyrics, indexed by rhyme suffix. See `data/phrase_rhymes.json`. Next step: phrase-level syllabification with elision/liaison modeling.
+- [ ] **Elision and liaison model** — Detect vowel elision across word boundaries (`toda a noite` -> `tod'a noite`, reducing syllable count). Use corpus evidence to validate which contractions actually occur in sung Portuguese.
 - [ ] **MCP tool server** — Package the engine as an MCP (Model Context Protocol) server so any AI assistant (Claude, GPT, local models) can call `silabificar`, `perfilFonetico`, and `calcScore` as native tools without custom integration code.
 
 ---
