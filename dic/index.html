@@ -595,6 +595,21 @@
                 </div>
                 <p class="input-hint">Agrupa clusters consonantais com comportamento fonético similar.</p>
             </div>
+            <div class="builder-section">
+                <span class="builder-label">Filtro de consoantes</span>
+                <input type="text" id="consoantes-input" class="text-input"
+                       placeholder="ex: m, t"
+                       inputmode="text" autocorrect="off" autocapitalize="none"
+                       spellcheck="false">
+                <p class="input-hint">Consoantes separadas por vírgula ou espaço. A busca usa a palavra inteira (minúscula, sem acentos).</p>
+                <div class="radio-row" style="margin-top:10px" id="consoantes-modo-row">
+                    <button class="radio-btn cons-modo-btn selected" data-cmodo="contem"    onclick="setConsoanteModo('contem', this)">Contém todas</button>
+                    <button class="radio-btn cons-modo-btn"          data-cmodo="posicao"   onclick="setConsoanteModo('posicao', this)">Antes/depois tônica</button>
+                    <button class="radio-btn cons-modo-btn"          data-cmodo="sequencia" onclick="setConsoanteModo('sequencia', this)">Em sequência</button>
+                    <button class="radio-btn cons-modo-btn"          data-cmodo="repetidas" onclick="setConsoanteModo('repetidas', this)">Repetidas</button>
+                </div>
+                <p class="input-hint" id="consoantes-hint-modo">Palavra contém todas as consoantes indicadas, em qualquer posição.</p>
+            </div>
         </div>
 
     </div><!-- /tab-wrapper -->
@@ -917,6 +932,60 @@ let FILTROS_NEG = {
     coda: false, classe: false, freq: false,
 };
 
+// Filtro de consoantes (não é campo===valor, é lógica customizada)
+let FILTRO_CONSOANTES = { letras: [], modo: 'contem' };
+
+const CONS_MODO_HINTS = {
+    contem:    'Palavra contém todas as consoantes indicadas, em qualquer posição.',
+    posicao:   'Primeira consoante antes da tônica, última depois (precisa de ≥2 letras).',
+    sequencia: 'As consoantes aparecem nessa ordem na palavra (não necessariamente adjacentes).',
+    repetidas: 'Filtra palavras onde pelo menos uma das consoantes indicadas se repete.',
+};
+
+function _normConsoante(c) { return c.toLowerCase().replace(/[áàâ]/g,'a').replace(/[éê]/g,'e').replace(/í/g,'i').replace(/[óô]/g,'o').replace(/[úü]/g,'u'); }
+
+function _filtraConsoantes(item) {
+    let letras = FILTRO_CONSOANTES.letras;
+    if (!letras.length) return true;
+    let p = item.palavra;
+    let modo = FILTRO_CONSOANTES.modo;
+
+    if (modo === 'contem') {
+        return letras.every(c => p.includes(c));
+    }
+
+    if (modo === 'posicao') {
+        if (letras.length < 2) return letras.every(c => p.includes(c));
+        // Antes da tônica: letras nas sílabas 0..ti-1
+        // Depois da tônica: letras nas sílabas ti+1..fim
+        let antes = item.silabas.slice(0, item.tonicaIndex).join('');
+        let depois = item.silabas.slice(item.tonicaIndex + 1).join('');
+        let primeira = letras[0], ultima = letras[letras.length - 1];
+        return antes.includes(primeira) && depois.includes(ultima);
+    }
+
+    if (modo === 'sequencia') {
+        // As consoantes aparecem nessa ordem na palavra
+        let pos = 0;
+        for (let c of letras) {
+            let idx = p.indexOf(c, pos);
+            if (idx === -1) return false;
+            pos = idx + 1;
+        }
+        return true;
+    }
+
+    if (modo === 'repetidas') {
+        // Pelo menos uma das consoantes indicadas aparece mais de uma vez
+        return letras.some(c => {
+            let first = p.indexOf(c);
+            return first !== -1 && p.indexOf(c, first + 1) !== -1;
+        });
+    }
+
+    return true;
+}
+
 let resultadosFiltrados = [];
 let resultadosVisiveis  = [];
 let FILTRO_BANDAS       = new Set();   // vazio = mostrar todas
@@ -962,7 +1031,7 @@ async function indexarDicionario() {
    6. PROCESSAMENTO CENTRAL
 ═══════════════════════════════════════════════════════════════ */
 function processarBusca() {
-    let temCriterio = alvoAtual !== null || Object.values(FILTROS).some(v => v !== null);
+    let temCriterio = alvoAtual !== null || Object.values(FILTROS).some(v => v !== null) || FILTRO_CONSOANTES.letras.length > 0;
     if (!temCriterio) {
         resultadosFiltrados = [];
         renderResultados();
@@ -983,6 +1052,7 @@ function processarBusca() {
             if (FILTROS_NEG[k]) { if (match)  return false; }
             else                 { if (!match) return false; }
         }
+        if (!_filtraConsoantes(item)) return false;
         return true;
     });
 
@@ -1023,7 +1093,7 @@ function processarBusca() {
 function _syncConstrutorCount() {
     let el = document.getElementById('construtor-count');
     let n = resultadosFiltrados.length;
-    let hasFiltro = Object.values(FILTROS).some(v => v !== null) || alvoAtual;
+    let hasFiltro = Object.values(FILTROS).some(v => v !== null) || alvoAtual || FILTRO_CONSOANTES.letras.length > 0;
     if (!hasFiltro) {
         el.textContent = '';
     } else {
@@ -1375,6 +1445,26 @@ function setFamilia(val, btn) {
     processarBusca();
 }
 
+function setConsoanteModo(modo, btn) {
+    document.querySelectorAll('.cons-modo-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    FILTRO_CONSOANTES.modo = modo;
+    document.getElementById('consoantes-hint-modo').textContent = CONS_MODO_HINTS[modo] || '';
+    if (navigator.vibrate) navigator.vibrate(20);
+    processarBusca();
+}
+
+let _consoantesDebounce;
+function _onConsoantesInput(e) {
+    clearTimeout(_consoantesDebounce);
+    _consoantesDebounce = setTimeout(() => {
+        let raw = e.target.value.toLowerCase().replace(/[áàâ]/g,'a').replace(/[éê]/g,'e').replace(/í/g,'i').replace(/[óô]/g,'o').replace(/[úü]/g,'u');
+        let letras = raw.split(/[\s,;]+/).map(s => s.trim()).filter(s => s.length > 0 && !/[aeiou]/.test(s));
+        FILTRO_CONSOANTES.letras = letras;
+        processarBusca();
+    }, 300);
+}
+
 function mostrarInputB() {
     if (!alvoAtual) return;
     let wrap = document.getElementById('intersect-input-wrap');
@@ -1430,6 +1520,11 @@ function _syncConstrutorUI() {
     document.querySelectorAll('.fam-btn').forEach(b => {
         b.classList.toggle('selected', (b.dataset.fam || null) === FILTROS.familiaCluster);
     });
+    document.getElementById('consoantes-input').value = FILTRO_CONSOANTES.letras.join(', ');
+    document.querySelectorAll('.cons-modo-btn').forEach(b => {
+        b.classList.toggle('selected', b.dataset.cmodo === FILTRO_CONSOANTES.modo);
+    });
+    document.getElementById('consoantes-hint-modo').textContent = CONS_MODO_HINTS[FILTRO_CONSOANTES.modo] || '';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1632,12 +1727,16 @@ function _updateHash() {
         if (locks.length) parts.push('locks=' + locks.join(','));
         if (negs.length)  parts.push('neg=' + negs.join(','));
     } else {
-        let hasFilter = Object.values(FILTROS).some(v => v !== null);
+        let hasFilter = Object.values(FILTROS).some(v => v !== null) || FILTRO_CONSOANTES.letras.length > 0;
         if (!hasFilter) { history.replaceState(null, '', location.pathname); return; }
         parts.push('construtor');
         for (let [k, v] of Object.entries(FILTROS)) {
             if (v !== null) parts.push(k + '=' + encodeURIComponent(v));
         }
+    }
+    if (FILTRO_CONSOANTES.letras.length > 0) {
+        parts.push('cons=' + encodeURIComponent(FILTRO_CONSOANTES.letras.join(',')));
+        if (FILTRO_CONSOANTES.modo !== 'contem') parts.push('cmodo=' + FILTRO_CONSOANTES.modo);
     }
     history.replaceState(null, '', '#' + parts.join('&'));
 }
@@ -1696,7 +1795,17 @@ function _restoreFromHash() {
                     FILTROS[k] = (k === 'numSilabas') ? parseInt(v, 10) : v;
                 }
             }
+            if (params.cons) {
+                FILTRO_CONSOANTES.letras = params.cons.split(',').filter(s => s.length > 0);
+                FILTRO_CONSOANTES.modo = params.cmodo || 'contem';
+            }
             switchTab('construtor');
+            processarBusca();
+        }
+        // Also restore consonant filter for molde mode
+        if ('molde' in params && params.cons) {
+            FILTRO_CONSOANTES.letras = params.cons.split(',').filter(s => s.length > 0);
+            FILTRO_CONSOANTES.modo = params.cmodo || 'contem';
             processarBusca();
         }
     } finally {
@@ -1780,6 +1889,11 @@ document.getElementById('input-palavra').addEventListener('keypress', e => {
 
 document.getElementById('onset-input').addEventListener('input', _onOnsetInput);
 document.getElementById('onset-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') e.target.blur();
+});
+
+document.getElementById('consoantes-input').addEventListener('input', _onConsoantesInput);
+document.getElementById('consoantes-input').addEventListener('keypress', e => {
     if (e.key === 'Enter') e.target.blur();
 });
 
