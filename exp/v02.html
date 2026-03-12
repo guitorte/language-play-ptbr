@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<title>Vocalis | Motor Fonético & Rimas</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary:    #1A252C; --accent: #E74C3C; --accent2: #C0392B;
+  --bg:         #F0F3F4; --surface: #FFFFFF; --border: #DFE6EC;
+  --text:       #2C3E50; --muted: #7F8C8D;
+  --lock-bg:    #FFF4E6; --lock-color: #A04000; --lock-border:#E67E22;
+  --neg-bg:     #fdecea; --neg-color: #922b21;
+  --c-rima:     #27AE60; --c-qrima: #16A085; --c-eco: #2980B9;
+  --c-ass:      #E67E22; --c-prox: #8E44AD; --c-ritmo: #95A5A6;
+  --safe-b:     env(safe-area-inset-bottom, 0px);
+  --sidebar-w:  268px;
+  
+  /* Variáveis do Lab herdadas do tema */
+  --lab-green:  #27AE60; --lab-green-dim: rgba(39, 174, 96, 0.1);
+  --lab-amber:  #E67E22; --lab-amber-dim: rgba(230, 126, 34, 0.1);
+  --lab-red:    #E74C3C; --lab-cyan: #2980B9;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary:  #E8ECEF; --bg: #181C20; --surface: #23282E;
+    --border:   #3A4048; --text: #D5DBE0; --muted: #8A949E;
+    --lock-bg:  #3D2E1A; --lock-color: #F0A860; --lock-border:#C87820;
+    --neg-bg:   #3D1A1A; --neg-color: #F08080;
+    --c-rima:   #2ECC71; --c-qrima: #1ABC9C; --c-eco: #3498DB;
+    --c-ass:    #F39C12; --c-prox: #9B59B6; --c-ritmo: #7F8C8D;
+    
+    --lab-green: #4dff7c; --lab-green-dim: rgba(77,255,124,0.1);
+    --lab-amber: #ffb84d; --lab-amber-dim: rgba(255,184,77,0.1);
+    --lab-red:   #ff5555; --lab-cyan: #4dffee;
+  }
+}
+*,*::before,*::after { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; margin:0; padding:0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column;
+  height: 100dvh; overflow: hidden;
+}
+
+/* ═══ GLOBAL NAV ═══════════════════════════════════════════════ */
+#global-nav {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--surface); padding: 8px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 300;
+}
+.nav-tab {
+  padding: 8px 16px; border-radius: 8px; border: none; background: transparent;
+  font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer;
+  transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.nav-tab.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.nav-tab:hover:not(.active) { color: var(--text); }
+
+/* APP VIEWS */
+.app-view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+.app-view.active { display: flex; }
+
+/* ═══ ESTÚDIO (RIMAS) ══════════════════════════════════════════ */
+#topbar { flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 12px 8px; z-index: 200; }
+.search-row { display: flex; align-items: center; gap: 8px; }
+.search-pill { flex: 1; display: flex; align-items: center; background: var(--bg); border: 2px solid var(--border); border-radius: 14px; overflow: hidden; transition: 0.2s; }
+.search-pill:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(231,76,60,0.12); }
+.search-pill input { flex: 1; background: none; border: none; outline: none; padding: 11px 0 11px 14px; font-size: 16px; font-weight: 600; color: var(--text); min-width: 0; }
+.pill-btn { background: none; border: none; cursor: pointer; padding: 0 10px; height: 44px; color: var(--muted); font-size: 16px; }
+.topbar-btn { width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); cursor: pointer; color: var(--muted); }
+.topbar-btn.active { background: var(--primary); color: #fff; }
+#rima-express { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 2px; scrollbar-width: none; }
+.rex-chip { flex-shrink: 0; background: var(--bg); border: 1.5px solid var(--border); padding: 4px 11px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+#body-area { flex: 1; display: flex; overflow: hidden; }
+#sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px; display: none; }
+@media (min-width: 820px) { #sidebar { display: block; } }
+.sb-section { margin-bottom: 20px; }
+.sb-label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.radio-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.r-btn { padding: 7px 10px; border-radius: 9px; border: 2px solid var(--border); background: var(--bg); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.r-btn.sel { background: var(--primary); border-color: var(--primary); color: #fff; }
+#results-zone { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#subbar { flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); }
+#lego-bar { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 10px 8px; align-items: center; }
+.lego-pill { background: var(--bg); border: 2px solid var(--border); padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.lego-pill.locked { background: var(--lock-bg); border-color: var(--lock-border); color: var(--lock-color); }
+#viewport { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; padding: 12px 10px 16px; }
+.word-card { background: var(--surface); border: 2px solid var(--border); border-radius: 12px; padding: 10px 6px 7px; text-align: center; font-size: 15px; font-weight: 500; cursor: pointer; }
+.word-card.b-rima { border-color: var(--c-rima); } .word-card.b-qrima { border-color: var(--c-qrima); }
+.tonica { font-weight: 800; color: var(--accent); }
+.empty-state { padding: 52px 24px; text-align: center; color: var(--muted); font-size: 15px; grid-column: 1/-1; }
+
+/* ═══ LABORATÓRIO FONÉTICO ═════════════════════════════════════ */
+#app-lab { background: var(--bg); overflow-y: auto; font-family: 'Share Tech Mono', monospace; padding: 16px; }
+.lab-grid { display: grid; grid-template-columns: 280px 1fr; gap: 12px; max-width: 1200px; margin: 0 auto; width: 100%; }
+@media(max-width: 800px){ .lab-grid { grid-template-columns: 1fr; } }
+.lab-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.lab-header { font-size: 10px; font-family: sans-serif; font-weight: 700; text-transform: uppercase; color: var(--muted); padding: 12px; border-bottom: 1px solid var(--border); background: var(--bg); }
+.c-btn { width: 36px; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin: 2px; }
+.c-btn:hover { border-color: var(--lab-green); color: var(--lab-green); }
+.c-btn.active { background: var(--lab-green-dim); border-color: var(--lab-green); color: var(--lab-green); box-shadow: 0 0 8px rgba(39,174,96,0.2); }
+.selected-sym { font-size: 48px; color: var(--lab-green); text-align: center; display: block; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.feat-pill { font-size: 10px; font-family: sans-serif; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); margin: 2px; display: inline-block; }
+.feat-pill.active { background: var(--lab-green-dim); border-color: var(--lab-green); color: var(--lab-green); }
+
+.view-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.v-tab { flex: 1; background: none; border: none; font-family: sans-serif; font-size: 11px; font-weight: 700; color: var(--muted); padding: 12px; cursor: pointer; text-transform: uppercase; }
+.v-tab.active { color: var(--lab-amber); border-bottom: 2px solid var(--lab-amber); background: var(--lab-amber-dim); }
+.lab-view { display: none; padding: 12px; } .lab-view.active { display: block; }
+
+.matrix-table { border-collapse: separate; border-spacing: 2px; width: 100%; overflow-x: auto; display: block; }
+.matrix-table th { font-size: 11px; color: var(--muted); padding: 4px; min-width: 28px; }
+.matrix-table td { width: 28px; height: 28px; text-align: center; font-size: 10px; cursor: pointer; border-radius: 4px; transition: transform 0.1s; }
+.matrix-table td:hover { transform: scale(1.2); z-index: 10; }
+.neighbor-item { display: grid; grid-template-columns: 30px 40px 1fr; align-items: center; gap: 8px; padding: 6px; border-bottom: 1px solid var(--bg); font-size: 12px; }
+.cost-bar-bg { height: 4px; background: var(--border); border-radius: 2px; width: 100%; }
+.cost-bar-fill { height: 100%; border-radius: 2px; background: var(--lab-green); }
+</style>
+</head>
+<body>
+
+<!-- Global Navigation -->
+<nav id="global-nav">
+  <button class="nav-tab active" onclick="switchApp('dict')">📖 Estúdio de Rimas</button>
+  <button class="nav-tab" onclick="switchApp('lab')">🔬 Lab Fonético</button>
+</nav>
+
+<!-- =========================================================================
+     APP 1: ESTÚDIO DE RIMAS
+     ========================================================================= -->
+<div id="app-dict" class="app-view active">
+  <div id="topbar">
+    <div class="search-row">
+      <div class="search-pill">
+        <input type="search" id="input-a" placeholder="Palavra ou rima..." autocomplete="off">
+        <button class="pill-btn" id="btn-clear-a" style="display:none;" onclick="clearAlvo()">✕</button>
+      </div>
+    </div>
+    <div id="rima-express"></div>
+  </div>
+
+  <div id="body-area">
+    <aside id="sidebar">
+      <div class="sb-section">
+        <span class="sb-label">Nº Sílabas</span>
+        <div class="radio-row">
+          <button class="r-btn sel" onclick="setFiltro('numSilabas', null)">Qualquer</button>
+          <button class="r-btn" onclick="setFiltro('numSilabas', 1)">1</button>
+          <button class="r-btn" onclick="setFiltro('numSilabas', 2)">2</button>
+          <button class="r-btn" onclick="setFiltro('numSilabas', 3)">3</button>
+          <button class="r-btn" onclick="setFiltro('numSilabas', 4)">4+</button>
+        </div>
+      </div>
+      <div class="sb-section">
+        <span class="sb-label">Acentuação</span>
+        <div class="radio-row">
+          <button class="r-btn sel" onclick="setFiltro('acentuacao', null)">Qualquer</button>
+          <button class="r-btn" onclick="setFiltro('acentuacao', 'ox')">Oxítona</button>
+          <button class="r-btn" onclick="setFiltro('acentuacao', 'px')">Paroxítona</button>
+        </div>
+      </div>
+    </aside>
+    
+    <div id="results-zone">
+      <div id="subbar"><div id="lego-bar"></div></div>
+      <div id="viewport">
+        <div class="grid" id="grid">
+          <div class="empty-state" id="empty-state">
+            Carregando banco de palavras (Pode digitar)...<br>
+            <small style="opacity:0.6">Motor Híbrido Fonético/Morfosintático Ativo</small>
+          </div>
+        </div>
+        <div id="sentinel" style="height:20px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================================
+     APP 2: LABORATÓRIO FONÉTICO
+     ========================================================================= -->
+<div id="app-lab" class="app-view">
+  <div class="lab-grid">
+    <!-- Panel Esquerdo -->
+    <div class="lab-panel">
+      <div class="lab-header">Traços Articulatórios (Chomsky-Halle)</div>
+      <div class="selected-sym" id="lab-sym">?</div>
+      <div id="lab-feats" style="padding: 12px; border-bottom: 1px solid var(--border); text-align: center;"></div>
+      <div id="lab-consonants" style="padding: 12px;"></div>
+    </div>
+    <!-- Panel Direito -->
+    <div class="lab-panel">
+      <div class="view-tabs">
+        <button class="v-tab active" onclick="switchLabTab('neighbors')">Vizinhos Acústicos</button>
+        <button class="v-tab" onclick="switchLabTab('matrix')">Matriz Completa</button>
+      </div>
+      <div id="lab-tab-neighbors" class="lab-view active">
+        <div id="lab-neighbors-list">Selecione uma consoante ao lado.</div>
+      </div>
+      <div id="lab-tab-matrix" class="lab-view">
+        <table class="matrix-table" id="lab-matrix"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   MÓDULO 1: MOTOR FONÉTICO IPA E CÁLCULO DE DISTÂNCIA
+═══════════════════════════════════════════════════════════════ */
+const FEATURE_WEIGHTS = {
+  voiced: 0.15, labial: 0.30, coronal: 0.20, dorsal: 0.30,
+  sonorant: 0.40, continuant: 0.35, nasal: 0.25, lateral: 0.25,
+  trill: 0.30, tap: 0.25, approximant: 0.35, affricate: 0.30
+};
+
+// Matriz Booleana de Traços IPA (Reduzida para performance)
+const CONSONANTS = {
+  'p': { voiced:false, labial:true, coronal:false, dorsal:false, sonorant:false, continuant:false, nasal:false, lateral:false },
+  'b': { voiced:true,  labial:true, coronal:false, dorsal:false, sonorant:false, continuant:false, nasal:false, lateral:false },
+  'm': { voiced:true,  labial:true, coronal:false, dorsal:false, sonorant:true,  continuant:false, nasal:true,  lateral:false },
+  'f': { voiced:false, labial:true, coronal:false, dorsal:false, sonorant:false, continuant:true,  nasal:false, lateral:false },
+  'v': { voiced:true,  labial:true, coronal:false, dorsal:false, sonorant:false, continuant:true,  nasal:false, lateral:false },
+  't': { voiced:false, labial:false, coronal:true, dorsal:false, sonorant:false, continuant:false, nasal:false, lateral:false },
+  'd': { voiced:true,  labial:false, coronal:true, dorsal:false, sonorant:false, continuant:false, nasal:false, lateral:false },
+  'n': { voiced:true,  labial:false, coronal:true, dorsal:false, sonorant:true,  continuant:false, nasal:true,  lateral:false },
+  's': { voiced:false, labial:false, coronal:true, dorsal:false, sonorant:false, continuant:true,  nasal:false, lateral:false },
+  'z': { voiced:true,  labial:false, coronal:true, dorsal:false, sonorant:false, continuant:true,  nasal:false, lateral:false },
+  'l': { voiced:true,  labial:false, coronal:true, dorsal:false, sonorant:true,  continuant:true,  nasal:false, lateral:true },
+  'ɾ': { voiced:true,  labial:false, coronal:true, dorsal:false, sonorant:true,  continuant:false, nasal:false, lateral:false, tap:true },
+  'ʃ': { voiced:false, labial:false, coronal:true, dorsal:false, sonorant:false, continuant:true,  nasal:false, lateral:false, affricate:true },
+  'ʒ': { voiced:true,  labial:false, coronal:true, dorsal:false, sonorant:false, continuant:true,  nasal:false, lateral:false, affricate:true },
+  'ɲ': { voiced:true,  labial:false, coronal:true, dorsal:true,  sonorant:true,  continuant:false, nasal:true,  lateral:false },
+  'ʎ': { voiced:true,  labial:false, coronal:true, dorsal:false, sonorant:true,  continuant:true,  nasal:false, lateral:true },
+  'k': { voiced:false, labial:false, coronal:false, dorsal:true, sonorant:false, continuant:false, nasal:false, lateral:false },
+  'g': { voiced:true,  labial:false, coronal:false, dorsal:true, sonorant:false, continuant:false, nasal:false, lateral:false },
+  'ʁ': { voiced:true,  labial:false, coronal:false, dorsal:true, sonorant:false, continuant:true,  nasal:false, lateral:false }
+};
+
+// Conversor da ortografia PT-BR para IPA para ligar os dois motores
+const ORTHO_TO_IPA = {
+  'p':'p', 'b':'b', 'm':'m', 'f':'f', 'v':'v', 't':'t', 'd':'d', 'n':'n',
+  's':'s', 'z':'z', 'l':'l', 'r':'ʁ', 'rr':'ʁ', 'c':'k', 'qu':'k', 'g':'g', 'gu':'g',
+  'ch':'ʃ', 'x':'ʃ', 'j':'ʒ', 'lh':'ʎ', 'nh':'ɲ',
+  'pr':['p','ɾ'], 'br':['b','ɾ'], 'tr':['t','ɾ'], 'dr':['d','ɾ'], 'cr':['k','ɾ'], 'gr':['g','ɾ'], 'fr':['f','ɾ'], 'vr':['v','ɾ'],
+  'pl':['p','l'], 'bl':['b','l'], 'cl':['k','l'], 'gl':['g','l'], 'fl':['f','l']
+};
+
+function getIPA(onset) {
+  if (!onset) return[];
+  let o = onset.toLowerCase();
+  if (ORTHO_TO_IPA[o]) return Array.isArray(ORTHO_TO_IPA[o]) ? ORTHO_TO_IPA[o] : [ORTHO_TO_IPA[o]];
+  return o.split('').map(c => ORTHO_TO_IPA[c] || c); // fallback
+}
+
+function phoneticDistance(s1, s2) {
+  const c1 = CONSONANTS[s1], c2 = CONSONANTS[s2];
+  if (!c1 || !c2) return { cost: null };
+  if (s1 === s2) return { cost: 0 };
+  
+  let raw = 0;
+  const totalMax = Object.values(FEATURE_WEIGHTS).reduce((a,b)=>a+b, 0);
+  for (const f of Object.keys(FEATURE_WEIGHTS)) {
+    if ((c1[f]||false) !== (c2[f]||false)) raw += FEATURE_WEIGHTS[f];
+  }
+  return { cost: raw / totalMax };
+}
+
+// O novo coração do Motor Híbrido
+function calcOnsetPhoneticCost(o1, o2) {
+  let i1 = getIPA(o1), i2 = getIPA(o2);
+  if (i1.length === 0 && i2.length === 0) return 0;
+  if (i1.length === 0 || i2.length === 0) return 1;
+  
+  let cost = 0;
+  let len = Math.max(i1.length, i2.length);
+  for(let i=0; i<len; i++) {
+    let s1 = i1[i], s2 = i2[i];
+    if (!s1 || !s2) { cost += 0.5; continue; } // penalty por cluster vs simples
+    let d = phoneticDistance(s1, s2);
+    cost += d.cost !== null ? d.cost : 1;
+  }
+  return cost / len;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MÓDULO 2: PARSER DO PORTUGUÊS (Rimas)
+═══════════════════════════════════════════════════════════════ */
+const vRegex = /[aeiouáàâãéêíóôõúü]/i;
+
+function silabificar(palavra) {
+  let blocos =[], tipoAt = '', textoAt = '';
+  for (let ch of palavra) {
+    let tipo = vRegex.test(ch) ? 'V' : 'C';
+    if (tipo !== tipoAt) { if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt}); tipoAt=tipo; textoAt=ch; }
+    else textoAt += ch;
+  }
+  if (textoAt) blocos.push({tipo:tipoAt,texto:textoAt});
+  
+  let sil =[], curr = "";
+  for (let b of blocos) {
+    if (b.tipo === 'V') { if(curr) sil.push(curr); curr = b.texto; }
+    else {
+      if (!curr) curr += b.texto;
+      else { sil.push(curr); curr = b.texto; } // Simplificado para demo
+    }
+  }
+  if(curr) sil.push(curr);
+  return sil.length ? sil : [palavra];
+}
+
+function identificarTonica(silabas, p) {
+  for (let i=0; i<silabas.length; i++) if(/[áéíóúâêôãõ]/i.test(silabas[i])) return i;
+  let t = p.toLowerCase();
+  if (t.match(/(r|l|z|x|i|u|im|um|us)$/)) return silabas.length-1;
+  return Math.max(0, silabas.length-2);
+}
+
+function calcCoda(p) {
+  let pL = p.toLowerCase();
+  for (let i = pL.length - 1; i >= 0; i--) if (vRegex.test(pL[i])) return pL.slice(i + 1);
+  return '';
+}
+
+function perfilFonetico(palavra) {
+  let pL = palavra.toLowerCase().trim();
+  if (!pL || !/[a-záàâãéêíóôõúü]/i.test(pL)) return null;
+  let sil = silabificar(pL), ti = identificarTonica(sil, pL);
+  let rima = sil.slice(ti).join('').toLowerCase();
+  let m = rima.match(vRegex);
+  let rimaPerfeita = m ? rima.slice(m.index) : rima;
+  
+  // Extração do Onset
+  let onsetMatch = sil[ti].match(/^([^aeiouáàâãéêíóôõúü]*)/i);
+  let onset = onsetMatch ? onsetMatch[1].toLowerCase() : '';
+
+  return {
+    palavra: pL, silabas: sil, numSilabas: sil.length, tonicaIndex: ti,
+    acentuacao: sil.length-1-ti === 0 ? 'ox' : 'px',
+    rimaPerfeita: rimaPerfeita,
+    vogaisRima: rimaPerfeita.replace(/[^aeiouãõ]/g,''),
+    onsetTonico: onset,
+    coda: calcCoda(pL)
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MÓDULO 3: SCORING HÍBRIDO (Motor 1 + Motor 2)
+═══════════════════════════════════════════════════════════════ */
+function calcScore(item, alvo) {
+  let s = 0;
+  if (item.rimaPerfeita === alvo.rimaPerfeita) s += 100;
+  if (alvo.vogaisRima && item.vogaisRima === alvo.vogaisRima) s += 60;
+  
+  // A MÁGICA HÍBRIDA ACONTECE AQUI
+  if (alvo.onsetTonico && item.onsetTonico) {
+    if (item.onsetTonico === alvo.onsetTonico) s += 50; // Onset idêntico
+    else {
+      // Usa o Motor de Chomsky-Halle para avaliar a similaridade anatômica!
+      let dist = calcOnsetPhoneticCost(item.onsetTonico, alvo.onsetTonico);
+      if (dist <= 0.15) s += 40;      // Ex: P e B, F e V
+      else if (dist <= 0.35) s += 25; // Ex: T e K, M e N
+      else if (dist <= 0.55) s += 10;
+    }
+  }
+  
+  if (item.numSilabas === alvo.numSilabas && item.acentuacao === alvo.acentuacao) s += 10;
+  return s;
+}
+
+const BANDAS =[
+  { key:160, label:'Rima Perf.', cls:'b-rima' },
+  { key:130, label:'Quase-rima', cls:'b-qrima'},
+  { key:60,  label:'Assonância', cls:'b-ass'  }
+];
+function getBandaKey(score) {
+  if (score >= 160) return 160; if (score >= 130) return 130; return 60;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO E DICIONÁRIO
+═══════════════════════════════════════════════════════════════ */
+let dicionario =[];
+let alvoAtual = null;
+let FILTROS = { numSilabas: null, acentuacao: null };
+
+// Dicionário de fallback caso rode localmente sem o txt
+const MOCK_DIC = "faca vaca maca paca jaca saca placa fraca prata lata nata mata gata bata chata rima lima prima clima cima animal fatal canal banal porta torta morta".split(' ');
+
+async function carregarDic() {
+  try {
+    const resp = await fetch('../dic/palavras.txt');
+    if (!resp.ok) throw new Error();
+    const texto = await resp.text();
+    let lista = texto.split(/\r?\n/).map(p=>p.trim());
+    dicionario = lista.map(perfilFonetico).filter(Boolean);
+  } catch(e) {
+    // Fallback para demonstração do ecossistema
+    dicionario = MOCK_DIC.map(perfilFonetico).filter(Boolean);
+  }
+  document.getElementById('empty-state').innerHTML = `Banco: ${dicionario.length} palavras.<br>Digite uma palavra para testar o Motor Híbrido.`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UI: ESTÚDIO DE RIMAS
+═══════════════════════════════════════════════════════════════ */
+function processarBusca() {
+  if (!alvoAtual) { renderGrid([]); return; }
+  
+  let res = dicionario.filter(i => i.palavra !== alvoAtual.palavra);
+  if (FILTROS.numSilabas) res = res.filter(i => (FILTROS.numSilabas>=4 ? i.numSilabas>=4 : i.numSilabas === FILTROS.numSilabas));
+  if (FILTROS.acentuacao) res = res.filter(i => i.acentuacao === FILTROS.acentuacao);
+  
+  res = res.map(i => ({ ...i, score: calcScore(i, alvoAtual) }))
+           .filter(i => i.score >= 60)
+           .sort((a,b) => b.score - a.score);
+           
+  renderGrid(res);
+  renderLegoBar();
+}
+
+function renderGrid(res) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  if(!res.length && alvoAtual) { grid.innerHTML = '<div class="empty-state">Sem resultados.</div>'; return; }
+  
+  let frag = document.createDocumentFragment();
+  res.slice(0, 100).forEach(item => { // limit 100 pra perf local
+    let c = document.createElement('div');
+    c.className = `word-card ${BANDAS.find(b=>b.key===getBandaKey(item.score))?.cls || ''}`;
+    c.innerHTML = item.silabas.map((s,i)=> i===item.tonicaIndex?`<span class="tonica">${s}</span>`:s).join('·');
+    c.onclick = () => setAlvoPalavra(item.palavra);
+    frag.appendChild(c);
+  });
+  grid.appendChild(frag);
+}
+
+function setAlvoPalavra(palavra) {
+  alvoAtual = perfilFonetico(palavra);
+  document.getElementById('input-a').value = palavra;
+  document.getElementById('btn-clear-a').style.display = 'block';
+  processarBusca();
+}
+
+function clearAlvo() {
+  alvoAtual = null; document.getElementById('input-a').value = '';
+  document.getElementById('btn-clear-a').style.display = 'none';
+  processarBusca();
+}
+
+document.getElementById('input-a').addEventListener('input', e => {
+  let val = e.target.value.trim();
+  document.getElementById('btn-clear-a').style.display = val ? 'block' : 'none';
+  if (val.length >= 2) { setAlvoPalavra(val); }
+});
+
+function setFiltro(key, val) {
+  FILTROS[key] = val;
+  // Atualiza botões
+  document.querySelectorAll(`.sb-section button`).forEach(b => b.classList.remove('sel'));
+  processarBusca();
+}
+
+function renderLegoBar() {
+  const b = document.getElementById('lego-bar');
+  b.innerHTML = '';
+  if(!alvoAtual) return;
+  if(alvoAtual.onsetTonico) b.innerHTML += `<div class="lego-pill">Onset IPA: /${getIPA(alvoAtual.onsetTonico).join('')}/</div>`;
+  b.innerHTML += `<div class="lego-pill">Coda: -${alvoAtual.coda}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UI: LABORATÓRIO FONÉTICO
+═══════════════════════════════════════════════════════════════ */
+function initLab() {
+  const cont = document.getElementById('lab-consonants');
+  Object.keys(CONSONANTS).forEach(sym => {
+    let btn = document.createElement('button');
+    btn.className = 'c-btn'; btn.textContent = sym;
+    btn.onclick = () => selectLabConsonant(sym);
+    cont.appendChild(btn);
+  });
+  buildLabMatrix();
+}
+
+function selectLabConsonant(sym) {
+  document.querySelectorAll('#lab-consonants .c-btn').forEach(b => b.classList.toggle('active', b.textContent===sym));
+  document.getElementById('lab-sym').textContent = sym;
+  
+  const feats = CONSONANTS[sym];
+  const fCont = document.getElementById('lab-feats');
+  fCont.innerHTML = Object.keys(FEATURE_WEIGHTS).map(f => 
+    `<span class="feat-pill ${feats[f]?'active':''}">${feats[f]?'+':'-'}${f}</span>`
+  ).join('');
+  
+  // Vizinhos
+  const nList = document.getElementById('lab-neighbors-list');
+  let neighbors = Object.keys(CONSONANTS).filter(s => s!==sym).map(s => {
+    return { sym: s, dist: phoneticDistance(sym, s).cost };
+  }).sort((a,b)=>a.dist - b.dist);
+  
+  nList.innerHTML = neighbors.map(n => {
+    let pct = (n.dist * 100).toFixed(1);
+    let color = n.dist < 0.2 ? 'var(--lab-green)' : n.dist < 0.4 ? 'var(--lab-amber)' : 'var(--lab-red)';
+    return `
+      <div class="neighbor-item">
+        <strong style="font-size:16px; color:${color}">${n.sym}</strong>
+        <span>${n.dist.toFixed(2)}</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:${pct}%; background:${color}"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildLabMatrix() {
+  const table = document.getElementById('lab-matrix');
+  const syms = Object.keys(CONSONANTS);
+  let html = '<tr><th></th>' + syms.map(s=>`<th>${s}</th>`).join('') + '</tr>';
+  
+  syms.forEach(s1 => {
+    html += `<tr><th style="text-align:right; padding-right:8px;">${s1}</th>`;
+    syms.forEach(s2 => {
+      let d = phoneticDistance(s1, s2).cost;
+      let alpha = s1===s2 ? 0.1 : Math.max(0.1, d);
+      let color = d < 0.2 ? '39,174,96' : d < 0.4 ? '230,126,34' : '231,76,60';
+      html += `<td style="background:rgba(${color},${alpha}); color:rgb(${color})">${s1===s2?'·':d.toFixed(1).replace('0.','.')}</td>`;
+    });
+    html += '</tr>';
+  });
+  table.innerHTML = html;
+}
+
+function switchLabTab(tab) {
+  document.querySelectorAll('.lab-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.v-tab').forEach(v=>v.classList.remove('active'));
+  document.getElementById('lab-tab-'+tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NAVEGAÇÃO GLOBAL
+═══════════════════════════════════════════════════════════════ */
+function switchApp(app) {
+  document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('app-'+app).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Inicialização
+window.onload = () => {
+  carregarDic();
+  initLab();
+  selectLabConsonant('s');
+};
+
+</script>
+</body>
+</html>
